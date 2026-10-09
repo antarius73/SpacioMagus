@@ -1,0 +1,8 @@
+.godot/
+.mono/
+android/
+bin/
+obj/
+*.apk
+*.aab
+export/

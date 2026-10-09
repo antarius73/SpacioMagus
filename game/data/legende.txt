@@ -1,0 +1,12 @@
+; Glossaire des caractères, commun à tous les niveaux.
+; L'espace vaut « vide » et les chiffres 1 à 9 sont des repères : ils ne se définissent pas ici.
+; Format : caractère = élément, ou caractère = élément, decor pour la couche de décor.
+[legende]
+# = mur
+. = sol
+G = grille
+> = escalier
+@ = depart
+b = blob_vert
+p = fiole
+t = torche, decor

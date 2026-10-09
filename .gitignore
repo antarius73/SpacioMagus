@@ -1,0 +1,19 @@
+.godot/
+.mono/
+.vs/
+.idea/
+bin/
+obj/
+*.user
+*.apk
+*.aab
+*.idsig
+game/android/
+game/export/
+core/TestResults/
+*.trx
+Claude outputs/
+__MACOSX/
+Thumbs.db
+.DS_Store
+~$*

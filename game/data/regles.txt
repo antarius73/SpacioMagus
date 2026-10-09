@@ -1,0 +1,7 @@
+; Paramètres globaux du jeu. Un niveau peut les surcharger dans sa section [niveau].
+magie_max = 4
+cout_sort = 1
+regen_par_tour = 1
+portee_sort = 8
+duree_etourdi = 4
+duree_grille = 5

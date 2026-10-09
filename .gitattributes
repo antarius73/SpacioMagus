@@ -1,0 +1,10 @@
+* text=auto
+*.cs text diff=csharp
+*.png binary
+*.jpg binary
+*.gif binary
+*.psd binary
+*.ttf binary
+*.docx binary
+*.pdf binary
+*.tmx text
