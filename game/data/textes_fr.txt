@@ -1,0 +1,124 @@
+# Textes du jeu en français.
+# Chaque texte commence par sa clé entre crochets et s'arrête à la clé suivante.
+# Une ligne vide dans un texte crée un paragraphe. {0} est remplacé par une valeur (nom du niveau).
+
+[langue]
+Français
+
+[histoire_titre]
+Spacio Magus
+
+[histoire]
+Zorgus vous a confié son donjon. Vous avez testé un sort maison. Mauvaise idée.
+
+Vous avez fui chez votre amie Isabela, qui vous a donné une potion mange-magie. Au retour, le donjon s'était barricadé.
+
+Filez à la salle d'expérimentation et réparez tout avant le retour du maître.
+
+[spacio_magus_titre]
+Spacio Magus
+
+[spacio_magus]
+Votre magie déplace, elle ne blesse pas.
+
+Touchez une case libre éclairée pour vous y téléporter. La zone éclairée montre la portée de votre magie.
+
+Chaque sort coûte une gemme. Touchez le magus pour vous reposer et en regagner une.
+
+[spacio_creatura_titre]
+Spacio Creatura
+
+[spacio_creatura]
+Touchez une créature éclairée, puis une autre : elles échangent leur place et restent étourdies. Le chiffre au-dessus d'elles compte les tours restants.
+
+Pour marcher, touchez une case voisine.
+
+[victoire_titre]
+Victoire !
+
+[victoire]
+Vous avez atteint l'escalier.
+
+[defaite_titre]
+Capturé…
+
+[defaite]
+Englobé ! Vous attendrez le retour de Zorgus au fond d'un blob. Il ne va pas être content.
+
+[menu_titre]
+Menu
+
+[credits_titre]
+Crédits
+
+[credits]
+Spacio Magus
+
+Police Digital Disco : jeti (fontenddev.com), licence CC BY 4.0.
+
+Donjon et interface : CraftPix.net.
+
+Effets : Raphael Hatencia (RagnaPixel Studio), licence CC BY 4.0.
+
+Magus, blob, fiole et toiles : packs de sprites d'origine, licence à confirmer.
+
+[erreur_titre]
+Erreur de données
+
+[debut_niveau]
+{0}
+Touchez ? pour revoir vos pouvoirs.
+
+[bouton_suivant]
+Suivant
+
+[bouton_passer]
+Passer
+
+[bouton_reprendre]
+Reprendre
+
+[bouton_recommencer]
+Recommencer
+
+[bouton_rejouer]
+Rejouer
+
+[bouton_niveau_suivant]
+Niveau suivant
+
+[bouton_credits]
+Crédits
+
+[bouton_compris]
+Compris
+
+[astuces_masquer]
+Ne plus afficher les astuces
+
+[astuces_oui]
+Astuces : oui
+
+[astuces_non]
+Astuces : non
+
+[langue_choix]
+Langue
+
+[porte_titre]
+Les portes
+
+[porte]
+Touchez une porte voisine pour l'ouvrir. Le chiffre indique dans combien de tours elle se referme, en repoussant qui se tient dessous. Fermée, elle arrête la vue et la magie.
+
+[fiole_titre]
+Les fioles
+
+[fiole]
+Une gorgée et toutes vos gemmes sont pleines. Marchez dessus pour la boire. Si vous avez déjà le plein, elle vous attendra sagement.
+
+[blob_vert_titre]
+Le blob vert
+
+[blob_vert]
+Le gardien préféré de Zorgus : mou, collant et obstiné. S'il vous touche, il vous englobe et vous attendrez le retour du maître dedans. Une fois qu'il vous a vu, il ne vous lâche plus.

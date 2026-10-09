@@ -82,4 +82,38 @@ public class GrilleTests
         Assert.False(grille.IsOpen);
         Assert.Equal(new Position(2, 1), game.Magus.Position);
     }
+
+    [Fact]
+    public void ClosingGrillePushesMagusDownWhenTheRandomSaysSo()
+    {
+        var game = new Game(TestMaps.Parse(Gate), null, new FixedRandom(1));
+        CloseGrilleOnMagus(game);
+
+        Assert.Equal(new Position(2, 3), game.Magus.Position);
+    }
+
+    [Fact]
+    public void ClosingGrillePushesMagusEitherWayWithTheGameRandom()
+    {
+        var landings = new HashSet<Position>();
+        for (var seed = 0; seed < 100; seed++)
+        {
+            var game = new Game(TestMaps.Parse(Gate), null, new SystemRandomSource(seed));
+            CloseGrilleOnMagus(game);
+            landings.Add(game.Magus.Position);
+        }
+
+        Assert.Contains(new Position(2, 1), landings);
+        Assert.Contains(new Position(2, 3), landings);
+    }
+
+    private static void CloseGrilleOnMagus(Game game)
+    {
+        game.OpenGrille(GrillePosition);
+        game.Move(GrillePosition);
+        for (var turn = 0; turn < 4; turn++)
+        {
+            game.Wait();
+        }
+    }
 }

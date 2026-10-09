@@ -1,0 +1,124 @@
+# Game texts in English.
+# Each text starts with its key in square brackets and ends at the next key.
+# An empty line inside a text starts a new paragraph. {0} is replaced by a value (level name).
+
+[langue]
+English
+
+[histoire_titre]
+Spacio Magus
+
+[histoire]
+Zorgus left you in charge of his dungeon. You tried a home-made spell. Bad idea.
+
+You ran to your friend Isabela, who gave you a magic-eating potion. Back home, the dungeon had locked itself down.
+
+Rush to the experiment room and fix it all before the master returns.
+
+[spacio_magus_titre]
+Spacio Magus
+
+[spacio_magus]
+Your magic moves things. It never hurts.
+
+Tap a free lit tile to teleport there. The lit area shows how far your magic reaches.
+
+Each spell costs one gem. Tap the magus to rest and get one back.
+
+[spacio_creatura_titre]
+Spacio Creatura
+
+[spacio_creatura]
+Tap a lit creature, then another one: they swap places and stay stunned. The number above them counts the turns left.
+
+To walk, tap a neighbouring tile.
+
+[victoire_titre]
+Victory!
+
+[victoire]
+You reached the stairs.
+
+[defaite_titre]
+Caught…
+
+[defaite]
+Engulfed! You will wait for Zorgus inside a blob. He will not be pleased.
+
+[menu_titre]
+Menu
+
+[credits_titre]
+Credits
+
+[credits]
+Spacio Magus
+
+Digital Disco font: jeti (fontenddev.com), CC BY 4.0 licence.
+
+Dungeon and interface: CraftPix.net.
+
+Effects: Raphael Hatencia (RagnaPixel Studio), CC BY 4.0 licence.
+
+Magus, blob, potion and cobwebs: original sprite packs, licence to be confirmed.
+
+[erreur_titre]
+Data error
+
+[debut_niveau]
+{0}
+Tap ? to see your powers again.
+
+[bouton_suivant]
+Next
+
+[bouton_passer]
+Skip
+
+[bouton_reprendre]
+Resume
+
+[bouton_recommencer]
+Restart
+
+[bouton_rejouer]
+Play again
+
+[bouton_niveau_suivant]
+Next level
+
+[bouton_credits]
+Credits
+
+[bouton_compris]
+Got it
+
+[astuces_masquer]
+Don't show tips again
+
+[astuces_oui]
+Tips: on
+
+[astuces_non]
+Tips: off
+
+[langue_choix]
+Language
+
+[porte_titre]
+Doors
+
+[porte]
+Tap a neighbouring door to open it. The number tells how many turns until it shuts, pushing away whoever stands in it. A closed door blocks sight and magic.
+
+[fiole_titre]
+Potions
+
+[fiole]
+One sip and all your gems are full. Walk onto it to drink it. If you are already full, it will wait patiently.
+
+[blob_vert_titre]
+The green blob
+
+[blob_vert]
+Zorgus's favourite guard: soft, sticky and stubborn. If it touches you, it engulfs you and you will wait inside it for the master. Once it has seen you, it never lets go.

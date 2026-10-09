@@ -14,7 +14,6 @@ public static class GuiAssets
     public static readonly Color TextOnWood = new(0.95f, 0.89f, 0.74f);
     public static readonly Color TextOnParchment = new(0.29f, 0.18f, 0.12f);
     public static readonly Color ButtonText = new(0.08f, 0.18f, 0.13f);
-    public static readonly Color AlertColor = new(0.93f, 0.2f, 0.18f);
     public static readonly Color AlertOutline = new(0.12f, 0.06f, 0.05f);
 
     private static FontFile? _font;
@@ -99,12 +98,30 @@ public static class GuiAssets
                 ContentMarginBottom = 6,
             };
             theme.SetStylebox(name, "Button", style);
+            theme.SetStylebox(name, "OptionButton", style);
         }
+
+        theme.SetStylebox("focus", "OptionButton", new StyleBoxEmpty());
+        theme.SetStylebox("panel", "PopupMenu", new StyleBoxTexture
+        {
+            Texture = Parchment,
+            TextureMarginLeft = 10,
+            TextureMarginRight = 10,
+            TextureMarginTop = 10,
+            TextureMarginBottom = 10,
+            ContentMarginLeft = 10,
+            ContentMarginRight = 10,
+            ContentMarginTop = 8,
+            ContentMarginBottom = 8,
+        });
+        theme.SetColor("font_color", "PopupMenu", TextOnParchment);
+        theme.SetColor("font_hover_color", "PopupMenu", ButtonText);
 
         theme.SetStylebox("focus", "Button", new StyleBoxEmpty());
         foreach (var color in new[] { "font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color" })
         {
             theme.SetColor(color, "Button", ButtonText);
+            theme.SetColor(color, "OptionButton", ButtonText);
         }
 
         theme.SetColor("font_disabled_color", "Button", new Color(ButtonText, 0.5f));

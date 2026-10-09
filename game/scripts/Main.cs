@@ -20,13 +20,20 @@ public partial class Main : Node
     private Hud _hud = null!;
     private MenuScreen? _screen;
     private Cell? _firstCreature;
+    private const float LanguageChoiceWidth = 120f;
+    private bool _pendingConclusion;
+    private readonly HashSet<Discovery> _discovered = new();
+    private readonly Queue<Discovery> _discoveryQueue = new();
+    private DiscoveryPopup? _discoveryPopup;
 
     public override void _Ready()
     {
         RenderingServer.SetDefaultClearColor(LevelView.BackgroundColor);
+        UserSettings.Load();
 
         _view = new LevelView { Name = "LevelView" };
         AddChild(_view);
+        _view.AnimationsFinished += OnAnimationsFinished;
 
         _camera = new Camera2D { Name = "Camera", PositionSmoothingEnabled = true };
         _view.AddChild(_camera);
@@ -38,6 +45,7 @@ public partial class Main : Node
 
         try
         {
+            Texts.Load(UserSettings.Language);
             _settings = GameData.LoadSettings();
             _legend = GameData.LoadLegend();
             _levels = GameData.LoadLevelList();
@@ -53,7 +61,7 @@ public partial class Main : Node
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (_game is null || _screen is not null || _game.Status != GameStatus.Playing)
+        if (_game is null || _screen is not null || _discoveryPopup is not null || _game.Status != GameStatus.Playing || _view.IsBusy)
         {
             return;
         }
@@ -70,20 +78,31 @@ public partial class Main : Node
 
     private void ShowStory()
     {
-        ShowScreen(MenuScreen.Create(
+        ShowScreen(MenuScreen.CreateIllustrated(
             Texts.StoryTitle,
             Texts.Story,
-            ("Suivant", () => ShowPowers()),
-            ("Passer", () => StartLevel(0))));
+            new StoryIllustration(),
+            (Texts.NextButton, () => ShowSpacioMagus(() => StartLevel(0))),
+            (Texts.SkipButton, () => StartLevel(0))));
     }
 
-    private void ShowPowers()
+    private void ShowSpacioMagus(Action done)
     {
-        ShowScreen(MenuScreen.Create(
-            Texts.PowersTitle,
-            Texts.Powers,
-            ("Suivant", () => StartLevel(0)),
-            ("Passer", () => StartLevel(0))));
+        ShowScreen(MenuScreen.CreateIllustrated(
+            Texts.SpacioMagusTitle,
+            Texts.SpacioMagus,
+            new SpacioMagusIllustration(),
+            (Texts.NextButton, () => ShowSpacioCreatura(done)),
+            (Texts.SkipButton, done)));
+    }
+
+    private void ShowSpacioCreatura(Action done)
+    {
+        ShowScreen(MenuScreen.CreateIllustrated(
+            Texts.SpacioCreaturaTitle,
+            Texts.SpacioCreatura,
+            new SpacioCreaturaIllustration(),
+            (Texts.NextButton, done)));
     }
 
     private void ShowVictory()
@@ -92,10 +111,10 @@ public partial class Main : Node
         if (_levelIndex + 1 < _levels.Count)
         {
             var next = _levelIndex + 1;
-            buttons.Add(("Niveau suivant", () => StartLevel(next)));
+            buttons.Add((Texts.NextLevelButton, () => StartLevel(next)));
         }
 
-        buttons.Add(("Rejouer", () => StartLevel(0)));
+        buttons.Add((Texts.PlayAgainButton, () => StartLevel(0)));
         var stars = new[] { GuiAssets.Star, GuiAssets.Star, GuiAssets.Star };
         ShowScreen(MenuScreen.Create(Texts.VictoryTitle, Texts.Victory, stars, buttons.ToArray()));
     }
@@ -107,38 +126,92 @@ public partial class Main : Node
             Texts.DefeatTitle,
             Texts.Defeat,
             new[] { GuiAssets.Cross },
-            ("Rejouer", () => StartLevel(index))));
+            (Texts.PlayAgainButton, () => StartLevel(index))));
     }
 
     private void ShowPause()
     {
-        if (_game is null || _screen is not null)
+        if (_game is null || _screen is not null || _discoveryPopup is not null)
         {
             return;
         }
 
         var index = _levelIndex;
-        ShowScreen(MenuScreen.Create(
+        ShowScreen(MenuScreen.CreateWithControl(
             Texts.PauseTitle,
             string.Empty,
-            ("Reprendre", () => Resume()),
-            ("Recommencer", () => StartLevel(index)),
-            ("Crédits", () => ShowCredits())));
+            LanguageChoice(),
+            (Texts.ResumeButton, () => Resume()),
+            (Texts.RestartButton, () => StartLevel(index)),
+            (UserSettings.TipsEnabled ? Texts.TipsOn : Texts.TipsOff, () => ToggleTips()),
+            (Texts.CreditsButton, () => ShowCredits())));
     }
 
-    private void ShowHelp()
+    private Control LanguageChoice()
     {
-        if (_game is null || _screen is not null)
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 8);
+        var label = new Label { Text = Texts.LanguageLabel, VerticalAlignment = VerticalAlignment.Center };
+        label.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
+        row.AddChild(label);
+
+        var choice = new OptionButton { CustomMinimumSize = new Vector2(LanguageChoiceWidth, 28) };
+        for (var index = 0; index < Texts.Languages.Count; index++)
+        {
+            choice.AddItem(Texts.LanguageName(Texts.Languages[index]), index);
+            if (Texts.Languages[index] == Texts.Language)
+            {
+                choice.Selected = index;
+            }
+        }
+
+        choice.ItemSelected += selected => ChangeLanguage(Texts.Languages[(int)selected]);
+        row.AddChild(choice);
+        return row;
+    }
+
+    private void ChangeLanguage(string language)
+    {
+        if (language == Texts.Language)
         {
             return;
         }
 
-        ShowScreen(MenuScreen.Create(Texts.PowersTitle, Texts.Powers, ("Reprendre", () => Resume())));
+        try
+        {
+            Texts.Load(language);
+        }
+        catch (System.IO.IOException exception)
+        {
+            GD.PushError(exception.Message);
+            return;
+        }
+
+        UserSettings.SetLanguage(language);
+        CloseScreen();
+        ShowPause();
+    }
+
+    private void ToggleTips()
+    {
+        UserSettings.SetTipsEnabled(!UserSettings.TipsEnabled);
+        CloseScreen();
+        ShowPause();
+    }
+
+    private void ShowHelp()
+    {
+        if (_game is null || _screen is not null || _discoveryPopup is not null)
+        {
+            return;
+        }
+
+        ShowSpacioMagus(Resume);
     }
 
     private void ShowCredits()
     {
-        ShowScreen(MenuScreen.Create(Texts.CreditsTitle, Texts.Credits, ("Reprendre", () => Resume())));
+        ShowScreen(MenuScreen.Create(Texts.CreditsTitle, Texts.Credits, (Texts.ResumeButton, () => Resume())));
     }
 
     private void Resume()
@@ -150,7 +223,7 @@ public partial class Main : Node
     private void ShowError(string message)
     {
         GD.PushError(message);
-        ShowScreen(MenuScreen.Create("Erreur de données", message));
+        ShowScreen(MenuScreen.Create(Texts.ErrorTitle, message));
     }
 
     private void ShowScreen(MenuScreen screen)
@@ -197,9 +270,11 @@ public partial class Main : Node
         CloseScreen();
         _hud.Visible = true;
         _firstCreature = null;
+        _pendingConclusion = false;
         _hud.ShowMessage(Texts.LevelStart(loaded.Definition.Name));
         Refresh();
         _camera.ResetSmoothing();
+        CheckDiscoveries();
     }
 
     private void HandleTap(Game game, Cell cell)
@@ -236,33 +311,20 @@ public partial class Main : Node
             return;
         }
 
-        Reject(cell, OutOfZoneError(game, cell));
+        Reject(cell);
     }
 
     private void TapFirstCreature(Game game, Cell cell)
     {
         var candidates = game.SwapCandidates().Select(monster => monster.Position).ToList();
-        if (!candidates.Contains(cell))
+        if (!candidates.Contains(cell) || game.Magus.Magic < game.Rules.SpellCost || candidates.Count < 2)
         {
-            Reject(cell, OutOfZoneError(game, cell));
-            return;
-        }
-
-        if (game.Magus.Magic < game.Rules.SpellCost)
-        {
-            Reject(cell, ActionError.NotEnoughMagic);
-            return;
-        }
-
-        if (candidates.Count < 2)
-        {
-            Reject(cell, ActionError.NotEnoughCreatures);
+            Reject(cell);
             return;
         }
 
         _firstCreature = cell;
         _view.Flash(cell, TapKind.Creature);
-        _hud.ShowMessage(Texts.SwapSecondHint);
         Refresh();
     }
 
@@ -272,7 +334,6 @@ public partial class Main : Node
         if (cell == first)
         {
             _view.Flash(cell, TapKind.Creature);
-            _hud.ShowMessage(Texts.SwapCancelled);
             Refresh();
             return;
         }
@@ -281,7 +342,6 @@ public partial class Main : Node
         if (!candidates.Contains(cell))
         {
             _view.Flash(cell, TapKind.Invalid);
-            _hud.ShowMessage(Texts.SwapCancelled);
             Refresh();
             return;
         }
@@ -295,20 +355,9 @@ public partial class Main : Node
         Apply(result, cell, TapKind.Creature);
     }
 
-    private static ActionError OutOfZoneError(Game game, Cell cell)
-    {
-        if (game.Magus.Position.ChebyshevTo(cell) > game.Rules.SpellRange)
-        {
-            return ActionError.OutOfRange;
-        }
-
-        return game.IsWalkable(cell) ? ActionError.NotVisible : ActionError.Blocked;
-    }
-
-    private void Reject(Cell cell, ActionError error)
+    private void Reject(Cell cell)
     {
         _view.Flash(cell, TapKind.Invalid);
-        _hud.ShowMessage(Texts.ForError(error));
     }
 
     private void Apply(ActionResult result, Cell cell, TapKind kind)
@@ -320,7 +369,7 @@ public partial class Main : Node
 
         if (!result.Success)
         {
-            Reject(cell, result.Error);
+            Reject(cell);
             Refresh();
             return;
         }
@@ -328,7 +377,41 @@ public partial class Main : Node
         _view.Flash(cell, kind);
         _firstCreature = null;
         _view.PlayEvents(result.Events);
-        _hud.ShowMessage(Texts.ForEvents(result.Events));
+        if (_view.IsBusy)
+        {
+            _pendingConclusion = true;
+            return;
+        }
+
+        Conclude();
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_game is not null)
+        {
+            _camera.Position = _view.MagusFocus;
+        }
+    }
+
+    private void OnAnimationsFinished()
+    {
+        if (!_pendingConclusion)
+        {
+            return;
+        }
+
+        _pendingConclusion = false;
+        Conclude();
+    }
+
+    private void Conclude()
+    {
+        if (_game is null)
+        {
+            return;
+        }
+
         Refresh();
 
         if (_game.Status == GameStatus.Won)
@@ -339,6 +422,70 @@ public partial class Main : Node
         {
             ShowDefeat();
         }
+        else
+        {
+            CheckDiscoveries();
+        }
+    }
+
+    private void CheckDiscoveries()
+    {
+        if (_game is null)
+        {
+            return;
+        }
+
+        var magus = _game.Magus.Position;
+        bool Seen(Cell cell) => _game.HasLineOfSight(magus, cell);
+        if (_game.Grilles.Any(grille => Seen(grille.Position)))
+        {
+            QueueDiscovery(Discovery.Door);
+        }
+
+        if (_game.Potions.Any(Seen))
+        {
+            QueueDiscovery(Discovery.Potion);
+        }
+
+        if (_game.Monsters.Any(monster => monster.Kind == MonsterKind.BlobVert && Seen(monster.Position)))
+        {
+            QueueDiscovery(Discovery.GreenBlob);
+        }
+
+        ShowNextDiscovery();
+    }
+
+    private void QueueDiscovery(Discovery discovery)
+    {
+        if (UserSettings.TipsEnabled && _discovered.Add(discovery))
+        {
+            _discoveryQueue.Enqueue(discovery);
+        }
+    }
+
+    private void ShowNextDiscovery()
+    {
+        if (_discoveryPopup is not null || _discoveryQueue.Count == 0)
+        {
+            return;
+        }
+
+        _discoveryPopup = DiscoveryPopup.Create(_discoveryQueue.Dequeue());
+        _discoveryPopup.Closed += OnDiscoveryClosed;
+        AddChild(_discoveryPopup);
+    }
+
+    private void OnDiscoveryClosed(bool hideTips)
+    {
+        _discoveryPopup = null;
+        if (hideTips)
+        {
+            UserSettings.SetTipsEnabled(false);
+            _discoveryQueue.Clear();
+            return;
+        }
+
+        ShowNextDiscovery();
     }
 
     private void Refresh()
@@ -351,7 +498,7 @@ public partial class Main : Node
         var magus = _game.Magus;
         var canCast = magus.Magic >= _game.Rules.SpellCost;
         _hud.Refresh(magus.Magic, _game.Rules.MagicMax);
-        _camera.Position = LevelView.CellCenter(magus.Position);
+        _camera.Position = _view.MagusFocus;
 
         var candidates = _game.SwapCandidates().Select(monster => monster.Position).ToList();
         var zone = _game.TeleportTargets().Concat(candidates).Append(magus.Position);

@@ -1,126 +1,160 @@
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using SpacioMagus.Core;
+using System.Text;
+using Godot;
 
 namespace SpacioMagus;
 
 public static class Texts
 {
-    public const string StoryTitle = "Spacio Magus";
+    public const string DefaultLanguage = "fr";
 
-    public const string Story =
-        "Vous êtes l'apprenti de Zorgus, un mage qui vous a confié la surveillance de son donjon pendant son absence.\n\n" +
-        "Vous avez voulu expérimenter une magie de votre cru, et cela a mal tourné.\n\n" +
-        "Votre amie Isabela, une autre apprentie, vous a donné une potion mange-magie qui devrait régler le problème.\n\n" +
-        "Mais à votre retour, l'expérience a tourné à la catastrophe et les sécurités du donjon se sont mises en place. " +
-        "Il vous faut maintenant, au péril de votre vie, descendre jusqu'à la salle d'expérimentation pour dissiper la magie.";
+    public static readonly IReadOnlyList<string> Languages = new[] { "fr", "en" };
 
-    public const string PowersTitle = "Vos pouvoirs";
+    private const string NameKey = "langue";
 
-    public const string Powers =
-        "Votre magie est celle de l'espace. Elle est pacifiste : tuer ou blesser détruirait votre don.\n\n" +
-        "La zone éclairée autour du magus montre la portée de votre magie.\n\n" +
-        "Touchez une case voisine pour vous déplacer.\n\n" +
-        "Spacio Magus : touchez une case libre éclairée pour vous y téléporter.\n\n" +
-        "Spacio Creatura : touchez une créature éclairée, puis une seconde, pour échanger leur place. Elles restent étourdies 4 tours.\n\n" +
-        "Chaque sort coûte une sphère de magie. Touchez le magus pour vous reposer et en récupérer une.\n\n" +
-        "Un monstre qui vous atteint vous tue.";
+    private static Dictionary<string, string> _fallback = new();
+    private static Dictionary<string, string> _current = new();
 
-    public const string VictoryTitle = "Victoire !";
+    public static string Language { get; private set; } = DefaultLanguage;
 
-    public const string Victory = "Vous avez atteint l'escalier.";
-
-    public const string DefeatTitle = "Capturé…";
-
-    public const string Defeat = "Un monstre a attrapé le magus.";
-
-    public const string PauseTitle = "Pause";
-
-    public const string CreditsTitle = "Crédits";
-
-    public const string Credits =
-        "Spacio Magus\n\n" +
-        "Police Digital Disco : jeti (fontenddev.com), licence CC BY 4.0.\n\n" +
-        "Donjon et interface : CraftPix.net.\n\n" +
-        "Magus, blob, fiole et toiles : packs de sprites d'origine, licence à confirmer.";
-
-    public static string LevelStart(string levelName) => $"{levelName}\nTouchez ? pour revoir vos pouvoirs.";
-
-    public const string SwapSecondHint = "Touchez la seconde créature à échanger.";
-
-    public const string SwapCancelled = "Échange annulé.";
-
-    public static string ForError(ActionError error) => error switch
+    public static void Load(string language)
     {
-        ActionError.GameOver => "La partie est terminée.",
-        ActionError.NotAdjacent => "Touchez une case voisine.",
-        ActionError.Blocked => "Passage bloqué.",
-        ActionError.CornerBlocked => "Impossible de passer en diagonale contre un angle de mur.",
-        ActionError.OccupiedByMonster => "Un monstre occupe cette case.",
-        ActionError.NotAGrille => "Ce n'est pas une porte.",
-        ActionError.GrilleAlreadyOpen => "Cette porte est déjà ouverte.",
-        ActionError.NotEnoughMagic => "Plus de magie. Touchez le magus pour vous reposer.",
-        ActionError.OutOfRange => "Hors de portée.",
-        ActionError.NotVisible => "Le magus ne voit pas cette case.",
-        ActionError.NotFree => "Cette case n'est pas libre.",
-        ActionError.NotAMonster => "Touchez une créature.",
-        ActionError.SameCreature => "Choisissez une autre créature.",
-        ActionError.NotEnoughCreatures => "Il faut deux créatures à portée.",
-        _ => string.Empty,
-    };
+        _fallback = Parse(DefaultLanguage, GameData.ReadText(FileName(DefaultLanguage)));
+        _current = language == DefaultLanguage ? _fallback : Parse(language, GameData.ReadText(FileName(language)));
+        Language = language;
+    }
 
-    public static string ForEvents(IReadOnlyList<GameEvent> events)
+    public static string LanguageName(string language)
     {
-        if (events.OfType<MagusCaptured>().Any())
+        var texts = language == Language ? _current : Parse(language, GameData.ReadText(FileName(language)));
+        return texts.TryGetValue(NameKey, out var name) ? name : language;
+    }
+
+    public static string LevelStart(string levelName) => string.Format(Get("debut_niveau"), levelName);
+
+    public static string StoryTitle => Get("histoire_titre");
+
+    public static string Story => Get("histoire");
+
+    public static string SpacioMagusTitle => Get("spacio_magus_titre");
+
+    public static string SpacioMagus => Get("spacio_magus");
+
+    public static string SpacioCreaturaTitle => Get("spacio_creatura_titre");
+
+    public static string SpacioCreatura => Get("spacio_creatura");
+
+    public static string VictoryTitle => Get("victoire_titre");
+
+    public static string Victory => Get("victoire");
+
+    public static string DefeatTitle => Get("defaite_titre");
+
+    public static string Defeat => Get("defaite");
+
+    public static string PauseTitle => Get("menu_titre");
+
+    public static string CreditsTitle => Get("credits_titre");
+
+    public static string Credits => Get("credits");
+
+    public static string ErrorTitle => Get("erreur_titre");
+
+    public static string NextButton => Get("bouton_suivant");
+
+    public static string SkipButton => Get("bouton_passer");
+
+    public static string ResumeButton => Get("bouton_reprendre");
+
+    public static string RestartButton => Get("bouton_recommencer");
+
+    public static string PlayAgainButton => Get("bouton_rejouer");
+
+    public static string NextLevelButton => Get("bouton_niveau_suivant");
+
+    public static string CreditsButton => Get("bouton_credits");
+
+    public static string DiscoveryButton => Get("bouton_compris");
+
+    public static string HideTips => Get("astuces_masquer");
+
+    public static string TipsOn => Get("astuces_oui");
+
+    public static string TipsOff => Get("astuces_non");
+
+    public static string LanguageLabel => Get("langue_choix");
+
+    public static string DoorTitle => Get("porte_titre");
+
+    public static string Door => Get("porte");
+
+    public static string PotionTitle => Get("fiole_titre");
+
+    public static string Potion => Get("fiole");
+
+    public static string GreenBlobTitle => Get("blob_vert_titre");
+
+    public static string GreenBlob => Get("blob_vert");
+
+    private static string FileName(string language) => $"textes_{language}.txt";
+
+    private static string Get(string key)
+    {
+        if (_current.TryGetValue(key, out var text) || _fallback.TryGetValue(key, out text))
         {
-            return "Un monstre vous attrape !";
+            return text;
         }
 
-        if (events.OfType<LevelCompleted>().Any())
+        GD.PushWarning($"Texte manquant : [{key}] ({Language}).");
+        return $"[{key}]";
+    }
+
+    private static Dictionary<string, string> Parse(string language, string content)
+    {
+        var texts = new Dictionary<string, string>();
+        string? key = null;
+        var buffer = new StringBuilder();
+        var lines = content.Replace("\r\n", "\n").Split('\n');
+        for (var index = 0; index < lines.Length; index++)
         {
-            return "Vous atteignez l'escalier !";
+            var line = lines[index];
+            var trimmed = line.Trim();
+            if (trimmed.StartsWith('[') && trimmed.EndsWith(']') && trimmed.Length > 2)
+            {
+                Store(texts, key, buffer, language);
+                key = trimmed[1..^1].Trim();
+                buffer.Clear();
+                continue;
+            }
+
+            if (key is null)
+            {
+                if (trimmed.Length > 0 && !trimmed.StartsWith('#'))
+                {
+                    throw new System.IO.IOException($"textes_{language}.txt ligne {index + 1} : texte hors d'une clé [cle].");
+                }
+
+                continue;
+            }
+
+            buffer.Append(line.TrimEnd()).Append('\n');
         }
 
-        if (events.OfType<MonsterSpotted>().Any())
+        Store(texts, key, buffer, language);
+        return texts;
+    }
+
+    private static void Store(Dictionary<string, string> texts, string? key, StringBuilder buffer, string language)
+    {
+        if (key is null)
         {
-            return "Un blob vous a repéré !";
+            return;
         }
 
-        if (events.OfType<PotionPicked>().Any())
+        if (!texts.TryAdd(key, buffer.ToString().Trim('\n')))
         {
-            return "La fiole recharge votre magie.";
+            throw new System.IO.IOException($"textes_{language}.txt : clé [{key}] en double.");
         }
-
-        if (events.OfType<CreaturesSwapped>().Any())
-        {
-            return "Spacio Creatura ! Les créatures sont étourdies.";
-        }
-
-        if (events.OfType<GrilleOpened>().FirstOrDefault() is { } opened)
-        {
-            return $"La porte s'ouvre pour {opened.TurnsRemaining} tours.";
-        }
-
-        if (events.OfType<GrilleCloseDelayed>().Any())
-        {
-            return "Quelque chose empêche la porte de se fermer.";
-        }
-
-        if (events.OfType<GrilleClosed>().Any())
-        {
-            return "Une porte se referme.";
-        }
-
-        if (events.OfType<MagusMoved>().Any(moved => moved.Cause == MoveCause.Teleport))
-        {
-            return "Spacio Magus !";
-        }
-
-        if (events.OfType<MagusMoved>().Any(moved => moved.Cause == MoveCause.Pushed))
-        {
-            return "La porte vous repousse.";
-        }
-
-        return string.Empty;
     }
 }

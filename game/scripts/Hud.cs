@@ -6,7 +6,7 @@ namespace SpacioMagus;
 public partial class Hud : CanvasLayer
 {
     public const float TopHeight = 36f;
-    public const float BottomHeight = 40f;
+    public const float BottomHeight = 0f;
 
     private const int PlankMargin = 6;
     private const float PortraitX = 2f;
@@ -14,10 +14,17 @@ public partial class Hud : CanvasLayer
     private const float GemsX = 31f;
     private const float GemsY = 10f;
     private const float TouchSize = 32f;
-    private const float MessageMargin = 8f;
+    private const float PopupWidth = 224f;
+    private const int PopupScreenMargin = 16;
+    private const int PopupTextureMargin = 10;
+    private const double MessageDuration = 3.0;
+    private const double MessageFadeDuration = 0.25;
 
     private readonly MagicBar _magic = new();
     private readonly Label _message = new();
+    private readonly PanelContainer _popup = new();
+    private double _time;
+    private double _hideAt = double.NegativeInfinity;
 
     public event Action? PausePressed;
 
@@ -60,19 +67,40 @@ public partial class Hud : CanvasLayer
         pause.Pressed += () => PausePressed?.Invoke();
         icons.AddChild(pause);
 
-        var bottom = GuiAssets.Panel(GuiAssets.Plank, PlankMargin);
-        bottom.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.BottomWide);
-        bottom.OffsetTop = -BottomHeight;
-        root.AddChild(bottom);
+        var style = new StyleBoxTexture
+        {
+            Texture = GuiAssets.Parchment,
+            TextureMarginLeft = PopupTextureMargin,
+            TextureMarginRight = PopupTextureMargin,
+            TextureMarginTop = PopupTextureMargin,
+            TextureMarginBottom = PopupTextureMargin,
+            ContentMarginLeft = 12,
+            ContentMarginRight = 12,
+            ContentMarginTop = 8,
+            ContentMarginBottom = 8,
+        };
+        _popup.AddThemeStyleboxOverride("panel", style);
+        _popup.MouseFilter = Control.MouseFilterEnum.Ignore;
+        _popup.Visible = false;
 
-        _message.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        _message.OffsetLeft = MessageMargin;
-        _message.OffsetRight = -MessageMargin;
+        var popupArea = new MarginContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        popupArea.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        foreach (var side in new[] { "margin_left", "margin_right", "margin_top", "margin_bottom" })
+        {
+            popupArea.AddThemeConstantOverride(side, PopupScreenMargin);
+        }
+
+        root.AddChild(popupArea);
+        var center = new CenterContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        popupArea.AddChild(center);
+        center.AddChild(_popup);
+
+        _message.CustomMinimumSize = new Vector2(PopupWidth, 0);
         _message.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         _message.HorizontalAlignment = HorizontalAlignment.Center;
-        _message.VerticalAlignment = VerticalAlignment.Center;
-        _message.AddThemeColorOverride("font_color", GuiAssets.TextOnWood);
-        bottom.AddChild(_message);
+        _message.MouseFilter = Control.MouseFilterEnum.Ignore;
+        _message.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
+        _popup.AddChild(_message);
     }
 
     public void Refresh(int magic, int maxMagic)
@@ -82,7 +110,40 @@ public partial class Hud : CanvasLayer
 
     public void ShowMessage(string message)
     {
+        if (string.IsNullOrEmpty(message))
+        {
+            return;
+        }
+
         _message.Text = message;
+        _popup.Visible = true;
+        _popup.Modulate = Colors.White;
+        _hideAt = _time + MessageDuration;
+    }
+
+    public void HideMessage()
+    {
+        _popup.Visible = false;
+        _hideAt = double.NegativeInfinity;
+    }
+
+    public override void _Process(double delta)
+    {
+        _time += delta;
+        if (!_popup.Visible)
+        {
+            return;
+        }
+
+        var remaining = _hideAt - _time;
+        if (remaining <= 0)
+        {
+            HideMessage();
+            return;
+        }
+
+        var alpha = (float)Math.Clamp(remaining / MessageFadeDuration, 0.0, 1.0);
+        _popup.Modulate = new Color(1f, 1f, 1f, alpha);
     }
 
     private static TextureButton IconButton(int index)

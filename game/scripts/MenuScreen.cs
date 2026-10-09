@@ -11,6 +11,8 @@ public partial class MenuScreen : CanvasLayer
     private const int InnerMargin = 16;
     private const float ButtonWidth = 160f;
     private const float ButtonHeight = 28f;
+    private const float IllustrationWidth = 224f;
+    private const float IllustrationHeight = 128f;
     private static readonly Color Backdrop = new(0.07f, 0.05f, 0.1f, 0.9f);
 
     public static MenuScreen Create(string title, string body, params (string Text, Action Action)[] buttons) =>
@@ -20,7 +22,30 @@ public partial class MenuScreen : CanvasLayer
         string title,
         string body,
         IReadOnlyList<Texture2D> icons,
-        params (string Text, Action Action)[] buttons)
+        params (string Text, Action Action)[] buttons) =>
+        Build(title, body, icons, null, null, buttons);
+
+    public static MenuScreen CreateWithControl(
+        string title,
+        string body,
+        Control control,
+        params (string Text, Action Action)[] buttons) =>
+        Build(title, body, Array.Empty<Texture2D>(), null, control, buttons);
+
+    public static MenuScreen CreateIllustrated(
+        string title,
+        string body,
+        Control illustration,
+        params (string Text, Action Action)[] buttons) =>
+        Build(title, body, Array.Empty<Texture2D>(), illustration, null, buttons);
+
+    private static MenuScreen Build(
+        string title,
+        string body,
+        IReadOnlyList<Texture2D> icons,
+        Control? illustration,
+        Control? control,
+        (string Text, Action Action)[] buttons)
     {
         var screen = new MenuScreen { Layer = 10 };
 
@@ -50,8 +75,15 @@ public partial class MenuScreen : CanvasLayer
         parchment.AddChild(margin);
 
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 12);
+        box.AddThemeConstantOverride("separation", 8);
         margin.AddChild(box);
+
+        if (illustration is not null)
+        {
+            illustration.CustomMinimumSize = new Vector2(IllustrationWidth, IllustrationHeight);
+            illustration.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
+            box.AddChild(illustration);
+        }
 
         if (icons.Count > 0)
         {
@@ -90,6 +122,12 @@ public partial class MenuScreen : CanvasLayer
         };
         bodyLabel.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
         scroll.AddChild(bodyLabel);
+
+        if (control is not null)
+        {
+            control.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
+            box.AddChild(control);
+        }
 
         var row = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter };
         row.AddThemeConstantOverride("separation", 6);

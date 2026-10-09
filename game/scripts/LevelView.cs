@@ -78,7 +78,6 @@ public partial class LevelView : Node2D
     private const int FireColumn = 39;
     private const int FireOffsetY = -8;
     private static readonly Color CandidateColor = new(0.8f, 0.55f, 1f, 0.22f);
-    private static readonly Color SelectedColor = new(0.85f, 0.6f, 1f, 1f);
     private static readonly Color ZoneEdgeColor = new(0.55f, 0.85f, 1f);
     private static readonly Color ZoneEdgeEmptyColor = new(0.6f, 0.6f, 0.7f);
     private static readonly Color MoveFlashColor = new(1f, 1f, 1f);
@@ -93,10 +92,6 @@ public partial class LevelView : Node2D
     private const int FlashCornerRadius = 6;
     private static readonly Color StunnedColor = new(0.6f, 0.6f, 0.75f);
     private const float DoorCounterOffsetY = 6f;
-    private const float StunCounterOffsetX = 26f;
-    private const float StunCounterOffsetY = 6f;
-    private const float AlertBaselineY = 12f;
-    private const int AlertOutline = 4;
 
     private readonly HashSet<Cell> _highlights = new();
     private readonly HashSet<Cell> _zone = new();
@@ -129,9 +124,41 @@ public partial class LevelView : Node2D
     private double _time;
     private int _magusDirection;
     private (Cell From, double Start)? _magusGlide;
+    private (Cell From, Cell To, double Start)? _teleport;
+    private (Cell First, Cell Second, double Start)? _swap;
+    private readonly Dictionary<int, Cell> _swapOrigins = new();
+    private readonly Dictionary<int, (int Previous, int Current, double Since)> _monsterFacing = new();
+    private (Cell Cell, double Start)? _selectionShock;
+    private (Cell Cell, double Start)? _fadingShock;
+    private bool _wasBusy;
+
+    public event Action? AnimationsFinished;
+
+    public bool IsBusy =>
+        (_teleport is { } teleport && _time - teleport.Start < SpellFx.TeleportDuration)
+        || (_swap is { } swap && _time - swap.Start < SpellFx.SwapDuration);
+
+    public Vector2 MagusFocus
+    {
+        get
+        {
+            if (_game is null)
+            {
+                return Vector2.Zero;
+            }
+
+            if (_teleport is { } teleport && _time - teleport.Start < SpellFx.TeleportHalfDuration)
+            {
+                return CellCenter(teleport.From);
+            }
+
+            return Shown(_game.Magus.Position, _magusGlide, out _) + new Vector2(Tile / 2f, Tile / 2f);
+        }
+    }
     private readonly Dictionary<int, (Cell From, double Start)> _monsterGlides = new();
 
     private const double MoveDuration = 0.15;
+    private const int DefaultFacing = -1;
     private const int WalkRowOffset = 0;
     private const int IdleRowOffset = 8;
 
@@ -160,7 +187,14 @@ public partial class LevelView : Node2D
         _grilleStates.Clear();
         _magusDirection = 0;
         _magusGlide = null;
+        _teleport = null;
+        _swap = null;
+        _swapOrigins.Clear();
+        _selectionShock = null;
+        _fadingShock = null;
+        _wasBusy = false;
         _monsterGlides.Clear();
+        _monsterFacing.Clear();
         _flashes.Clear();
         _zone.Clear();
         _darkness = new float[game.Level.Width * game.Level.Height];
@@ -219,12 +253,36 @@ public partial class LevelView : Node2D
             _highlights.Add(cell);
         }
 
-        _selected = selected;
+        SetSelected(selected);
         QueueRedraw();
     }
 
     public void PlayEvents(IReadOnlyList<GameEvent> events)
     {
+        var monstersStart = _time;
+        foreach (var gameEvent in events)
+        {
+            if (gameEvent is MagusMoved { Cause: MoveCause.Teleport } teleport)
+            {
+                _teleport = (teleport.From, teleport.To, _time);
+                monstersStart = _time + SpellFx.TeleportDuration;
+            }
+
+            if (gameEvent is MonsterMoved { Cause: MoveCause.Swap } swapped)
+            {
+                _swapOrigins[swapped.MonsterId] = swapped.From;
+                if (_swap is not { } current || current.Start != _time)
+                {
+                    _swap = (swapped.From, swapped.To, _time);
+                }
+
+                monstersStart = _time + SpellFx.SwapDuration;
+                _selected = null;
+                _selectionShock = null;
+                _fadingShock = null;
+            }
+        }
+
         foreach (var gameEvent in events)
         {
             switch (gameEvent)
@@ -241,25 +299,115 @@ public partial class LevelView : Node2D
                     _magusGlide = null;
                     break;
                 case MonsterMoved moved when moved.Cause is MoveCause.Step or MoveCause.Pushed:
-                    _monsterGlides[moved.MonsterId] = (moved.From, _time);
+                    _monsterGlides[moved.MonsterId] = (moved.From, monstersStart);
                     break;
                 case MonsterMoved moved:
                     _monsterGlides.Remove(moved.MonsterId);
                     break;
             }
         }
+
+        UpdateFacings(events, monstersStart);
+    }
+
+    private void UpdateFacings(IReadOnlyList<GameEvent> events, double since)
+    {
+        if (_game is null)
+        {
+            return;
+        }
+
+        var swapped = new HashSet<int>();
+        var steps = new Dictionary<int, int>();
+        foreach (var gameEvent in events)
+        {
+            if (gameEvent is not MonsterMoved moved)
+            {
+                continue;
+            }
+
+            if (moved.Cause == MoveCause.Swap)
+            {
+                swapped.Add(moved.MonsterId);
+            }
+            else if (moved.Cause == MoveCause.Step)
+            {
+                steps[moved.MonsterId] = Math.Sign(moved.To.X - moved.From.X);
+            }
+        }
+
+        var magus = _game.Magus.Position;
+        foreach (var monster in _game.Monsters)
+        {
+            if (swapped.Contains(monster.Id))
+            {
+                continue;
+            }
+
+            var direction = 0;
+            if (monster.IsTracking && !monster.IsStunned)
+            {
+                direction = Math.Sign(magus.X - monster.Position.X);
+            }
+            else if (steps.TryGetValue(monster.Id, out var step))
+            {
+                direction = step;
+            }
+
+            var current = Facing(monster.Id);
+            if (direction != 0 && direction != current)
+            {
+                _monsterFacing[monster.Id] = (current, direction, since);
+            }
+        }
+    }
+
+    private int Facing(int monsterId)
+    {
+        if (!_monsterFacing.TryGetValue(monsterId, out var facing))
+        {
+            return DefaultFacing;
+        }
+
+        return _time >= facing.Since ? facing.Current : facing.Previous;
     }
 
     public void ClearHighlights()
     {
         _highlights.Clear();
-        _selected = null;
+        SetSelected(null);
         QueueRedraw();
+    }
+
+    private void SetSelected(Cell? selected)
+    {
+        if (selected == _selected)
+        {
+            return;
+        }
+
+        if (_selectionShock is { } previous)
+        {
+            _fadingShock = (previous.Cell, _time);
+        }
+
+        _selected = selected;
+        _selectionShock = selected is { } cell ? (cell, _time) : null;
     }
 
     public override void _Process(double delta)
     {
         _time += delta;
+        var busy = IsBusy;
+        if (_wasBusy && !busy)
+        {
+            _teleport = null;
+            _swap = null;
+            _swapOrigins.Clear();
+            AnimationsFinished?.Invoke();
+        }
+
+        _wasBusy = busy;
         var step = (float)delta * ZoneFadeSpeed * OutsideZoneDarkness;
         for (var index = 0; index < _darkness.Length; index++)
         {
@@ -335,10 +483,30 @@ public partial class LevelView : Node2D
             var color = monster.IsStunned ? StunnedColor : Colors.White;
             var glide = _monsterGlides.TryGetValue(monster.Id, out var value) ? value : ((Cell From, double Start)?)null;
             var shown = Shown(monster.Position, glide, out _);
-            DrawTextureRectRegion(_animations, new Rect2(shown, Tile, Tile), new Rect2(monster.IsStunned ? 0 : frame * 32, 160, 32, 32), color);
+            var alpha = SwapAlpha(monster.Id, ref shown);
+            if (alpha <= 0f)
+            {
+                continue;
+            }
+
+            var source = new Rect2(monster.IsStunned ? 0 : frame * 32, 160, 32, 32);
+            if (Facing(monster.Id) > 0)
+            {
+                DrawSetTransform(new Vector2(shown.X + Tile, shown.Y), 0f, new Vector2(-1f, 1f));
+                DrawTextureRectRegion(_animations, new Rect2(0, 0, Tile, Tile), source, new Color(color, alpha));
+                DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+            }
+            else
+            {
+                DrawTextureRectRegion(_animations, new Rect2(shown, Tile, Tile), source, new Color(color, alpha));
+            }
         }
 
+        DrawShocks();
+
+        DrawAura(SpellFx.AuraBack);
         DrawMagus(_game.Magus.Position);
+        DrawAura(SpellFx.AuraFront);
 
         foreach (var (tileId, position) in _ledges)
         {
@@ -361,12 +529,6 @@ public partial class LevelView : Node2D
             DrawRect(CellRect(cell), CandidateColor);
         }
 
-        if (_selected is { } selected)
-        {
-            var pulse = 0.6f + 0.4f * Mathf.Sin((float)_time * 6f);
-            DrawRect(CellRect(selected).Grow(-1f), new Color(SelectedColor, pulse), false, 2f);
-        }
-
         DrawFlashes();
 
         foreach (var grille in _game.Grilles)
@@ -383,11 +545,7 @@ public partial class LevelView : Node2D
             var position = monster.Position;
             if (monster.IsStunned)
             {
-                GuiAssets.DrawNumber(this, monster.StunTurns, new Vector2(position.X * Tile + StunCounterOffsetX, position.Y * Tile + StunCounterOffsetY));
-            }
-            else if (monster.IsTracking)
-            {
-                DrawAlert(position);
+                SpellFx.DrawStun(this, new Vector2(position.X * Tile, position.Y * Tile), monster.StunTurns, _time);
             }
         }
     }
@@ -476,7 +634,7 @@ public partial class LevelView : Node2D
     }
 
     private bool IsOutsideEdge(LevelDefinition level, Cell neighbour) =>
-        !_zone.Contains(neighbour) && level.TerrainAt(neighbour) is Terrain.Floor or Terrain.Stairs or Terrain.Grille;
+        !_zone.Contains(neighbour) && level.TerrainAt(neighbour) is Terrain.Floor or Terrain.Stairs;
 
     private void DrawFlashes()
     {
@@ -915,16 +1073,82 @@ public partial class LevelView : Node2D
     private void DrawMagus(Cell cell)
     {
         var shown = Shown(cell, _magusGlide, out var moving);
+        var alpha = 1f;
+        if (_teleport is { } teleport && IsBusy)
+        {
+            var elapsed = _time - teleport.Start;
+            alpha = SpellFx.TeleportMagusAlpha(elapsed);
+            var at = SpellFx.IsDeparting(elapsed) ? teleport.From : teleport.To;
+            shown = new Vector2(at.X * Tile, at.Y * Tile);
+        }
+
+        if (alpha <= 0f)
+        {
+            return;
+        }
+
         var row = (moving ? WalkRowOffset : IdleRowOffset) + _magusDirection;
         var frame = moving ? (int)(_time * 12) % 6 : (int)(_time * 6) % 6;
-        DrawTextureRectRegion(_magusPixel, new Rect2(shown, Tile, Tile), new Rect2(frame * 32, row * 32, 32, 32));
+        DrawTextureRectRegion(_magusPixel, new Rect2(shown, Tile, Tile), new Rect2(frame * 32, row * 32, 32, 32), new Color(1f, 1f, 1f, alpha));
     }
 
-    private void DrawAlert(Cell cell)
+    private void DrawAura(Texture2D layer)
     {
-        var origin = new Vector2(cell.X * Tile, cell.Y * Tile + AlertBaselineY);
-        var font = GuiAssets.Font;
-        DrawStringOutline(font, origin, "!", HorizontalAlignment.Center, Tile, GuiAssets.FontSize, AlertOutline, GuiAssets.AlertOutline);
-        DrawString(font, origin, "!", HorizontalAlignment.Center, Tile, GuiAssets.FontSize, GuiAssets.AlertColor);
+        if (_teleport is not { } teleport || !IsBusy)
+        {
+            return;
+        }
+
+        var elapsed = _time - teleport.Start;
+        var cell = SpellFx.IsDeparting(elapsed) ? teleport.From : teleport.To;
+        SpellFx.DrawTeleportAura(this, layer, new Vector2(cell.X * Tile, cell.Y * Tile), elapsed);
     }
+
+    private float SwapAlpha(int monsterId, ref Vector2 shown)
+    {
+        if (_swap is not { } swap || !IsBusy || !_swapOrigins.TryGetValue(monsterId, out var origin))
+        {
+            return 1f;
+        }
+
+        var alpha = SpellFx.SwapMonsterAlpha(_time - swap.Start, out var atOrigin);
+        if (atOrigin)
+        {
+            shown = new Vector2(origin.X * Tile, origin.Y * Tile);
+        }
+
+        return alpha;
+    }
+
+    private void DrawShocks()
+    {
+        if (_swap is { } swap && IsBusy)
+        {
+            var (first, second) = SpellFx.SwapShockAlphas(_time - swap.Start);
+            DrawShock(swap.First, first);
+            DrawShock(swap.Second, second);
+            return;
+        }
+
+        if (_selectionShock is { } selection)
+        {
+            DrawShock(selection.Cell, (float)Math.Clamp((_time - selection.Start) / SpellFx.ShockFadeInDuration, 0.0, 1.0));
+        }
+
+        if (_fadingShock is { } fading)
+        {
+            var alpha = 1f - (float)Math.Clamp((_time - fading.Start) / SpellFx.ShockSelectionFadeOutDuration, 0.0, 1.0);
+            if (alpha <= 0f)
+            {
+                _fadingShock = null;
+                return;
+            }
+
+            DrawShock(fading.Cell, alpha);
+        }
+    }
+
+    private void DrawShock(Cell cell, float alpha) =>
+        SpellFx.DrawShock(this, new Vector2(cell.X * Tile, cell.Y * Tile), alpha, _time);
+
 }

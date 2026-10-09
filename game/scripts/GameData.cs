@@ -22,6 +22,8 @@ public static class GameData
     public static LoadedLevel LoadLevel(string fileName, Legend legend, RuleSet rules) =>
         LevelFile.Parse(fileName, Read($"{LevelsDirectory}/{fileName}"), legend, rules);
 
+    public static string ReadText(string fileName) => Read($"{DataDirectory}/{fileName}");
+
     private static string Read(string path)
     {
         using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
