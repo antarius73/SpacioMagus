@@ -5,12 +5,13 @@ public sealed class Game
     private readonly List<MonsterState> _monsters;
     private readonly Dictionary<Position, GrilleState> _grilles;
     private readonly HashSet<Position> _potions;
+    private readonly Dictionary<Position, bool> _containers;
     private readonly IRandomSource _random;
     private readonly HashSet<Position> _fireZone;
     private readonly HashSet<Position> _waterZone;
     private List<GameEvent> _events = new();
 
-    public const int RulesVersion = 2;
+    public const int RulesVersion = 3;
 
     public Game(LevelDefinition level, RuleSet? rules = null, IRandomSource? random = null)
     {
@@ -29,7 +30,19 @@ public sealed class Game
             _grilles[position] = new GrilleState(position, first, second);
         }
 
-        _potions = new HashSet<Position>(level.Potions);
+        _potions = new HashSet<Position>(level.Potions.Where(potion => !LevelDefinition.IsContainer(level.TerrainAt(potion))));
+        _containers = new Dictionary<Position, bool>();
+        for (var y = 0; y < level.Height; y++)
+        {
+            for (var x = 0; x < level.Width; x++)
+            {
+                var position = new Position(x, y);
+                if (LevelDefinition.IsContainer(level.TerrainAt(position)))
+                {
+                    _containers[position] = level.Potions.Contains(position);
+                }
+            }
+        }
         _fireZone = BuildFireZone(level);
         _waterZone = BuildWaterZone(level);
     }
@@ -50,6 +63,10 @@ public sealed class Game
 
     public IReadOnlyCollection<Position> Potions => _potions;
 
+    public IReadOnlyCollection<Position> Containers => _containers.Keys;
+
+    public bool IsContainer(Position position) => _containers.ContainsKey(position);
+
     public GrilleState? GrilleAt(Position position) =>
         _grilles.TryGetValue(position, out var grille) ? grille : null;
 
@@ -67,7 +84,10 @@ public sealed class Game
     };
 
     public bool IsWalkable(Position position) =>
-        !BlocksSight(position) && !LevelDefinition.IsObstacle(Level.TerrainAt(position));
+        !BlocksSight(position) && !IsObstacleAt(position);
+
+    private bool IsObstacleAt(Position position) =>
+        LevelDefinition.IsObstacle(Level.TerrainAt(position)) || _containers.ContainsKey(position);
 
     public IReadOnlyCollection<Position> FearZone(MonsterKind kind) => kind switch
     {
@@ -138,6 +158,7 @@ public sealed class Game
         OpenGrilleAction grille => OpenGrille(grille.Target),
         SpacioMagusAction teleport => CastSpacioMagus(teleport.Target),
         SpacioCreaturaAction swap => CastSpacioCreatura(swap.First, swap.Second),
+        BreakAction breaking => Break(breaking.Target),
         null => throw new ArgumentNullException(nameof(action)),
         _ => throw new ArgumentException($"Action inconnue : {action.GetType().Name}.", nameof(action)),
     };
@@ -212,6 +233,34 @@ public sealed class Game
         grille.TurnsRemaining = Rules.GrilleOpenDuration;
         grille.OpenedThisTurn = true;
         _events.Add(new GrilleOpened(target, grille.TurnsRemaining));
+        return EndTurn();
+    }
+
+    public ActionResult Break(Position target)
+    {
+        if (Status != GameStatus.Playing)
+        {
+            return ActionResult.Fail(ActionError.GameOver);
+        }
+
+        if (!_containers.TryGetValue(target, out var hasPotion))
+        {
+            return ActionResult.Fail(ActionError.NotAContainer);
+        }
+
+        if (!Magus.Position.IsAdjacentTo(target))
+        {
+            return ActionResult.Fail(ActionError.NotAdjacent);
+        }
+
+        BeginTurn();
+        _containers.Remove(target);
+        if (hasPotion)
+        {
+            _potions.Add(target);
+        }
+
+        _events.Add(new ContainerBroken(target, hasPotion));
         return EndTurn();
     }
 
@@ -763,7 +812,7 @@ public sealed class Game
     private bool IsPlannable(Position position) =>
         Level.InBounds(position)
         && !LevelDefinition.IsSolid(Level.TerrainAt(position))
-        && !LevelDefinition.IsObstacle(Level.TerrainAt(position));
+        && !IsObstacleAt(position);
 
     private static HashSet<Position> BuildFireZone(LevelDefinition level)
     {

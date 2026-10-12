@@ -120,6 +120,10 @@ public static class Texts
 
     public static string Torch => Get("torche");
 
+    public static string ContainerTitle => Get("contenant_titre");
+
+    public static string Container => Get("contenant");
+
     public static string BrazierTitle => Get("brasero_titre");
 
     public static string Brazier => Get("brasero");

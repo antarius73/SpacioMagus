@@ -223,6 +223,7 @@ public partial class Main : Node
             : _game.GrilleAt(cell) is not null ? InfoSubject.Door
             : _game.Level.Torches.Contains(cell) ? InfoSubject.Torch
             : _game.Level.TerrainAt(cell) == Terrain.Brazier ? InfoSubject.Brazier
+            : _game.IsContainer(cell) ? InfoSubject.Container
             : _game.Potions.Contains(cell) ? InfoSubject.Potion
             : _game.Level.TerrainAt(cell) == Terrain.Stairs ? InfoSubject.Stairs
             : (InfoSubject?)null;
@@ -533,6 +534,18 @@ public partial class Main : Node
         if (cell == game.Magus.Position)
         {
             Apply(Play(new WaitAction()), cell, TapKind.Wait);
+            return;
+        }
+
+        if (game.IsContainer(cell))
+        {
+            if (game.Magus.Position.IsAdjacentTo(cell))
+            {
+                Apply(Play(new BreakAction(cell)), cell, TapKind.Move);
+                return;
+            }
+
+            Reject(cell);
             return;
         }
 

@@ -11,13 +11,13 @@ nom = Hall du donjon de Zorgus
 #.......#
 ####.####
 ####.####
-#p.....p#
+#U.....K#
 ###...###
 ####G####
 ###...###
 ###...###
 ###...###
-#b....###
+#b.....b#
 ###...###
 ###...###
 ####G####
@@ -27,4 +27,22 @@ nom = Hall du donjon de Zorgus
 #########
 
 [decor]
-   t t
+ VBtRtBV
+
+
+ VBO OBV
+
+
+
+
+ BDB BDB
+
+
+   O O
+
+
+ BW   WB
+
+
+
+ VBO OBV

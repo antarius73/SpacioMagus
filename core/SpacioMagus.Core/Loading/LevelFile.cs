@@ -114,6 +114,8 @@ public static class LevelFile
                     ElementIds.Stairs => Terrain.Stairs,
                     ElementIds.Brazier => Terrain.Brazier,
                     ElementIds.Water => Terrain.Water,
+                    ElementIds.Barrel or ElementIds.BarrelPotion => Terrain.Barrel,
+                    ElementIds.Crate or ElementIds.CratePotion => Terrain.Crate,
                     _ => Terrain.Floor,
                 };
 
@@ -128,7 +130,7 @@ public static class LevelFile
                     case ElementIds.BlobRouge:
                         monsters.Add(new MonsterSpawn(MonsterKind.BlobRouge, position, post ?? position));
                         break;
-                    case ElementIds.Potion:
+                    case ElementIds.Potion or ElementIds.BarrelPotion or ElementIds.CratePotion:
                         potions.Add(position);
                         break;
                 }
@@ -163,6 +165,13 @@ public static class LevelFile
         var layer = ParseDecor(fileName, document.Lines(DecorSection), legend, width, height, issues);
         var torches = layer.Where(item => item.Id == ElementIds.Torch).Select(item => item.Position).ToList();
         var decor = layer.Where(item => item.Id != ElementIds.Torch).ToList();
+        foreach (var item in decor.Where(item => ElementIds.WallDecor.Contains(item.Id)))
+        {
+            if (!IsWallFace(cells, width, height, item.Position))
+            {
+                issues.Add(new LoadIssue(fileName, 0, 0, $"Le décor « {item.Id} » en {item.Position} doit être sur un mur avec du sol juste en dessous."));
+            }
+        }
 
         if (issues.Count > 0)
         {
@@ -181,6 +190,16 @@ public static class LevelFile
                 new LoadIssue(fileName, 0, 0, $"{exception.Message} Les positions sont (colonne, ligne) dans la carte, à partir de 0 en haut à gauche."),
             });
         }
+    }
+
+    private static bool IsWallFace(Terrain[] cells, int width, int height, Position position)
+    {
+        if (position.Y + 1 >= height || cells[position.Y * width + position.X] != Terrain.Wall)
+        {
+            return false;
+        }
+
+        return LevelDefinition.IsGround(cells[(position.Y + 1) * width + position.X]);
     }
 
     private static List<SourceLine> TrimBlankLines(IReadOnlyList<SourceLine> lines, bool trimStart)

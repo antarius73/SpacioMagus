@@ -6,7 +6,7 @@
 Français
 
 [histoire_titre]
-Spacio Magus
+Mob le Magus
 
 [histoire]
 Zorgus vous a confié son donjon. Vous avez testé un sort maison. Mauvaise idée.
@@ -53,7 +53,7 @@ Menu
 Crédits
 
 [credits]
-Spacio Magus
+Mob le Magus
 
 Police Digital Disco : jeti (fontenddev.com), licence CC BY 4.0.
 
@@ -93,7 +93,7 @@ Niveau suivant
 Crédits
 
 [jeu_titre]
-Spacio Magus
+Mob le Magus
 
 [bouton_nouvelle_partie]
 Nouvelle partie
@@ -163,6 +163,12 @@ Le brasero
 
 [brasero]
 Un feu infranchissable, qui laisse passer la vue et la magie. Les blobs verts ne s'approchent pas des cases qui l'entourent.
+
+[contenant_titre]
+Caisses et tonneaux
+
+[contenant]
+Impossible de s'y téléporter. Touchez-en un quand vous êtes à côté pour le briser : cela prend un tour. Il cache parfois une fiole.
 
 [escalier_titre]
 L'escalier

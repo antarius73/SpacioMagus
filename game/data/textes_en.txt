@@ -6,7 +6,7 @@
 English
 
 [histoire_titre]
-Spacio Magus
+Mob le Magus
 
 [histoire]
 Zorgus left you in charge of his dungeon. You tried a home-made spell. Bad idea.
@@ -53,7 +53,7 @@ Menu
 Credits
 
 [credits]
-Spacio Magus
+Mob le Magus
 
 Digital Disco font: jeti (fontenddev.com), CC BY 4.0 licence.
 
@@ -93,7 +93,7 @@ Next level
 Credits
 
 [jeu_titre]
-Spacio Magus
+Mob le Magus
 
 [bouton_nouvelle_partie]
 New game
@@ -163,6 +163,12 @@ The brazier
 
 [brasero]
 A fire you cannot cross, but sight and magic pass through it. Green blobs keep away from the tiles around it.
+
+[contenant_titre]
+Crates and barrels
+
+[contenant]
+You cannot teleport onto them. Tap one when you stand next to it to break it: it takes a turn. Sometimes a potion hides inside.
 
 [escalier_titre]
 The stairs

@@ -18,6 +18,7 @@ public class LoadingTests
         * = brasero
         ~ = eau
         t = torche, decor
+        B = bouclier, decor
         """;
 
     private static readonly Legend TestLegend = Legend.Parse("legende.txt", LegendText);
@@ -204,6 +205,33 @@ public class LoadingTests
             """);
 
         Assert.Contains("torchère", Assert.Single(error.Issues).Message);
+    }
+
+    [Fact]
+    public void WallDecorMustHangOnAWallFace()
+    {
+        var level = Load("""
+            [carte]
+            #######
+            #@...>#
+            #######
+
+            [decor]
+             B
+            """);
+        Assert.Equal(new[] { new DecorItem(new Position(1, 0), "bouclier") }, level.Decor);
+
+        var error = LoadFails("""
+            [carte]
+            #######
+            #@...>#
+            #######
+
+            [decor]
+
+              B
+            """);
+        Assert.Contains("bouclier", Assert.Single(error.Issues).Message);
     }
 
     [Fact]

@@ -60,7 +60,27 @@ public partial class LevelView : Node2D
     private const int ShadeInnerNorthWestTile = 253;
 
     private static readonly Rect2 StairsRegion = new(16, 80, 32, 32);
-    private static readonly Rect2[] ShieldRegions = { new(96, 112, 16, 16), new(112, 112, 16, 16) };
+    private static readonly Rect2 ShieldRegion = new(96, 112, 16, 16);
+    private static readonly Dictionary<string, Rect2> HangingRegions = new()
+    {
+        [ElementIds.RedHanging] = new Rect2(0, 0, 32, 32),
+        [ElementIds.RedBoneHanging] = new Rect2(32, 0, 32, 32),
+        [ElementIds.RedTornHanging] = new Rect2(64, 0, 32, 32),
+        [ElementIds.GreenHanging] = new Rect2(0, 32, 32, 32),
+        [ElementIds.GreenBoneHanging] = new Rect2(32, 32, 32, 32),
+    };
+    private const int BannerOffsetY = -2;
+    private static readonly Rect2[] CrateRegions =
+    {
+        new(56, 82, 16, 30), new(80, 82, 16, 20), new(96, 80, 16, 24), new(160, 82, 16, 20), new(176, 80, 16, 24),
+    };
+    private static readonly Rect2[] BarrelRegions = { new(112, 80, 16, 24), new(192, 80, 16, 24) };
+    private const int ContainerBottomMargin = 2;
+    private const double BreakBlinkDuration = 0.25;
+    private const int BreakBlinks = 3;
+    private const double PotionAppearDelay = 0.3;
+    private const double PotionBounceDuration = 0.35;
+    private const float PotionBounceHeight = 8f;
 
     private const double CrackChance = 0.4;
     private const double WebChance = 0.5;
@@ -116,16 +136,20 @@ public partial class LevelView : Node2D
     private readonly List<(int TileId, Vector2 Center, int Turns)> _cracks = new();
     private readonly List<(Vector2 Position, bool FlipX)> _webs = new();
     private readonly List<(Rect2 Source, Rect2 Target)> _shields = new();
+    private readonly List<(Rect2 Source, Vector2 Position)> _banners = new();
     private readonly List<Cell> _torches = new();
     private readonly List<Cell> _stairs = new();
     private readonly List<Cell> _braziers = new();
     private readonly List<Cell> _water = new();
+    private readonly Dictionary<Cell, Rect2> _containerLooks = new();
+    private readonly Dictionary<Cell, (double Start, Rect2 Look)> _breaks = new();
     private readonly HashSet<Cell> _thinDoors = new();
     private readonly Dictionary<Cell, (bool Open, double ChangedAt)> _grilleStates = new();
     private Texture2D _tileset = null!;
     private Texture2D _doors = null!;
     private Texture2D _fire = null!;
     private Texture2D _objects = null!;
+    private Texture2D _items = null!;
     private Texture2D _web = null!;
     private Texture2D _animations = null!;
     private Texture2D _potion = null!;
@@ -193,6 +217,7 @@ public partial class LevelView : Node2D
         _doors = LoadTexture("res://assets/sprites/donjon_portes.png");
         _fire = LoadTexture("res://assets/sprites/donjon_feu.png");
         _objects = LoadTexture("res://assets/sprites/donjon_objets.png");
+        _items = LoadTexture("res://assets/sprites/items.png");
         _web = LoadTexture("res://assets/sprites/toile.png");
         _animations = LoadTexture("res://assets/sprites/animations.png");
         _potion = LoadTexture("res://assets/sprites/fiole_bleue.png");
@@ -294,6 +319,12 @@ public partial class LevelView : Node2D
         var monstersStart = _time;
         foreach (var gameEvent in events)
         {
+            if (gameEvent is ContainerBroken broken && _containerLooks.TryGetValue(broken.Position, out var look))
+            {
+                _breaks[broken.Position] = (_time, look);
+                _containerLooks.Remove(broken.Position);
+            }
+
             if (gameEvent is MagusMoved { Cause: MoveCause.Teleport } teleport)
             {
                 _teleport = (teleport.From, teleport.To, _time);
@@ -476,6 +507,11 @@ public partial class LevelView : Node2D
             DrawTextureRectRegion(_objects, CellRect(stairs), StairsRegion);
         }
 
+        foreach (var (source, position) in _banners)
+        {
+            DrawTextureRectRegion(_items, new Rect2(position, source.Size), source);
+        }
+
         foreach (var (source, target) in _shields)
         {
             DrawTextureRectRegion(_objects, target, source);
@@ -509,7 +545,50 @@ public partial class LevelView : Node2D
 
         foreach (var potion in _game.Potions)
         {
-            DrawTextureRectRegion(_potion, CellRect(potion), new Rect2(frame * 32, 0, 32, 32));
+            var offset = 0f;
+            if (_breaks.TryGetValue(potion, out var revealed))
+            {
+                var since = _time - revealed.Start - PotionAppearDelay;
+                if (since < 0)
+                {
+                    continue;
+                }
+
+                if (since < PotionBounceDuration)
+                {
+                    var progress = (float)(since / PotionBounceDuration);
+                    offset = -Mathf.Round(Mathf.Abs(Mathf.Cos(progress * Mathf.Pi * 2.5f)) * PotionBounceHeight * (1f - progress));
+                }
+            }
+
+            var target = CellRect(potion);
+            target.Position += new Vector2(0, offset);
+            DrawTextureRectRegion(_potion, target, new Rect2(frame * 32, 0, 32, 32));
+        }
+
+        foreach (var container in _game.Containers)
+        {
+            if (_containerLooks.TryGetValue(container, out var look))
+            {
+                DrawContainer(container, look, Colors.White);
+            }
+        }
+
+        foreach (var (cell, broken) in _breaks)
+        {
+            var elapsed = _time - broken.Start;
+            if (elapsed < BreakBlinkDuration)
+            {
+                var phase = (int)(elapsed / BreakBlinkDuration * BreakBlinks * 2);
+                if (phase % 2 == 0)
+                {
+                    DrawContainer(cell, broken.Look, Colors.White);
+                }
+
+                continue;
+            }
+
+            SpellFx.DrawSakura(this, new Vector2(cell.X * Tile, cell.Y * Tile), elapsed - BreakBlinkDuration);
         }
 
         var brazierSource = new Rect2(BrazierColumn, (int)(_time * 8) % FireFrames * FireFrameHeight, BrazierSize, BrazierSize);
@@ -603,6 +682,16 @@ public partial class LevelView : Node2D
         }
     }
 
+    private void DrawContainer(Cell cell, Rect2 look, Color tint)
+    {
+        var target = new Rect2(
+            cell.X * Tile + (Tile - look.Size.X) / 2f,
+            cell.Y * Tile + Tile - look.Size.Y - ContainerBottomMargin,
+            look.Size.X,
+            look.Size.Y);
+        DrawTextureRectRegion(_objects, target, look, tint);
+    }
+
     private int MonsterRow(MonsterState monster)
     {
         var row = KindRow(monster.Kind);
@@ -626,10 +715,10 @@ public partial class LevelView : Node2D
         new(tileId % TilesetColumns * SubTile, tileId / TilesetColumns * SubTile, SubTile, SubTile);
 
     private static bool IsWalkGround(Terrain terrain) =>
-        terrain is Terrain.Floor or Terrain.Stairs or Terrain.Brazier or Terrain.Water;
+        terrain is Terrain.Floor or Terrain.Stairs or Terrain.Brazier or Terrain.Water or Terrain.Barrel or Terrain.Crate;
 
     private static bool IsOpenGround(Terrain terrain) =>
-        terrain is Terrain.Floor or Terrain.Stairs or Terrain.Grille or Terrain.Brazier or Terrain.Water;
+        terrain is Terrain.Floor or Terrain.Stairs or Terrain.Grille or Terrain.Brazier or Terrain.Water or Terrain.Barrel or Terrain.Crate;
 
     private static int Pick(bool left, bool right, int firstTile) =>
         left && right ? firstTile + 1 : !left ? firstTile : firstTile + 2;
@@ -641,7 +730,9 @@ public partial class LevelView : Node2D
             return true;
         }
 
-        if (level.TerrainAt(cell) is Terrain.Floor or Terrain.Stairs)
+        var terrain = level.TerrainAt(cell);
+        if (terrain is Terrain.Floor or Terrain.Stairs
+            || (LevelDefinition.IsContainer(terrain) && _game is not null && !_game.IsContainer(cell)))
         {
             return false;
         }
@@ -972,17 +1063,15 @@ public partial class LevelView : Node2D
         _cracks.Clear();
         _webs.Clear();
         _shields.Clear();
+        _banners.Clear();
         _torches.Clear();
+        _containerLooks.Clear();
+        _breaks.Clear();
 
         bool IsFace(Cell cell) =>
             level.TerrainAt(cell) == Terrain.Wall && IsOpenGround(level.TerrainAt(new Cell(cell.X, cell.Y + 1)));
-        bool FarFrom(Cell cell, IEnumerable<Cell> others) =>
-            others.All(other => other.Y != cell.Y || Math.Abs(other.X - cell.X) > 1);
-        bool Spaced(Cell cell, IEnumerable<Cell> others) =>
-            others.All(other => Math.Abs(other.X - cell.X) + Math.Abs(other.Y - cell.Y) > 2);
 
         var faces = new List<Cell>();
-        var grilles = new List<Cell>();
         for (var y = 0; y < level.Height; y++)
         {
             for (var x = 0; x < level.Width; x++)
@@ -1010,10 +1099,6 @@ public partial class LevelView : Node2D
                         _cracks.Add((crack, center, random.Next(4)));
                     }
                 }
-                else if (terrain == Terrain.Grille)
-                {
-                    grilles.Add(cell);
-                }
                 else if (IsFace(cell))
                 {
                     faces.Add(cell);
@@ -1021,23 +1106,11 @@ public partial class LevelView : Node2D
             }
         }
 
-        var used = new HashSet<Cell>();
-        foreach (var torch in level.Torches)
+        _torches.AddRange(level.Torches);
+        foreach (var container in _game?.Containers ?? Array.Empty<Cell>())
         {
-            _torches.Add(torch);
-            used.Add(torch);
-        }
-
-        foreach (var grille in grilles)
-        {
-            foreach (var side in new[] { -1, 1 })
-            {
-                var cell = new Cell(grille.X + side, grille.Y);
-                if (IsFace(cell))
-                {
-                    used.Add(cell);
-                }
-            }
+            var looks = level.TerrainAt(container) == Terrain.Barrel ? BarrelRegions : CrateRegions;
+            _containerLooks[container] = looks[random.Next(looks.Length)];
         }
 
         foreach (var face in faces)
@@ -1055,24 +1128,17 @@ public partial class LevelView : Node2D
             }
         }
 
-        var shieldCount = random.Next(2, 4);
-        var shields = new List<Cell>();
-        foreach (var candidate in faces.Where(face => !used.Contains(face) && FarFrom(face, grilles)).OrderBy(_ => random.Next()))
+        foreach (var item in _decor)
         {
-            if (shields.Count >= shieldCount)
+            var origin = new Vector2(item.Position.X * Tile, item.Position.Y * Tile);
+            if (HangingRegions.TryGetValue(item.Id, out var hanging))
             {
-                break;
+                _banners.Add((hanging, new Vector2(origin.X, origin.Y + BannerOffsetY)));
             }
-
-            if (!Spaced(candidate, shields))
+            else if (item.Id == ElementIds.Shield)
             {
-                continue;
+                _shields.Add((ShieldRegion, new Rect2(origin.X + SubTile / 2f, origin.Y + ShieldOffsetY, SubTile, SubTile)));
             }
-
-            shields.Add(candidate);
-            used.Add(candidate);
-            var target = new Rect2(candidate.X * Tile + SubTile / 2f, candidate.Y * Tile + ShieldOffsetY, SubTile, SubTile);
-            _shields.Add((ShieldRegions[random.Next(ShieldRegions.Length)], target));
         }
     }
 

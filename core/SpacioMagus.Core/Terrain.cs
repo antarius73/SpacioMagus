@@ -9,4 +9,6 @@ public enum Terrain
     Stairs,
     Brazier,
     Water,
+    Barrel,
+    Crate,
 }

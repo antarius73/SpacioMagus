@@ -12,6 +12,7 @@ public enum InfoSubject
     RedBlob,
     Torch,
     Brazier,
+    Container,
 }
 
 public partial class InfoPopup : CanvasLayer
@@ -35,6 +36,7 @@ public partial class InfoPopup : CanvasLayer
             InfoSubject.RedBlob => (Texts.RedBlobTitle, Texts.RedBlob, (Control)new BlobIllustration(BlobIllustration.RedRow)),
             InfoSubject.Torch => (Texts.TorchTitle, Texts.Torch, (Control)new TorchIllustration()),
             InfoSubject.Brazier => (Texts.BrazierTitle, Texts.Brazier, (Control)new BrazierIllustration()),
+            InfoSubject.Container => (Texts.ContainerTitle, Texts.Container, (Control)new ContainerIllustration()),
             _ => (Texts.GreenBlobTitle, Texts.GreenBlob, (Control)new BlobIllustration(BlobIllustration.GreenRow)),
         };
 
@@ -313,6 +315,71 @@ public partial class TorchIllustration : Illustration
         DrawTextureRectRegion(_fire, new Rect2(40, FireOffsetY, Cell, FireHeight), new Rect2(FireColumn, frame * FireHeight, Cell, FireHeight));
         DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
     }
+}
+
+public partial class ContainerIllustration : Illustration
+{
+    private const int Cell = 32;
+    private const double IdleDuration = 0.9;
+    private const double BlinkDuration = 0.25;
+    private const int Blinks = 3;
+    private const double PotionDelay = 0.3;
+    private const double BounceDuration = 0.35;
+    private const double HoldDuration = 1.0;
+    private const float BounceHeight = 8f;
+    private static readonly Vector2 SceneSize = new(112, 64);
+    private static readonly Rect2 Barrel = new(112, 80, 16, 24);
+    private static readonly Rect2 Crate = new(96, 80, 16, 24);
+    private static readonly Vector2 BarrelCell = new(24, 16);
+    private static readonly Vector2 CrateCell = new(56, 16);
+
+    private readonly Texture2D _objects = Load("res://assets/sprites/donjon_objets.png");
+    private readonly Texture2D _potion = Load("res://assets/sprites/fiole_bleue.png");
+
+    public override void _Draw()
+    {
+        BeginScene(SceneSize, 2f);
+        for (var y = 0; y < SceneSize.Y; y += 16)
+        {
+            for (var x = 0; x < SceneSize.X; x += 16)
+            {
+                DrawTile(138, x, y);
+            }
+        }
+
+        DrawObject(Crate, CrateCell);
+        var cycle = IdleDuration + BlinkDuration + SpellFx.SakuraDuration + HoldDuration;
+        var t = Time % cycle;
+        var broken = t - IdleDuration;
+        if (broken < 0 || (broken < BlinkDuration && (int)(broken / BlinkDuration * Blinks * 2) % 2 == 0))
+        {
+            DrawObject(Barrel, BarrelCell);
+        }
+
+        if (broken >= PotionDelay)
+        {
+            var since = broken - PotionDelay;
+            var offset = 0f;
+            if (since < BounceDuration)
+            {
+                var progress = (float)(since / BounceDuration);
+                offset = -Mathf.Round(Mathf.Abs(Mathf.Cos(progress * Mathf.Pi * 2.5f)) * BounceHeight * (1f - progress));
+            }
+
+            var frame = (int)(Time * 5) % 4;
+            DrawTextureRectRegion(_potion, new Rect2(BarrelCell.X, BarrelCell.Y + offset, Cell, Cell), new Rect2(frame * Cell, 0, Cell, Cell));
+        }
+
+        if (broken >= BlinkDuration)
+        {
+            SpellFx.DrawSakura(this, BarrelCell, broken - BlinkDuration);
+        }
+
+        DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+    }
+
+    private void DrawObject(Rect2 source, Vector2 cell) =>
+        DrawTextureRectRegion(_objects, new Rect2(cell.X + (Cell - source.Size.X) / 2f, cell.Y + Cell - source.Size.Y - 2, source.Size.X, source.Size.Y), source);
 }
 
 public partial class BrazierIllustration : Illustration

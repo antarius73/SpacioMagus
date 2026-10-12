@@ -42,6 +42,13 @@ public static class SpellFx
     public const double MutationFrameDuration = 0.06;
     public const float MutationOffsetY = -2f;
 
+    public const int SakuraSize = 96;
+    public const int SakuraFrames = 7;
+    public const int SakuraColumns = 5;
+    public const double SakuraFrameDuration = 0.065;
+    public const double SakuraDuration = SakuraFrames * SakuraFrameDuration;
+
+    private static Texture2D? _sakura;
     private static Texture2D? _mutation;
     private static Texture2D? _auraBack;
     private static Texture2D? _auraFront;
@@ -57,6 +64,8 @@ public static class SpellFx
     public static Texture2D StunSwirl => _stunSwirl ??= Load("res://assets/fx/etourdi.png");
 
     public static Texture2D Mutation => _mutation ??= Load("res://assets/fx/mutation.png");
+
+    public static Texture2D Sakura => _sakura ??= Load("res://assets/fx/sakura.png");
 
     public static bool IsDeparting(double elapsed) => elapsed < TeleportHalfDuration;
 
@@ -130,6 +139,19 @@ public static class SpellFx
         var target = new Rect2(center.X - StunSwirlWidth / 2, center.Y - StunSwirlHeight / 2, StunSwirlWidth, StunSwirlHeight);
         canvas.DrawTextureRectRegion(StunSwirl, target, new Rect2(frame * StunSwirlWidth, 0, StunSwirlWidth, StunSwirlHeight));
         GuiAssets.DrawNumber(canvas, turns, center);
+    }
+
+    public static void DrawSakura(CanvasItem canvas, Vector2 cellOrigin, double elapsed)
+    {
+        if (elapsed < 0 || elapsed >= SakuraDuration)
+        {
+            return;
+        }
+
+        var frame = (int)(elapsed / SakuraFrameDuration);
+        var source = new Rect2(frame % SakuraColumns * SakuraSize, frame / SakuraColumns * SakuraSize, SakuraSize, SakuraSize);
+        var target = new Rect2(cellOrigin.X + 16 - SakuraSize / 2f, cellOrigin.Y + 16 - SakuraSize / 2f, SakuraSize, SakuraSize);
+        canvas.DrawTextureRectRegion(Sakura, target, source);
     }
 
     public static void DrawMutation(CanvasItem canvas, Vector2 cellOrigin, double time)

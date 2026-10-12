@@ -34,6 +34,8 @@ public sealed record MonsterMutationStarted(int MonsterId, int Turns) : GameEven
 
 public sealed record MonsterMutated(int MonsterId, MonsterKind From, MonsterKind To) : GameEvent;
 
+public sealed record ContainerBroken(Position Position, bool HadPotion) : GameEvent;
+
 public sealed record MagusCaptured(int MonsterId) : GameEvent;
 
 public sealed record LevelCompleted : GameEvent;

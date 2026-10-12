@@ -57,6 +57,11 @@ public sealed class LevelDefinition
 
     public static bool IsObstacle(Terrain terrain) => terrain is Terrain.Brazier or Terrain.Water;
 
+    public static bool IsContainer(Terrain terrain) => terrain is Terrain.Barrel or Terrain.Crate;
+
+    public static bool IsGround(Terrain terrain) =>
+        terrain is Terrain.Floor or Terrain.Stairs || IsObstacle(terrain) || IsContainer(terrain);
+
     public static bool IsSolid(Terrain terrain) => terrain is Terrain.Wall or Terrain.Void;
 
     public bool InBounds(Position position) =>
@@ -141,9 +146,9 @@ public sealed class LevelDefinition
         var potions = new HashSet<Position>();
         foreach (var potion in Potions)
         {
-            if (TerrainAt(potion) != Terrain.Floor)
+            if (TerrainAt(potion) != Terrain.Floor && !IsContainer(TerrainAt(potion)))
             {
-                throw new LevelDefinitionException($"La fiole en {potion} doit être sur une case de sol.");
+                throw new LevelDefinitionException($"La fiole en {potion} doit être sur une case de sol ou dans un contenant.");
             }
 
             if (!potions.Add(potion))
@@ -160,7 +165,7 @@ public sealed class LevelDefinition
         var torches = new HashSet<Position>();
         foreach (var torch in Torches)
         {
-            if (TerrainAt(torch) != Terrain.Wall || !IsOpenGround(TerrainAt(torch + new Position(0, 1))))
+            if (TerrainAt(torch) != Terrain.Wall || !IsGround(TerrainAt(torch + new Position(0, 1))))
             {
                 throw new LevelDefinitionException($"La torchère en {torch} doit être sur un mur avec du sol juste en dessous.");
             }

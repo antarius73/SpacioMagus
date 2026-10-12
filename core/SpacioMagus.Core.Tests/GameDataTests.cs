@@ -40,6 +40,7 @@ public class GameDataTests
             g => g.Move(new Position(4, 10)),
             g => g.Move(new Position(3, 9)),
             g => g.Move(new Position(2, 9)),
+            g => g.Break(new Position(1, 9)),
             g => g.Move(new Position(1, 9)),
             g => g.Move(new Position(2, 9)),
             g => g.Move(new Position(3, 9)),

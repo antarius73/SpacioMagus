@@ -17,4 +17,5 @@ public enum ActionError
     NotAMonster,
     SameCreature,
     NotEnoughCreatures,
+    NotAContainer,
 }

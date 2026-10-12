@@ -22,6 +22,8 @@ internal static class TestMaps
                     '#' or 'T' => Terrain.Wall,
                     '*' => Terrain.Brazier,
                     '~' => Terrain.Water,
+                    'u' or 'U' => Terrain.Barrel,
+                    'k' or 'K' => Terrain.Crate,
                     ' ' => Terrain.Void,
                     'G' => Terrain.Grille,
                     '>' => Terrain.Stairs,
@@ -40,7 +42,7 @@ internal static class TestMaps
                     case 'r':
                         monsters.Add(new MonsterSpawn(MonsterKind.BlobRouge, position, position));
                         break;
-                    case 'p':
+                    case 'p' or 'U' or 'K':
                         potions.Add(position);
                         break;
                     case 'T':

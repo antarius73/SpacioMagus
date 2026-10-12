@@ -22,6 +22,11 @@ public static class GameDigest
             text.Append(CultureInfo.InvariantCulture, $"porte {grille.Position.X} {grille.Position.Y} {grille.TurnsRemaining}\n");
         }
 
+        foreach (var container in game.Containers.OrderBy(container => container.Y).ThenBy(container => container.X))
+        {
+            text.Append(CultureInfo.InvariantCulture, $"contenant {container.X} {container.Y}\n");
+        }
+
         foreach (var potion in game.Potions.OrderBy(potion => potion.Y).ThenBy(potion => potion.X))
         {
             text.Append(CultureInfo.InvariantCulture, $"fiole {potion.X} {potion.Y}\n");
