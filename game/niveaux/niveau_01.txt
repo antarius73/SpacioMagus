@@ -1,5 +1,5 @@
 [niveau]
-nom = Les cachots de Zorgus
+nom = Hall du donjon de Zorgus
 
 [carte]
 #########

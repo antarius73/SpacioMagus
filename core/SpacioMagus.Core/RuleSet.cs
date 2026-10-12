@@ -8,8 +8,6 @@ public sealed record RuleSet
 
     public int SpellCost { get; init; } = 1;
 
-    public int RegenPerTurn { get; init; } = 1;
-
     public int SpellRange { get; init; } = 8;
 
     public int StunDuration { get; init; } = 4;
@@ -20,7 +18,6 @@ public sealed record RuleSet
     {
         Require(MagicMax >= 1, nameof(MagicMax), MagicMax);
         Require(SpellCost >= 0, nameof(SpellCost), SpellCost);
-        Require(RegenPerTurn >= 0, nameof(RegenPerTurn), RegenPerTurn);
         Require(SpellRange >= 1, nameof(SpellRange), SpellRange);
         Require(StunDuration >= 1, nameof(StunDuration), StunDuration);
         Require(GrilleOpenDuration >= 1, nameof(GrilleOpenDuration), GrilleOpenDuration);

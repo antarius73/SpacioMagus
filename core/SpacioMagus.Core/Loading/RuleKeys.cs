@@ -6,7 +6,6 @@ internal static class RuleKeys
     {
         ["magie_max"] = (rules, value) => rules with { MagicMax = value },
         ["cout_sort"] = (rules, value) => rules with { SpellCost = value },
-        ["regen_par_tour"] = (rules, value) => rules with { RegenPerTurn = value },
         ["portee_sort"] = (rules, value) => rules with { SpellRange = value },
         ["duree_etourdi"] = (rules, value) => rules with { StunDuration = value },
         ["duree_grille"] = (rules, value) => rules with { GrilleOpenDuration = value },

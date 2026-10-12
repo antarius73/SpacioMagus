@@ -3,37 +3,36 @@ using Godot;
 
 namespace SpacioMagus;
 
-public enum Discovery
+public enum InfoSubject
 {
     Door,
     Potion,
     GreenBlob,
+    Stairs,
 }
 
-public partial class DiscoveryPopup : CanvasLayer
+public partial class InfoPopup : CanvasLayer
 {
     private const int ScreenMargin = 16;
     private const int TextureMargin = 10;
     private const float ContentWidth = 224f;
     private const float IllustrationHeight = 128f;
-    private const float ButtonWidth = 140f;
-    private const float ButtonHeight = 28f;
+    private const float HintOpacity = 0.6f;
     private static readonly Color Backdrop = new(0.04f, 0.03f, 0.07f, 0.6f);
 
-    public event Action<bool>? Closed;
+    public event Action? Closed;
 
-    private CheckBox _hideTips = null!;
-
-    public static DiscoveryPopup Create(Discovery discovery)
+    public static InfoPopup Create(InfoSubject subject)
     {
-        var (title, body, illustration) = discovery switch
+        var (title, body, illustration) = subject switch
         {
-            Discovery.Door => (Texts.DoorTitle, Texts.Door, (Control)new DoorIllustration()),
-            Discovery.Potion => (Texts.PotionTitle, Texts.Potion, (Control)new PotionIllustration()),
+            InfoSubject.Door => (Texts.DoorTitle, Texts.Door, (Control)new DoorIllustration()),
+            InfoSubject.Potion => (Texts.PotionTitle, Texts.Potion, (Control)new PotionIllustration()),
+            InfoSubject.Stairs => (Texts.StairsTitle, Texts.Stairs, (Control)new StairsIllustration()),
             _ => (Texts.GreenBlobTitle, Texts.GreenBlob, (Control)new BlobIllustration()),
         };
 
-        var popup = new DiscoveryPopup { Layer = 9 };
+        var popup = new InfoPopup { Layer = 9 };
 
         var root = new Control { Theme = GuiAssets.Theme };
         root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
@@ -41,6 +40,13 @@ public partial class DiscoveryPopup : CanvasLayer
 
         var backdrop = new ColorRect { Color = Backdrop, MouseFilter = Control.MouseFilterEnum.Stop };
         backdrop.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        backdrop.GuiInput += input =>
+        {
+            if (input is InputEventMouseButton { Pressed: true })
+            {
+                popup.Close();
+            }
+        };
         root.AddChild(backdrop);
 
         var area = new MarginContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -55,7 +61,7 @@ public partial class DiscoveryPopup : CanvasLayer
         var center = new CenterContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         area.AddChild(center);
 
-        var panel = new PanelContainer();
+        var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         panel.AddThemeStyleboxOverride("panel", new StyleBoxTexture
         {
             Texture = GuiAssets.Parchment,
@@ -70,7 +76,7 @@ public partial class DiscoveryPopup : CanvasLayer
         });
         center.AddChild(panel);
 
-        var box = new VBoxContainer();
+        var box = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         box.AddThemeConstantOverride("separation", 8);
         panel.AddChild(box);
 
@@ -91,30 +97,22 @@ public partial class DiscoveryPopup : CanvasLayer
         bodyLabel.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
         box.AddChild(bodyLabel);
 
-        popup._hideTips = new CheckBox { Text = Texts.HideTips, SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter };
-        foreach (var color in new[] { "font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color" })
-        {
-            popup._hideTips.AddThemeColorOverride(color, GuiAssets.TextOnParchment);
-        }
-
-        box.AddChild(popup._hideTips);
-
-        var button = new Button
-        {
-            Text = Texts.DiscoveryButton,
-            CustomMinimumSize = new Vector2(ButtonWidth, ButtonHeight),
-            SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
-        };
-        button.Pressed += popup.Close;
-        box.AddChild(button);
+        var hint = new Label { Text = Texts.CloseHint, HorizontalAlignment = HorizontalAlignment.Center };
+        hint.AddThemeColorOverride("font_color", new Color(GuiAssets.TextOnParchment, HintOpacity));
+        box.AddChild(hint);
 
         return popup;
     }
 
     private void Close()
     {
+        if (IsQueuedForDeletion())
+        {
+            return;
+        }
+
         QueueFree();
-        Closed?.Invoke(_hideTips.ButtonPressed);
+        Closed?.Invoke();
     }
 }
 
@@ -264,6 +262,115 @@ public partial class BlobIllustration : Illustration
         BeginScene(SceneSize, 3f);
         var frame = (int)(Time / FrameDuration) % Frames;
         DrawTextureRectRegion(_animations, new Rect2(0, 0, 32, 32), new Rect2(frame * 32, Row, 32, 32));
+        DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+    }
+}
+
+public partial class StairsIllustration : Illustration
+{
+    private const int Cell = 32;
+    private const int IdleRow = 8;
+    private const int WalkEastRow = 2;
+    private const double WaitDuration = 0.8;
+    private const double WalkDuration = 0.6;
+    private const double FadeDuration = 0.4;
+    private const double EmptyDuration = 0.6;
+    private static readonly Vector2 SceneSize = new(112, 64);
+    private static readonly Vector2 StartCell = new(24, 26);
+    private static readonly Vector2 StairsCell = new(56, 26);
+    private static readonly Rect2 StairsRegion = new(16, 80, 32, 32);
+
+    private readonly Texture2D _objects = Load("res://assets/sprites/donjon_objets.png");
+    private readonly Texture2D _magus = Load("res://assets/sprites/magus_pixel.png");
+
+    public override void _Draw()
+    {
+        BeginScene(SceneSize, 2f);
+        for (var x = 0; x < SceneSize.X; x += 16)
+        {
+            DrawTile(70, x, 0);
+            DrawTile(87, x, 16);
+            DrawTile(138, x, 32);
+            DrawTile(138, x, 48);
+        }
+
+        DrawTextureRectRegion(_objects, new Rect2(StairsCell, Cell, Cell), StairsRegion);
+
+        var cycle = WaitDuration + WalkDuration + FadeDuration + EmptyDuration;
+        var t = Time % cycle;
+        var position = StartCell;
+        var alpha = 1f;
+        var row = IdleRow;
+        var frame = (int)(Time * 6) % 6;
+        if (t >= WaitDuration && t < WaitDuration + WalkDuration)
+        {
+            var progress = (float)((t - WaitDuration) / WalkDuration);
+            position = new Vector2(Mathf.Round(Mathf.Lerp(StartCell.X, StairsCell.X, progress)), StartCell.Y);
+            row = WalkEastRow;
+            frame = (int)(Time * 12) % 6;
+        }
+        else if (t >= WaitDuration + WalkDuration)
+        {
+            position = StairsCell;
+            alpha = 1f - (float)Math.Clamp((t - WaitDuration - WalkDuration) / FadeDuration, 0.0, 1.0);
+        }
+
+        if (alpha > 0f)
+        {
+            DrawTextureRectRegion(_magus, new Rect2(position, Cell, Cell), new Rect2(frame * Cell, row * Cell, Cell, Cell), new Color(1f, 1f, 1f, alpha));
+        }
+
+        DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+    }
+}
+
+public partial class GestureIllustration : Illustration
+{
+    private const double WaitDuration = 0.6;
+    private const double CardDuration = 1.4;
+    private const float RingRadius = 20f;
+    private const float RingWidth = 3f;
+    private const int RingPoints = 32;
+    private static readonly Vector2 SceneSize = new(112, 64);
+    private static readonly Color RingColor = new(0.95f, 0.89f, 0.74f);
+    private static readonly Color CardColor = new(0.91f, 0.84f, 0.64f);
+    private static readonly Color CardBorder = new(0.36f, 0.24f, 0.15f);
+
+    private readonly Texture2D _doors = Load("res://assets/sprites/donjon_portes.png");
+
+    public override void _Draw()
+    {
+        BeginScene(SceneSize, 2f);
+        for (var x = 0; x < SceneSize.X; x += 16)
+        {
+            DrawTile(53, x, 0);
+            DrawTile(70, x, 16);
+            DrawTile(87, x, 32);
+            DrawTile(138, x, 48);
+        }
+
+        DrawTextureRectRegion(_doors, new Rect2(16, 16, 32, 32), new Rect2(32, 16, 32, 32));
+
+        var hold = LevelView.LongPressDuration;
+        var cycle = WaitDuration + hold + CardDuration;
+        var t = Time % cycle;
+        var center = new Vector2(32, 32);
+        if (t >= WaitDuration && t < WaitDuration + hold)
+        {
+            var progress = (float)((t - WaitDuration) / hold);
+            DrawArc(center, RingRadius / 2f, -Mathf.Pi / 2f, -Mathf.Pi / 2f + Mathf.Tau * progress, RingPoints, RingColor, RingWidth / 2f);
+        }
+        else if (t >= WaitDuration + hold)
+        {
+            var card = new Rect2(60, 12, 46, 40);
+            DrawRect(card, CardColor);
+            DrawRect(card, CardBorder, false, 1f);
+            for (var line = 0; line < 4; line++)
+            {
+                DrawRect(new Rect2(65, 20 + line * 7, line == 3 ? 22 : 36, 2), CardBorder);
+            }
+        }
+
         DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
     }
 }

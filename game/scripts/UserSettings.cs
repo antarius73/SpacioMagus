@@ -7,10 +7,7 @@ public static class UserSettings
 {
     private const string FilePath = "user://reglages.cfg";
     private const string Section = "jeu";
-    private const string TipsKey = "astuces";
     private const string LanguageKey = "langue";
-
-    public static bool TipsEnabled { get; private set; } = true;
 
     public static string Language { get; private set; } = SystemLanguage();
 
@@ -19,7 +16,6 @@ public static class UserSettings
         var config = new ConfigFile();
         if (config.Load(FilePath) == Error.Ok)
         {
-            TipsEnabled = config.GetValue(Section, TipsKey, true).AsBool();
             Language = config.GetValue(Section, LanguageKey, Language).AsString();
         }
 
@@ -27,12 +23,6 @@ public static class UserSettings
         {
             Language = Texts.DefaultLanguage;
         }
-    }
-
-    public static void SetTipsEnabled(bool enabled)
-    {
-        TipsEnabled = enabled;
-        Save(TipsKey, enabled);
     }
 
     public static void SetLanguage(string language)

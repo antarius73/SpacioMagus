@@ -11,7 +11,7 @@ Spacio Magus
 [histoire]
 Zorgus left you in charge of his dungeon. You tried a home-made spell. Bad idea.
 
-You ran to your friend Isabela, who gave you a magic-eating potion. Back home, the dungeon had locked itself down.
+You ran to your friend Isabela, who gave you a magic-eating potion.
 
 Rush to the experiment room and fix it all before the master returns.
 
@@ -19,19 +19,20 @@ Rush to the experiment room and fix it all before the master returns.
 Spacio Magus
 
 [spacio_magus]
-Your magic moves things. It never hurts.
+The lit area shows how far your magic reaches.
+Tap one of these tiles to teleport there!
+Each spell costs one magic gem.
 
-Tap a free lit tile to teleport there. The lit area shows how far your magic reaches.
-
-Each spell costs one gem. Tap the magus to rest and get one back.
+Tapping a neighbouring tile makes you walk there.
+Tapping the magus skips your turn.
 
 [spacio_creatura_titre]
 Spacio Creatura
 
 [spacio_creatura]
-Tap a lit creature, then another one: they swap places and stay stunned. The number above them counts the turns left.
+Tap a lit creature, then another one:
 
-To walk, tap a neighbouring tile.
+they swap places and stay stunned for the number of turns shown above them.
 
 [victoire_titre]
 Victory!
@@ -60,14 +61,15 @@ Dungeon and interface: CraftPix.net.
 
 Effects: Raphael Hatencia (RagnaPixel Studio), CC BY 4.0 licence.
 
-Magus, blob, potion and cobwebs: original sprite packs, licence to be confirmed.
+Magus: an_ghoul (an-ghoul.itch.io).
+
+Blob, potion and cobwebs: Kao (kaopxl.itch.io).
 
 [erreur_titre]
 Data error
 
 [debut_niveau]
 {0}
-Tap ? to see your powers again.
 
 [bouton_suivant]
 Next
@@ -90,17 +92,38 @@ Next level
 [bouton_credits]
 Credits
 
-[bouton_compris]
-Got it
+[jeu_titre]
+Spacio Magus
 
-[astuces_masquer]
-Don't show tips again
+[bouton_nouvelle_partie]
+New game
 
-[astuces_oui]
-Tips: on
+[bouton_continuer]
+Continue
 
-[astuces_non]
-Tips: off
+[bouton_reglages]
+Settings
+
+[bouton_retour]
+Back
+
+[bouton_menu_principal]
+Main menu
+
+[reglages_titre]
+Settings
+
+[confirmation_titre]
+New game?
+
+[confirmation]
+Your current game will be lost.
+
+[bouton_confirmer]
+Confirm
+
+[bouton_annuler]
+Cancel
 
 [langue_choix]
 Language
@@ -109,7 +132,7 @@ Language
 Doors
 
 [porte]
-Tap a neighbouring door to open it. The number tells how many turns until it shuts, pushing away whoever stands in it. A closed door blocks sight and magic.
+Tap a neighbouring door to open it. The number tells how many turns until it shuts, pushing away whoever stands in it.
 
 [fiole_titre]
 Potions
@@ -122,3 +145,20 @@ The green blob
 
 [blob_vert]
 Zorgus's favourite guard: soft, sticky and stubborn. If it touches you, it engulfs you and you will wait inside it for the master. Once it has seen you, it never lets go.
+
+[escalier_titre]
+The stairs
+
+[escalier]
+The way out of the level. Step on it to go deeper into the dungeon.
+
+[geste_titre]
+Long press
+
+[geste]
+To learn everything about a door, a creature, an item or the magus himself, keep your finger on it.
+
+On a computer, just right-click.
+
+[fermer_indication]
+Tap to close

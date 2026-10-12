@@ -28,8 +28,6 @@ public partial class Hud : CanvasLayer
 
     public event Action? PausePressed;
 
-    public event Action? HelpPressed;
-
     public override void _Ready()
     {
         var root = new Control { Theme = GuiAssets.Theme, MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -54,14 +52,10 @@ public partial class Hud : CanvasLayer
 
         var icons = new HBoxContainer();
         icons.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.RightWide);
-        icons.OffsetLeft = -2 * TouchSize - 4;
+        icons.OffsetLeft = -TouchSize - 4;
         icons.OffsetRight = -2;
         icons.AddThemeConstantOverride("separation", 0);
         top.AddChild(icons);
-
-        var help = IconButton(1);
-        help.Pressed += () => HelpPressed?.Invoke();
-        icons.AddChild(help);
 
         var pause = IconButton(0);
         pause.Pressed += () => PausePressed?.Invoke();

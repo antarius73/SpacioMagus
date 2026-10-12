@@ -1,7 +1,6 @@
-using System;
 using System.Collections.Generic;
-using System.Text;
 using Godot;
+using SpacioMagus.Core.Loading;
 
 namespace SpacioMagus;
 
@@ -13,21 +12,23 @@ public static class Texts
 
     private const string NameKey = "langue";
 
-    private static Dictionary<string, string> _fallback = new();
-    private static Dictionary<string, string> _current = new();
+    private static IReadOnlyDictionary<string, string> _fallback = new Dictionary<string, string>();
+    private static IReadOnlyDictionary<string, string> _current = new Dictionary<string, string>();
 
     public static string Language { get; private set; } = DefaultLanguage;
 
     public static void Load(string language)
     {
-        _fallback = Parse(DefaultLanguage, GameData.ReadText(FileName(DefaultLanguage)));
-        _current = language == DefaultLanguage ? _fallback : Parse(language, GameData.ReadText(FileName(language)));
+        var fallback = Parse(DefaultLanguage);
+        var current = language == DefaultLanguage ? fallback : Parse(language);
+        _fallback = fallback;
+        _current = current;
         Language = language;
     }
 
     public static string LanguageName(string language)
     {
-        var texts = language == Language ? _current : Parse(language, GameData.ReadText(FileName(language)));
+        var texts = language == Language ? _current : Parse(language);
         return texts.TryGetValue(NameKey, out var name) ? name : language;
     }
 
@@ -75,15 +76,29 @@ public static class Texts
 
     public static string CreditsButton => Get("bouton_credits");
 
-    public static string DiscoveryButton => Get("bouton_compris");
-
-    public static string HideTips => Get("astuces_masquer");
-
-    public static string TipsOn => Get("astuces_oui");
-
-    public static string TipsOff => Get("astuces_non");
-
     public static string LanguageLabel => Get("langue_choix");
+
+    public static string GameTitle => Get("jeu_titre");
+
+    public static string NewGameButton => Get("bouton_nouvelle_partie");
+
+    public static string ContinueButton => Get("bouton_continuer");
+
+    public static string SettingsButton => Get("bouton_reglages");
+
+    public static string BackButton => Get("bouton_retour");
+
+    public static string MainMenuButton => Get("bouton_menu_principal");
+
+    public static string SettingsTitle => Get("reglages_titre");
+
+    public static string ConfirmNewGameTitle => Get("confirmation_titre");
+
+    public static string ConfirmNewGame => Get("confirmation");
+
+    public static string ConfirmButton => Get("bouton_confirmer");
+
+    public static string CancelButton => Get("bouton_annuler");
 
     public static string DoorTitle => Get("porte_titre");
 
@@ -96,6 +111,16 @@ public static class Texts
     public static string GreenBlobTitle => Get("blob_vert_titre");
 
     public static string GreenBlob => Get("blob_vert");
+
+    public static string StairsTitle => Get("escalier_titre");
+
+    public static string Stairs => Get("escalier");
+
+    public static string GestureTitle => Get("geste_titre");
+
+    public static string Gesture => Get("geste");
+
+    public static string CloseHint => Get("fermer_indication");
 
     private static string FileName(string language) => $"textes_{language}.txt";
 
@@ -110,51 +135,6 @@ public static class Texts
         return $"[{key}]";
     }
 
-    private static Dictionary<string, string> Parse(string language, string content)
-    {
-        var texts = new Dictionary<string, string>();
-        string? key = null;
-        var buffer = new StringBuilder();
-        var lines = content.Replace("\r\n", "\n").Split('\n');
-        for (var index = 0; index < lines.Length; index++)
-        {
-            var line = lines[index];
-            var trimmed = line.Trim();
-            if (trimmed.StartsWith('[') && trimmed.EndsWith(']') && trimmed.Length > 2)
-            {
-                Store(texts, key, buffer, language);
-                key = trimmed[1..^1].Trim();
-                buffer.Clear();
-                continue;
-            }
-
-            if (key is null)
-            {
-                if (trimmed.Length > 0 && !trimmed.StartsWith('#'))
-                {
-                    throw new System.IO.IOException($"textes_{language}.txt ligne {index + 1} : texte hors d'une clé [cle].");
-                }
-
-                continue;
-            }
-
-            buffer.Append(line.TrimEnd()).Append('\n');
-        }
-
-        Store(texts, key, buffer, language);
-        return texts;
-    }
-
-    private static void Store(Dictionary<string, string> texts, string? key, StringBuilder buffer, string language)
-    {
-        if (key is null)
-        {
-            return;
-        }
-
-        if (!texts.TryAdd(key, buffer.ToString().Trim('\n')))
-        {
-            throw new System.IO.IOException($"textes_{language}.txt : clé [{key}] en double.");
-        }
-    }
+    private static IReadOnlyDictionary<string, string> Parse(string language) =>
+        TextFile.Parse(FileName(language), GameData.ReadText(FileName(language)));
 }

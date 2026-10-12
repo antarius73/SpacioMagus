@@ -10,17 +10,15 @@ public class MagicTests
     };
 
     [Fact]
-    public void WaitingRegeneratesOnePointWithoutExceedingMax()
+    public void WaitingDoesNotRestoreMagic()
     {
         var game = TestMaps.NewGame(TestMaps.Parse(Corridor));
         game.CastSpacioMagus(new Position(5, 1));
         Assert.Equal(3, game.Magus.Magic);
 
-        game.Wait();
-        Assert.Equal(4, game.Magus.Magic);
-
-        game.Wait();
-        Assert.Equal(4, game.Magus.Magic);
+        var result = game.Wait();
+        Assert.True(result.Success);
+        Assert.Equal(3, game.Magus.Magic);
     }
 
     [Fact]

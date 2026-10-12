@@ -13,7 +13,7 @@ public enum TapKind
     Move,
     Teleport,
     Creature,
-    Rest,
+    Wait,
     Invalid,
 }
 
@@ -83,7 +83,7 @@ public partial class LevelView : Node2D
     private static readonly Color MoveFlashColor = new(1f, 1f, 1f);
     private static readonly Color TeleportFlashColor = new(0.45f, 0.85f, 1f);
     private static readonly Color CreatureFlashColor = new(0.85f, 0.6f, 1f);
-    private static readonly Color RestFlashColor = new(1f, 0.85f, 0.4f);
+    private static readonly Color WaitFlashColor = new(1f, 0.85f, 0.4f);
     private static readonly Color InvalidFlashColor = new(1f, 0.3f, 0.25f);
     private const float OutsideZoneDarkness = 0.5f;
     private const float ZoneFadeSpeed = 2.5f;
@@ -131,6 +131,9 @@ public partial class LevelView : Node2D
     private (Cell Cell, double Start)? _selectionShock;
     private (Cell Cell, double Start)? _fadingShock;
     private bool _wasBusy;
+    private (Cell Cell, double Start)? _hold;
+
+    public double HoldElapsed => _hold is { } hold ? _time - hold.Start : 0.0;
 
     public event Action? AnimationsFinished;
 
@@ -159,6 +162,12 @@ public partial class LevelView : Node2D
 
     private const double MoveDuration = 0.15;
     private const int DefaultFacing = -1;
+    private const float HoldRingRadius = 14f;
+    private const float HoldRingWidth = 2f;
+    private const int HoldRingPoints = 32;
+    private static readonly Color HoldRingColor = new(0.95f, 0.89f, 0.74f, 0.9f);
+
+    public const double LongPressDuration = 0.5;
     private const int WalkRowOffset = 0;
     private const int IdleRowOffset = 8;
 
@@ -190,6 +199,7 @@ public partial class LevelView : Node2D
         _teleport = null;
         _swap = null;
         _swapOrigins.Clear();
+        _hold = null;
         _selectionShock = null;
         _fadingShock = null;
         _wasBusy = false;
@@ -231,6 +241,16 @@ public partial class LevelView : Node2D
         QueueRedraw();
     }
 
+    public void BeginHold(Cell cell)
+    {
+        _hold = (cell, _time);
+    }
+
+    public void EndHold()
+    {
+        _hold = null;
+    }
+
     public void Flash(Cell cell, TapKind kind)
     {
         var color = kind switch
@@ -238,7 +258,7 @@ public partial class LevelView : Node2D
             TapKind.Move => MoveFlashColor,
             TapKind.Teleport => TeleportFlashColor,
             TapKind.Creature => CreatureFlashColor,
-            TapKind.Rest => RestFlashColor,
+            TapKind.Wait => WaitFlashColor,
             _ => InvalidFlashColor,
         };
         _flashes.Add((cell, color, _time));
@@ -530,6 +550,7 @@ public partial class LevelView : Node2D
         }
 
         DrawFlashes();
+        DrawHold();
 
         foreach (var grille in _game.Grilles)
         {
@@ -635,6 +656,23 @@ public partial class LevelView : Node2D
 
     private bool IsOutsideEdge(LevelDefinition level, Cell neighbour) =>
         !_zone.Contains(neighbour) && level.TerrainAt(neighbour) is Terrain.Floor or Terrain.Stairs;
+
+    private void DrawHold()
+    {
+        if (_hold is not { } hold)
+        {
+            return;
+        }
+
+        var progress = (float)Math.Clamp((_time - hold.Start) / LongPressDuration, 0.0, 1.0);
+        if (progress <= 0f)
+        {
+            return;
+        }
+
+        var start = -Mathf.Pi / 2f;
+        DrawArc(CellCenter(hold.Cell), HoldRingRadius, start, start + Mathf.Tau * progress, HoldRingPoints, HoldRingColor, HoldRingWidth);
+    }
 
     private void DrawFlashes()
     {

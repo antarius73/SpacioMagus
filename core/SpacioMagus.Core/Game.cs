@@ -8,6 +8,8 @@ public sealed class Game
     private readonly IRandomSource _random;
     private List<GameEvent> _events = new();
 
+    public const int RulesVersion = 1;
+
     public Game(LevelDefinition level, RuleSet? rules = null, IRandomSource? random = null)
     {
         Level = level ?? throw new ArgumentNullException(nameof(level));
@@ -110,6 +112,17 @@ public sealed class Game
         return _monsters.Where(monster => CheckSwapTarget(monster) == ActionError.None).ToList();
     }
 
+    public ActionResult Apply(GameAction action) => action switch
+    {
+        MoveAction move => Move(move.Target),
+        WaitAction => Wait(),
+        OpenGrilleAction grille => OpenGrille(grille.Target),
+        SpacioMagusAction teleport => CastSpacioMagus(teleport.Target),
+        SpacioCreaturaAction swap => CastSpacioCreatura(swap.First, swap.Second),
+        null => throw new ArgumentNullException(nameof(action)),
+        _ => throw new ArgumentException($"Action inconnue : {action.GetType().Name}.", nameof(action)),
+    };
+
     public ActionResult Move(Position target)
     {
         if (Status != GameStatus.Playing)
@@ -150,7 +163,6 @@ public sealed class Game
         }
 
         BeginTurn();
-        ChangeMagic(Magus.Magic + Rules.RegenPerTurn);
         return EndTurn();
     }
 
