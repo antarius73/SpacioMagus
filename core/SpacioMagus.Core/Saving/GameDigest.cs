@@ -14,7 +14,7 @@ public static class GameDigest
         foreach (var monster in game.Monsters.OrderBy(monster => monster.Id))
         {
             text.Append(CultureInfo.InvariantCulture,
-                $"monstre {monster.Id} {monster.Position.X} {monster.Position.Y} {monster.StunTurns} {monster.IsTracking}\n");
+                $"monstre {monster.Id} {monster.Kind} {monster.Position.X} {monster.Position.Y} {monster.StunTurns} {monster.IsTracking} {monster.FearTurns} {monster.MutationTurns}\n");
         }
 
         foreach (var grille in game.Grilles.OrderBy(grille => grille.Position.Y).ThenBy(grille => grille.Position.X))

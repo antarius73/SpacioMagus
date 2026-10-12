@@ -9,6 +9,9 @@ public enum InfoSubject
     Potion,
     GreenBlob,
     Stairs,
+    RedBlob,
+    Torch,
+    Brazier,
 }
 
 public partial class InfoPopup : CanvasLayer
@@ -29,7 +32,10 @@ public partial class InfoPopup : CanvasLayer
             InfoSubject.Door => (Texts.DoorTitle, Texts.Door, (Control)new DoorIllustration()),
             InfoSubject.Potion => (Texts.PotionTitle, Texts.Potion, (Control)new PotionIllustration()),
             InfoSubject.Stairs => (Texts.StairsTitle, Texts.Stairs, (Control)new StairsIllustration()),
-            _ => (Texts.GreenBlobTitle, Texts.GreenBlob, (Control)new BlobIllustration()),
+            InfoSubject.RedBlob => (Texts.RedBlobTitle, Texts.RedBlob, (Control)new BlobIllustration(BlobIllustration.RedRow)),
+            InfoSubject.Torch => (Texts.TorchTitle, Texts.Torch, (Control)new TorchIllustration()),
+            InfoSubject.Brazier => (Texts.BrazierTitle, Texts.Brazier, (Control)new BrazierIllustration()),
+            _ => (Texts.GreenBlobTitle, Texts.GreenBlob, (Control)new BlobIllustration(BlobIllustration.GreenRow)),
         };
 
         var popup = new InfoPopup { Layer = 9 };
@@ -250,18 +256,90 @@ public partial class PotionIllustration : Illustration
 
 public partial class BlobIllustration : Illustration
 {
+    public const int GreenRow = 5;
+    public const int RedRow = 6;
+
     private const double FrameDuration = 0.2;
     private const int Frames = 4;
-    private const int Row = 160;
     private static readonly Vector2 SceneSize = new(32, 32);
 
     private readonly Texture2D _animations = Load("res://assets/sprites/animations.png");
+    private readonly int _row;
+
+    public BlobIllustration()
+        : this(GreenRow)
+    {
+    }
+
+    public BlobIllustration(int row)
+    {
+        _row = row;
+    }
 
     public override void _Draw()
     {
         BeginScene(SceneSize, 3f);
         var frame = (int)(Time / FrameDuration) % Frames;
-        DrawTextureRectRegion(_animations, new Rect2(0, 0, 32, 32), new Rect2(frame * 32, Row, 32, 32));
+        DrawTextureRectRegion(_animations, new Rect2(0, 0, 32, 32), new Rect2(frame * 32, _row * 32, 32, 32));
+        DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+    }
+}
+
+public partial class TorchIllustration : Illustration
+{
+    private const int Cell = 32;
+    private const int FireColumn = 39;
+    private const int FireHeight = 48;
+    private const int FireFrames = 6;
+    private const int FireOffsetY = -8;
+    private static readonly Vector2 SceneSize = new(112, 64);
+    private static readonly Color FearColor = new(1f, 0.55f, 0.2f, 0.25f);
+
+    private readonly Texture2D _fire = Load("res://assets/sprites/donjon_feu.png");
+
+    public override void _Draw()
+    {
+        BeginScene(SceneSize, 2f);
+        for (var x = 0; x < SceneSize.X; x += 16)
+        {
+            DrawTile(70, x, 0);
+            DrawTile(87, x, 16);
+            DrawTile(138, x, 32);
+            DrawTile(138, x, 48);
+        }
+
+        DrawRect(new Rect2(8, Cell, 3 * Cell, Cell), FearColor);
+        var frame = (int)(Time * 8) % FireFrames;
+        DrawTextureRectRegion(_fire, new Rect2(40, FireOffsetY, Cell, FireHeight), new Rect2(FireColumn, frame * FireHeight, Cell, FireHeight));
+        DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+    }
+}
+
+public partial class BrazierIllustration : Illustration
+{
+    private const int Cell = 32;
+    private const int BrazierColumn = 128;
+    private const int BrazierSize = 48;
+    private const int FireFrames = 6;
+    private static readonly Vector2 SceneSize = new(112, 64);
+    private static readonly Color FearColor = new(1f, 0.55f, 0.2f, 0.25f);
+
+    private readonly Texture2D _fire = Load("res://assets/sprites/donjon_feu.png");
+
+    public override void _Draw()
+    {
+        BeginScene(SceneSize, 2f);
+        for (var y = 0; y < SceneSize.Y; y += 16)
+        {
+            for (var x = 0; x < SceneSize.X; x += 16)
+            {
+                DrawTile(138, x, y);
+            }
+        }
+
+        DrawRect(new Rect2(8, 0, 3 * Cell, SceneSize.Y), FearColor);
+        var frame = (int)(Time * 8) % FireFrames;
+        DrawTextureRectRegion(_fire, new Rect2(32, 6, BrazierSize, BrazierSize), new Rect2(BrazierColumn, frame * BrazierSize, BrazierSize, BrazierSize));
         DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
     }
 }

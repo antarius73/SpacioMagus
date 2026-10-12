@@ -37,6 +37,12 @@ public static class SpellFx
     public const float StunOffsetX = 16f;
     public const float StunOffsetY = 2f;
 
+    public const int MutationSize = 28;
+    public const int MutationFrames = 22;
+    public const double MutationFrameDuration = 0.06;
+    public const float MutationOffsetY = -2f;
+
+    private static Texture2D? _mutation;
     private static Texture2D? _auraBack;
     private static Texture2D? _auraFront;
     private static Texture2D? _shock;
@@ -49,6 +55,8 @@ public static class SpellFx
     public static Texture2D Shock => _shock ??= Load("res://assets/fx/aura_electrique.png");
 
     public static Texture2D StunSwirl => _stunSwirl ??= Load("res://assets/fx/etourdi.png");
+
+    public static Texture2D Mutation => _mutation ??= Load("res://assets/fx/mutation.png");
 
     public static bool IsDeparting(double elapsed) => elapsed < TeleportHalfDuration;
 
@@ -122,6 +130,17 @@ public static class SpellFx
         var target = new Rect2(center.X - StunSwirlWidth / 2, center.Y - StunSwirlHeight / 2, StunSwirlWidth, StunSwirlHeight);
         canvas.DrawTextureRectRegion(StunSwirl, target, new Rect2(frame * StunSwirlWidth, 0, StunSwirlWidth, StunSwirlHeight));
         GuiAssets.DrawNumber(canvas, turns, center);
+    }
+
+    public static void DrawMutation(CanvasItem canvas, Vector2 cellOrigin, double time)
+    {
+        var frame = (int)(time / MutationFrameDuration) % MutationFrames;
+        var target = new Rect2(
+            cellOrigin.X + StunOffsetX - MutationSize / 2f,
+            cellOrigin.Y + MutationOffsetY - MutationSize / 2f,
+            MutationSize,
+            MutationSize);
+        canvas.DrawTextureRectRegion(Mutation, target, new Rect2(frame * MutationSize, 0, MutationSize, MutationSize));
     }
 
     private static void DrawAuraRow(CanvasItem canvas, Texture2D layer, Rect2 target, int frame, int row, float alpha)

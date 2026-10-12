@@ -146,6 +146,24 @@ Le blob vert
 [blob_vert]
 Le gardien préféré de Zorgus : mou, collant et obstiné. S'il vous touche, il vous englobe et vous attendrez le retour du maître dedans. Une fois qu'il vous a vu, il ne vous lâche plus.
 
+[blob_rouge_titre]
+Le blob rouge
+
+[blob_rouge]
+Un blob vert qui a eu trop peur du feu. Le feu ne l'arrête plus, mais l'eau le terrifie. Coincé par sa peur, il redevient vert.
+
+[torche_titre]
+La torchère
+
+[torche]
+Les blobs verts craignent le feu : ils n'entrent pas dans les trois cases sous la torchère et n'y attaquent pas. Bloqué trop longtemps, un blob vert devient rouge.
+
+[brasero_titre]
+Le brasero
+
+[brasero]
+Un feu infranchissable, qui laisse passer la vue et la magie. Les blobs verts ne s'approchent pas des cases qui l'entourent.
+
 [escalier_titre]
 L'escalier
 

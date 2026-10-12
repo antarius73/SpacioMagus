@@ -28,7 +28,7 @@ public class GameDataTests
         var game = NewLevel01();
 
         Play(game,
-            g => g.Move(new Position(4, 20)),
+            g => g.Move(new Position(3, 20)),
             g => g.Move(new Position(4, 19)),
             g => g.OpenGrille(new Position(4, 18)),
             g => g.Move(new Position(4, 18)),
@@ -62,7 +62,7 @@ public class GameDataTests
         var game = NewLevel01();
 
         Play(game,
-            g => g.Move(new Position(4, 20)),
+            g => g.Move(new Position(3, 20)),
             g => g.Move(new Position(4, 19)),
             g => g.OpenGrille(new Position(4, 18)),
             g => g.Move(new Position(4, 18)),

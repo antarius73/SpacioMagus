@@ -4,3 +4,4 @@ cout_sort = 1
 portee_sort = 8
 duree_etourdi = 4
 duree_grille = 5
+duree_mutation = 2

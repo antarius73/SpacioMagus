@@ -7,4 +7,6 @@ public enum Terrain
     Wall,
     Grille,
     Stairs,
+    Brazier,
+    Water,
 }

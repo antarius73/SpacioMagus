@@ -6,9 +6,11 @@ public sealed class Game
     private readonly Dictionary<Position, GrilleState> _grilles;
     private readonly HashSet<Position> _potions;
     private readonly IRandomSource _random;
+    private readonly HashSet<Position> _fireZone;
+    private readonly HashSet<Position> _waterZone;
     private List<GameEvent> _events = new();
 
-    public const int RulesVersion = 1;
+    public const int RulesVersion = 2;
 
     public Game(LevelDefinition level, RuleSet? rules = null, IRandomSource? random = null)
     {
@@ -28,6 +30,8 @@ public sealed class Game
         }
 
         _potions = new HashSet<Position>(level.Potions);
+        _fireZone = BuildFireZone(level);
+        _waterZone = BuildWaterZone(level);
     }
 
     public LevelDefinition Level { get; }
@@ -62,7 +66,22 @@ public sealed class Game
         _ => false,
     };
 
-    public bool IsWalkable(Position position) => !BlocksSight(position);
+    public bool IsWalkable(Position position) =>
+        !BlocksSight(position) && !LevelDefinition.IsObstacle(Level.TerrainAt(position));
+
+    public IReadOnlyCollection<Position> FearZone(MonsterKind kind) => kind switch
+    {
+        MonsterKind.BlobVert => _fireZone,
+        MonsterKind.BlobRouge => _waterZone,
+        _ => Array.Empty<Position>(),
+    };
+
+    public bool IsFeared(MonsterKind kind, Position position) => kind switch
+    {
+        MonsterKind.BlobVert => _fireZone.Contains(position),
+        MonsterKind.BlobRouge => _waterZone.Contains(position),
+        _ => false,
+    };
 
     public bool IsCornerFree(Position from, Position to)
     {
@@ -72,7 +91,7 @@ public sealed class Game
             return true;
         }
 
-        return IsWalkable(new Position(to.X, from.Y)) && IsWalkable(new Position(from.X, to.Y));
+        return !BlocksSight(new Position(to.X, from.Y)) && !BlocksSight(new Position(from.X, to.Y));
     }
 
     public bool HasLineOfSight(Position from, Position to) => ClearLine(from, to);
@@ -279,6 +298,7 @@ public sealed class Game
         foreach (var monster in new[] { a, b })
         {
             monster.StunTurns = Rules.StunDuration;
+            monster.FearTurns = 0;
             _events.Add(new MonsterStunned(monster.Id, monster.StunTurns));
             LoseTrack(monster);
         }
@@ -467,6 +487,34 @@ public sealed class Game
             return;
         }
 
+        if (monster.MutationTurns > 0)
+        {
+            monster.MutationTurns--;
+            if (monster.MutationTurns == 0)
+            {
+                var from = monster.Kind;
+                monster.Kind = Mutated(from);
+                _events.Add(new MonsterMutated(monster.Id, from, monster.Kind));
+            }
+
+            return;
+        }
+
+        var wasAfraid = monster.FearTurns > 0;
+        monster.FearTurns = 0;
+
+        if (IsFeared(monster.Kind, monster.Position))
+        {
+            if (FleeStep(monster) is { } refuge)
+            {
+                StepMonster(monster, refuge);
+                return;
+            }
+
+            BlockByFear(monster, wasAfraid);
+            return;
+        }
+
         if (!monster.IsTracking && HasLineOfSight(monster.Position, Magus.Position))
         {
             monster.IsTracking = true;
@@ -475,7 +523,8 @@ public sealed class Game
 
         if (monster.IsTracking)
         {
-            if (monster.Position.IsAdjacentTo(Magus.Position) && IsCornerFree(monster.Position, Magus.Position))
+            var adjacent = monster.Position.IsAdjacentTo(Magus.Position) && IsCornerFree(monster.Position, Magus.Position);
+            if (adjacent && !IsFeared(monster.Kind, Magus.Position))
             {
                 var from = monster.Position;
                 monster.Position = Magus.Position;
@@ -485,34 +534,194 @@ public sealed class Game
                 return;
             }
 
-            StepTowards(monster, Magus.Position);
+            if (adjacent)
+            {
+                BlockByFear(monster, wasAfraid);
+                return;
+            }
+
+            Chase(monster, wasAfraid);
             return;
         }
 
-        if (monster.Position != monster.Post)
+        if (monster.Position != monster.Post
+            && !IsFeared(monster.Kind, monster.Post)
+            && FirstStep(monster.Position, monster.Post, monster.Kind) is { } step)
         {
-            StepTowards(monster, monster.Post);
+            TryStep(monster, step);
         }
     }
 
-    private void StepTowards(MonsterState monster, Position goal)
+    private void Chase(MonsterState monster, bool wasAfraid)
     {
-        if (FirstStep(monster.Position, goal) is not { } step)
+        if (FirstStep(monster.Position, Magus.Position, monster.Kind) is { } step)
+        {
+            TryStep(monster, step);
+            return;
+        }
+
+        if (FirstStep(monster.Position, Magus.Position, null) is null)
         {
             return;
         }
 
+        if (ClosestApproach(monster) is { } approach)
+        {
+            TryStep(monster, approach);
+            return;
+        }
+
+        BlockByFear(monster, wasAfraid);
+    }
+
+    private void BlockByFear(MonsterState monster, bool wasAfraid)
+    {
+        if (!wasAfraid)
+        {
+            monster.FearTurns = 1;
+            _events.Add(new MonsterAfraid(monster.Id));
+            return;
+        }
+
+        monster.MutationTurns = Rules.MutationDuration - 1;
+        _events.Add(new MonsterMutationStarted(monster.Id, Rules.MutationDuration));
+        if (monster.MutationTurns == 0)
+        {
+            var from = monster.Kind;
+            monster.Kind = Mutated(from);
+            _events.Add(new MonsterMutated(monster.Id, from, monster.Kind));
+        }
+    }
+
+    private static MonsterKind Mutated(MonsterKind kind) => kind switch
+    {
+        MonsterKind.BlobVert => MonsterKind.BlobRouge,
+        MonsterKind.BlobRouge => MonsterKind.BlobVert,
+        _ => kind,
+    };
+
+    private void TryStep(MonsterState monster, Position step)
+    {
         if (!IsWalkable(step) || IsOccupied(step) || !IsCornerFree(monster.Position, step))
         {
             return;
         }
 
+        StepMonster(monster, step);
+    }
+
+    private void StepMonster(MonsterState monster, Position step)
+    {
         var from = monster.Position;
         monster.Position = step;
         _events.Add(new MonsterMoved(monster.Id, from, step, MoveCause.Step));
     }
 
-    private Position? FirstStep(Position start, Position goal)
+    private Position? FleeStep(MonsterState monster)
+    {
+        var start = monster.Position;
+        var cameFrom = new Dictionary<Position, Position> { [start] = start };
+        var queue = new Queue<Position>();
+        queue.Enqueue(start);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            if (current != start && !IsFeared(monster.Kind, current))
+            {
+                var step = FirstOnPath(cameFrom, start, current);
+                return IsWalkable(step) && !IsOccupied(step) && IsCornerFree(start, step) ? step : null;
+            }
+
+            foreach (var direction in Position.Directions)
+            {
+                var next = current + direction;
+                if (cameFrom.ContainsKey(next) || !IsWalkable(next) || IsOccupied(next) || !IsCornerFree(current, next))
+                {
+                    continue;
+                }
+
+                cameFrom[next] = current;
+                queue.Enqueue(next);
+            }
+        }
+
+        return null;
+    }
+
+    private Position? ClosestApproach(MonsterState monster)
+    {
+        var distances = Distances(Magus.Position);
+        var start = monster.Position;
+        if (!distances.TryGetValue(start, out var best))
+        {
+            return null;
+        }
+
+        Position? target = null;
+        var cameFrom = new Dictionary<Position, Position> { [start] = start };
+        var queue = new Queue<Position>();
+        queue.Enqueue(start);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            if (current != start && distances.TryGetValue(current, out var distance) && distance < best && !IsOccupied(current))
+            {
+                best = distance;
+                target = current;
+            }
+
+            foreach (var direction in Position.Directions)
+            {
+                var next = current + direction;
+                if (cameFrom.ContainsKey(next) || !IsPlannable(next) || !IsPlannableCorner(current, next) || IsFeared(monster.Kind, next))
+                {
+                    continue;
+                }
+
+                cameFrom[next] = current;
+                queue.Enqueue(next);
+            }
+        }
+
+        return target is { } goal ? FirstOnPath(cameFrom, start, goal) : null;
+    }
+
+    private Dictionary<Position, int> Distances(Position origin)
+    {
+        var distances = new Dictionary<Position, int> { [origin] = 0 };
+        var queue = new Queue<Position>();
+        queue.Enqueue(origin);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            foreach (var direction in Position.Directions)
+            {
+                var next = current + direction;
+                if (distances.ContainsKey(next) || !IsPlannable(next) || !IsPlannableCorner(current, next))
+                {
+                    continue;
+                }
+
+                distances[next] = distances[current] + 1;
+                queue.Enqueue(next);
+            }
+        }
+
+        return distances;
+    }
+
+    private static Position FirstOnPath(Dictionary<Position, Position> cameFrom, Position start, Position goal)
+    {
+        var step = goal;
+        while (cameFrom[step] != start)
+        {
+            step = cameFrom[step];
+        }
+
+        return step;
+    }
+
+    private Position? FirstStep(Position start, Position goal, MonsterKind? afraidOf)
     {
         if (start == goal)
         {
@@ -538,27 +747,70 @@ public sealed class Game
                     continue;
                 }
 
+                if (afraidOf is { } kind && next != goal && IsFeared(kind, next))
+                {
+                    continue;
+                }
+
                 cameFrom[next] = current;
                 queue.Enqueue(next);
             }
         }
 
-        if (!cameFrom.ContainsKey(goal))
-        {
-            return null;
-        }
-
-        var step = goal;
-        while (cameFrom[step] != start)
-        {
-            step = cameFrom[step];
-        }
-
-        return step;
+        return cameFrom.ContainsKey(goal) ? FirstOnPath(cameFrom, start, goal) : null;
     }
 
     private bool IsPlannable(Position position) =>
-        Level.InBounds(position) && !LevelDefinition.IsSolid(Level.TerrainAt(position));
+        Level.InBounds(position)
+        && !LevelDefinition.IsSolid(Level.TerrainAt(position))
+        && !LevelDefinition.IsObstacle(Level.TerrainAt(position));
+
+    private static HashSet<Position> BuildFireZone(LevelDefinition level)
+    {
+        var zone = new HashSet<Position>();
+        foreach (var torch in level.Torches)
+        {
+            for (var dx = -1; dx <= 1; dx++)
+            {
+                zone.Add(new Position(torch.X + dx, torch.Y + 1));
+            }
+        }
+
+        foreach (var brazier in level.Cells.Select((terrain, index) => (terrain, index)).Where(cell => cell.terrain == Terrain.Brazier))
+        {
+            var center = new Position(brazier.index % level.Width, brazier.index / level.Width);
+            for (var dy = -1; dy <= 1; dy++)
+            {
+                for (var dx = -1; dx <= 1; dx++)
+                {
+                    zone.Add(new Position(center.X + dx, center.Y + dy));
+                }
+            }
+        }
+
+        zone.RemoveWhere(position => LevelDefinition.IsSolid(level.TerrainAt(position)));
+        return zone;
+    }
+
+    private static HashSet<Position> BuildWaterZone(LevelDefinition level)
+    {
+        var zone = new HashSet<Position>();
+        foreach (var water in level.Cells.Select((terrain, index) => (terrain, index)).Where(cell => cell.terrain == Terrain.Water))
+        {
+            var center = new Position(water.index % level.Width, water.index / level.Width);
+            foreach (var direction in Position.Directions)
+            {
+                var neighbor = center + direction;
+                if (level.TerrainAt(neighbor) != Terrain.Water)
+                {
+                    zone.Add(neighbor);
+                }
+            }
+        }
+
+        zone.RemoveWhere(position => LevelDefinition.IsSolid(level.TerrainAt(position)));
+        return zone;
+    }
 
     private bool IsPlannableCorner(Position from, Position to)
     {
@@ -568,8 +820,11 @@ public sealed class Game
             return true;
         }
 
-        return IsPlannable(new Position(to.X, from.Y)) && IsPlannable(new Position(from.X, to.Y));
+        return IsCornerPlannable(new Position(to.X, from.Y)) && IsCornerPlannable(new Position(from.X, to.Y));
     }
+
+    private bool IsCornerPlannable(Position position) =>
+        Level.InBounds(position) && !LevelDefinition.IsSolid(Level.TerrainAt(position));
 
     private void RunObjects()
     {

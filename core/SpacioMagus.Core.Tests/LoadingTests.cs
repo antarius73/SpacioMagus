@@ -14,6 +14,9 @@ public class LoadingTests
         @ = depart
         b = blob_vert
         p = fiole
+        r = blob_rouge
+        * = brasero
+        ~ = eau
         t = torche, decor
         """;
 
@@ -54,7 +57,8 @@ public class LoadingTests
         Assert.Equal(new[] { new Position(7, 3) }, definition.Potions);
         Assert.Equal(Terrain.Grille, definition.TerrainAt(new Position(4, 2)));
         Assert.Equal(Terrain.Stairs, definition.TerrainAt(new Position(4, 1)));
-        Assert.Equal(new[] { new DecorItem(new Position(3, 0), "torche"), new DecorItem(new Position(5, 0), "torche") }, level.Decor);
+        Assert.Empty(level.Decor);
+        Assert.Equal(new[] { new Position(3, 0), new Position(5, 0) }, definition.Torches);
     }
 
     [Fact]
@@ -166,6 +170,40 @@ public class LoadingTests
         Assert.Equal(2, error.Issues.Count);
         Assert.Contains(error.Issues, issue => issue.Message.Contains("« 2 »"));
         Assert.Contains(error.Issues, issue => issue.Message.Contains("« 1 »"));
+    }
+
+    [Fact]
+    public void NewElementsAreLoaded()
+    {
+        var level = Load("""
+            [carte]
+            #######
+            #@.r*~#
+            #....>#
+            #######
+            """);
+
+        var definition = level.Definition;
+        Assert.Equal(MonsterKind.BlobRouge, Assert.Single(definition.Monsters).Kind);
+        Assert.Equal(Terrain.Brazier, definition.TerrainAt(new Position(4, 1)));
+        Assert.Equal(Terrain.Water, definition.TerrainAt(new Position(5, 1)));
+    }
+
+    [Fact]
+    public void TorchMustHangOverFloor()
+    {
+        var error = LoadFails("""
+            [carte]
+            #######
+            #######
+            #@...>#
+            #######
+
+            [decor]
+              t
+            """);
+
+        Assert.Contains("torchère", Assert.Single(error.Issues).Message);
     }
 
     [Fact]

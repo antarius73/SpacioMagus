@@ -9,6 +9,7 @@ internal static class RuleKeys
         ["portee_sort"] = (rules, value) => rules with { SpellRange = value },
         ["duree_etourdi"] = (rules, value) => rules with { StunDuration = value },
         ["duree_grille"] = (rules, value) => rules with { GrilleOpenDuration = value },
+        ["duree_mutation"] = (rules, value) => rules with { MutationDuration = value },
     };
 
     public static IEnumerable<string> Names => Setters.Keys;

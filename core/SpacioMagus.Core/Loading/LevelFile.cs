@@ -112,6 +112,8 @@ public static class LevelFile
                     ElementIds.Void => Terrain.Void,
                     ElementIds.Grille => Terrain.Grille,
                     ElementIds.Stairs => Terrain.Stairs,
+                    ElementIds.Brazier => Terrain.Brazier,
+                    ElementIds.Water => Terrain.Water,
                     _ => Terrain.Floor,
                 };
 
@@ -122,6 +124,9 @@ public static class LevelFile
                         break;
                     case ElementIds.BlobVert:
                         monsters.Add(new MonsterSpawn(MonsterKind.BlobVert, position, post ?? position));
+                        break;
+                    case ElementIds.BlobRouge:
+                        monsters.Add(new MonsterSpawn(MonsterKind.BlobRouge, position, post ?? position));
                         break;
                     case ElementIds.Potion:
                         potions.Add(position);
@@ -155,7 +160,9 @@ public static class LevelFile
             issues.Add(new LoadIssue(fileName, marker.Line, 0, $"Le poste {marker.Post} du repère « {marker.Symbol} » est hors de la carte ({width} × {height})."));
         }
 
-        var decor = ParseDecor(fileName, document.Lines(DecorSection), legend, width, height, issues);
+        var layer = ParseDecor(fileName, document.Lines(DecorSection), legend, width, height, issues);
+        var torches = layer.Where(item => item.Id == ElementIds.Torch).Select(item => item.Position).ToList();
+        var decor = layer.Where(item => item.Id != ElementIds.Torch).ToList();
 
         if (issues.Count > 0)
         {
@@ -164,7 +171,7 @@ public static class LevelFile
 
         try
         {
-            var definition = new LevelDefinition(name, width, height, cells, starts[0].Position, monsters, potions);
+            var definition = new LevelDefinition(name, width, height, cells, starts[0].Position, monsters, potions, torches);
             return new LoadedLevel(definition, rules, decor);
         }
         catch (LevelDefinitionException exception)
@@ -218,7 +225,7 @@ public static class LevelFile
             {
                 var parameter = match.Groups["key"].Value;
                 var parameterValue = match.Groups["value"].Value;
-                if (parameter == "poste" && id == ElementIds.BlobVert)
+                if (parameter == "poste" && id is ElementIds.BlobVert or ElementIds.BlobRouge)
                 {
                     var coordinates = CoordinatesPattern.Match(parameterValue);
                     if (!coordinates.Success)

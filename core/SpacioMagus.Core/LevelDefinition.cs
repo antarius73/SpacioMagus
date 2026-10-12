@@ -11,7 +11,8 @@ public sealed class LevelDefinition
         IReadOnlyList<Terrain> cells,
         Position magusStart,
         IReadOnlyList<MonsterSpawn> monsters,
-        IReadOnlyList<Position> potions)
+        IReadOnlyList<Position> potions,
+        IReadOnlyList<Position>? torches = null)
     {
         ArgumentNullException.ThrowIfNull(cells);
         ArgumentNullException.ThrowIfNull(monsters);
@@ -34,6 +35,7 @@ public sealed class LevelDefinition
         MagusStart = magusStart;
         Monsters = monsters.ToArray();
         Potions = potions.ToArray();
+        Torches = (torches ?? Array.Empty<Position>()).ToArray();
         Validate();
     }
 
@@ -50,6 +52,10 @@ public sealed class LevelDefinition
     public IReadOnlyList<MonsterSpawn> Monsters { get; }
 
     public IReadOnlyList<Position> Potions { get; }
+
+    public IReadOnlyList<Position> Torches { get; }
+
+    public static bool IsObstacle(Terrain terrain) => terrain is Terrain.Brazier or Terrain.Water;
 
     public static bool IsSolid(Terrain terrain) => terrain is Terrain.Wall or Terrain.Void;
 
@@ -149,6 +155,20 @@ public sealed class LevelDefinition
         foreach (var grille in Grilles())
         {
             GrilleSides(grille);
+        }
+
+        var torches = new HashSet<Position>();
+        foreach (var torch in Torches)
+        {
+            if (TerrainAt(torch) != Terrain.Wall || !IsOpenGround(TerrainAt(torch + new Position(0, 1))))
+            {
+                throw new LevelDefinitionException($"La torchère en {torch} doit être sur un mur avec du sol juste en dessous.");
+            }
+
+            if (!torches.Add(torch))
+            {
+                throw new LevelDefinitionException($"Deux torchères sur la même case {torch}.");
+            }
         }
     }
 }

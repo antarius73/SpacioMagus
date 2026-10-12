@@ -28,6 +28,12 @@ public sealed record GrilleClosed(Position Position) : GameEvent;
 
 public sealed record GrilleCloseDelayed(Position Position) : GameEvent;
 
+public sealed record MonsterAfraid(int MonsterId) : GameEvent;
+
+public sealed record MonsterMutationStarted(int MonsterId, int Turns) : GameEvent;
+
+public sealed record MonsterMutated(int MonsterId, MonsterKind From, MonsterKind To) : GameEvent;
+
 public sealed record MagusCaptured(int MonsterId) : GameEvent;
 
 public sealed record LevelCompleted : GameEvent;

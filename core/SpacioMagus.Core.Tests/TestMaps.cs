@@ -10,6 +10,7 @@ internal static class TestMaps
         Position? magus = null;
         var monsters = new List<MonsterSpawn>();
         var potions = new List<Position>();
+        var torches = new List<Position>();
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
@@ -18,11 +19,13 @@ internal static class TestMaps
                 var position = new Position(x, y);
                 cells[y * width + x] = symbol switch
                 {
-                    '#' => Terrain.Wall,
+                    '#' or 'T' => Terrain.Wall,
+                    '*' => Terrain.Brazier,
+                    '~' => Terrain.Water,
                     ' ' => Terrain.Void,
                     'G' => Terrain.Grille,
                     '>' => Terrain.Stairs,
-                    '.' or '@' or 'b' or 'p' => Terrain.Floor,
+                    '.' or '@' or 'b' or 'r' or 'p' => Terrain.Floor,
                     _ => throw new ArgumentException($"Caractère inconnu '{symbol}' en {position}."),
                 };
 
@@ -34,8 +37,14 @@ internal static class TestMaps
                     case 'b':
                         monsters.Add(new MonsterSpawn(MonsterKind.BlobVert, position, position));
                         break;
+                    case 'r':
+                        monsters.Add(new MonsterSpawn(MonsterKind.BlobRouge, position, position));
+                        break;
                     case 'p':
                         potions.Add(position);
+                        break;
+                    case 'T':
+                        torches.Add(position);
                         break;
                 }
             }
@@ -48,7 +57,8 @@ internal static class TestMaps
             cells,
             magus ?? throw new ArgumentException("Aucun départ de magus."),
             monsters,
-            potions);
+            potions,
+            torches);
     }
 
     public static LevelDefinition WithPost(LevelDefinition level, Position start, Position post) =>
@@ -59,7 +69,8 @@ internal static class TestMaps
             level.Cells,
             level.MagusStart,
             level.Monsters.Select(spawn => spawn.Start == start ? spawn with { Post = post } : spawn).ToList(),
-            level.Potions);
+            level.Potions,
+            level.Torches);
 
     public static Game NewGame(LevelDefinition level, RuleSet? rules = null) =>
         new(level, rules, new FixedRandom());

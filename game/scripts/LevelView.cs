@@ -91,6 +91,16 @@ public partial class LevelView : Node2D
     private const float FlashGrowth = 4f;
     private const int FlashCornerRadius = 6;
     private static readonly Color StunnedColor = new(0.6f, 0.6f, 0.75f);
+    private static readonly Color FireFearColor = new(1f, 0.55f, 0.2f, 0.14f);
+    private static readonly Color WaterFearColor = new(0.3f, 0.6f, 1f, 0.14f);
+    private static readonly Color WaterColor = new(0.16f, 0.36f, 0.62f);
+    private const int GreenBlobRow = 5;
+    private const int RedBlobRow = 6;
+    private const double MutationBlinkDuration = 0.18;
+    private const int BrazierColumn = 128;
+    private const int BrazierSize = 48;
+    private const int BrazierOffsetX = -8;
+    private const int BrazierOffsetY = -10;
     private const float DoorCounterOffsetY = 6f;
 
     private readonly HashSet<Cell> _highlights = new();
@@ -108,6 +118,8 @@ public partial class LevelView : Node2D
     private readonly List<(Rect2 Source, Rect2 Target)> _shields = new();
     private readonly List<Cell> _torches = new();
     private readonly List<Cell> _stairs = new();
+    private readonly List<Cell> _braziers = new();
+    private readonly List<Cell> _water = new();
     private readonly HashSet<Cell> _thinDoors = new();
     private readonly Dictionary<Cell, (bool Open, double ChangedAt)> _grilleStates = new();
     private Texture2D _tileset = null!;
@@ -475,22 +487,38 @@ public partial class LevelView : Node2D
             DrawFire(torch, fireSource);
         }
 
-        foreach (var item in _decor)
-        {
-            if (item.Id == "torche")
-            {
-                DrawFire(item.Position, fireSource);
-            }
-        }
-
         foreach (var (position, flipX) in _webs)
         {
             DrawWeb(position, flipX);
         }
 
+        foreach (var cell in _water)
+        {
+            DrawRect(CellRect(cell), WaterColor);
+        }
+
+        foreach (var cell in _game.FearZone(MonsterKind.BlobVert))
+        {
+            DrawRect(CellRect(cell), FireFearColor);
+        }
+
+        foreach (var cell in _game.FearZone(MonsterKind.BlobRouge))
+        {
+            DrawRect(CellRect(cell), WaterFearColor);
+        }
+
         foreach (var potion in _game.Potions)
         {
             DrawTextureRectRegion(_potion, CellRect(potion), new Rect2(frame * 32, 0, 32, 32));
+        }
+
+        var brazierSource = new Rect2(BrazierColumn, (int)(_time * 8) % FireFrames * FireFrameHeight, BrazierSize, BrazierSize);
+        foreach (var brazier in _braziers)
+        {
+            DrawTextureRectRegion(
+                _fire,
+                new Rect2(brazier.X * Tile + BrazierOffsetX, brazier.Y * Tile + BrazierOffsetY, BrazierSize, BrazierSize),
+                brazierSource);
         }
 
         foreach (var grille in _game.Grilles)
@@ -509,7 +537,7 @@ public partial class LevelView : Node2D
                 continue;
             }
 
-            var source = new Rect2(monster.IsStunned ? 0 : frame * 32, 160, 32, 32);
+            var source = new Rect2(monster.IsStunned ? 0 : frame * 32, MonsterRow(monster) * 32, 32, 32);
             if (Facing(monster.Id) > 0)
             {
                 DrawSetTransform(new Vector2(shown.X + Tile, shown.Y), 0f, new Vector2(-1f, 1f));
@@ -568,8 +596,26 @@ public partial class LevelView : Node2D
             {
                 SpellFx.DrawStun(this, new Vector2(position.X * Tile, position.Y * Tile), monster.StunTurns, _time);
             }
+            else if (monster.IsMutating)
+            {
+                SpellFx.DrawMutation(this, new Vector2(position.X * Tile, position.Y * Tile), _time);
+            }
         }
     }
+
+    private int MonsterRow(MonsterState monster)
+    {
+        var row = KindRow(monster.Kind);
+        if (!monster.IsMutating || monster.IsStunned)
+        {
+            return row;
+        }
+
+        var other = KindRow(monster.Kind == MonsterKind.BlobVert ? MonsterKind.BlobRouge : MonsterKind.BlobVert);
+        return (int)(_time / MutationBlinkDuration) % 2 == 0 ? row : other;
+    }
+
+    private static int KindRow(MonsterKind kind) => kind == MonsterKind.BlobRouge ? RedBlobRow : GreenBlobRow;
 
     private static Texture2D LoadTexture(string path) =>
         GD.Load<Texture2D>(path) ?? throw new InvalidOperationException($"Texture introuvable : {path}");
@@ -579,9 +625,11 @@ public partial class LevelView : Node2D
     private static Rect2 TileSource(int tileId) =>
         new(tileId % TilesetColumns * SubTile, tileId / TilesetColumns * SubTile, SubTile, SubTile);
 
-    private static bool IsWalkGround(Terrain terrain) => terrain is Terrain.Floor or Terrain.Stairs;
+    private static bool IsWalkGround(Terrain terrain) =>
+        terrain is Terrain.Floor or Terrain.Stairs or Terrain.Brazier or Terrain.Water;
 
-    private static bool IsOpenGround(Terrain terrain) => terrain is Terrain.Floor or Terrain.Stairs or Terrain.Grille;
+    private static bool IsOpenGround(Terrain terrain) =>
+        terrain is Terrain.Floor or Terrain.Stairs or Terrain.Grille or Terrain.Brazier or Terrain.Water;
 
     private static int Pick(bool left, bool right, int firstTile) =>
         left && right ? firstTile + 1 : !left ? firstTile : firstTile + 2;
@@ -593,7 +641,7 @@ public partial class LevelView : Node2D
             return true;
         }
 
-        if (IsWalkGround(level.TerrainAt(cell)))
+        if (level.TerrainAt(cell) is Terrain.Floor or Terrain.Stairs)
         {
             return false;
         }
@@ -751,6 +799,8 @@ public partial class LevelView : Node2D
         _terrainTiles.Clear();
         _ledges.Clear();
         _stairs.Clear();
+        _braziers.Clear();
+        _water.Clear();
         _shading.Clear();
         _thinDoors.Clear();
 
@@ -899,6 +949,16 @@ public partial class LevelView : Node2D
                     _stairs.Add(cell);
                 }
 
+                if (level.TerrainAt(cell) == Terrain.Brazier)
+                {
+                    _braziers.Add(cell);
+                }
+
+                if (level.TerrainAt(cell) == Terrain.Water)
+                {
+                    _water.Add(cell);
+                }
+
                 if (ThinDoor(x * 2, y * 2))
                 {
                     _thinDoors.Add(cell);
@@ -914,12 +974,8 @@ public partial class LevelView : Node2D
         _shields.Clear();
         _torches.Clear();
 
-        bool IsWalk(Cell cell) => IsWalkGround(level.TerrainAt(cell));
         bool IsFace(Cell cell) =>
             level.TerrainAt(cell) == Terrain.Wall && IsOpenGround(level.TerrainAt(new Cell(cell.X, cell.Y + 1)));
-        bool IsNarrow(Cell cell) =>
-            (!IsWalk(new Cell(cell.X - 1, cell.Y)) && !IsWalk(new Cell(cell.X + 1, cell.Y)))
-            || (!IsWalk(new Cell(cell.X, cell.Y - 1)) && !IsWalk(new Cell(cell.X, cell.Y + 1)));
         bool FarFrom(Cell cell, IEnumerable<Cell> others) =>
             others.All(other => other.Y != cell.Y || Math.Abs(other.X - cell.X) > 1);
         bool Spaced(Cell cell, IEnumerable<Cell> others) =>
@@ -966,6 +1022,12 @@ public partial class LevelView : Node2D
         }
 
         var used = new HashSet<Cell>();
+        foreach (var torch in level.Torches)
+        {
+            _torches.Add(torch);
+            used.Add(torch);
+        }
+
         foreach (var grille in grilles)
         {
             foreach (var side in new[] { -1, 1 })
@@ -1011,67 +1073,6 @@ public partial class LevelView : Node2D
             used.Add(candidate);
             var target = new Rect2(candidate.X * Tile + SubTile / 2f, candidate.Y * Tile + ShieldOffsetY, SubTile, SubTile);
             _shields.Add((ShieldRegions[random.Next(ShieldRegions.Length)], target));
-        }
-
-        var rooms = new Dictionary<Cell, int>();
-        var roomCount = 0;
-        for (var y = 0; y < level.Height; y++)
-        {
-            for (var x = 0; x < level.Width; x++)
-            {
-                var start = new Cell(x, y);
-                if (!IsWalk(start) || IsNarrow(start) || rooms.ContainsKey(start))
-                {
-                    continue;
-                }
-
-                var stack = new Stack<Cell>();
-                stack.Push(start);
-                rooms[start] = roomCount;
-                while (stack.Count > 0)
-                {
-                    var current = stack.Pop();
-                    foreach (var next in new[]
-                             {
-                                 new Cell(current.X + 1, current.Y), new Cell(current.X - 1, current.Y),
-                                 new Cell(current.X, current.Y + 1), new Cell(current.X, current.Y - 1),
-                             })
-                    {
-                        if (IsWalk(next) && !IsNarrow(next) && !rooms.ContainsKey(next))
-                        {
-                            rooms[next] = roomCount;
-                            stack.Push(next);
-                        }
-                    }
-                }
-
-                roomCount++;
-            }
-        }
-
-        for (var room = 0; room < roomCount; room++)
-        {
-            var wanted = random.Next(1, 3);
-            var placed = new List<Cell>();
-            var candidates = faces
-                .Where(face => rooms.TryGetValue(new Cell(face.X, face.Y + 1), out var owner) && owner == room)
-                .OrderBy(_ => random.Next());
-            foreach (var candidate in candidates)
-            {
-                if (placed.Count >= wanted)
-                {
-                    break;
-                }
-
-                if (used.Contains(candidate) || !FarFrom(candidate, used) || !Spaced(candidate, placed))
-                {
-                    continue;
-                }
-
-                placed.Add(candidate);
-                used.Add(candidate);
-                _torches.Add(candidate);
-            }
         }
     }
 

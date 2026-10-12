@@ -14,6 +14,8 @@ public sealed record RuleSet
 
     public int GrilleOpenDuration { get; init; } = 5;
 
+    public int MutationDuration { get; init; } = 2;
+
     public void Validate()
     {
         Require(MagicMax >= 1, nameof(MagicMax), MagicMax);
@@ -21,6 +23,7 @@ public sealed record RuleSet
         Require(SpellRange >= 1, nameof(SpellRange), SpellRange);
         Require(StunDuration >= 1, nameof(StunDuration), StunDuration);
         Require(GrilleOpenDuration >= 1, nameof(GrilleOpenDuration), GrilleOpenDuration);
+        Require(MutationDuration >= 1, nameof(MutationDuration), MutationDuration);
     }
 
     private static void Require(bool condition, string name, int value)

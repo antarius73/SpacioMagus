@@ -25,7 +25,7 @@ public sealed class MonsterState
 
     public int Id { get; }
 
-    public MonsterKind Kind { get; }
+    public MonsterKind Kind { get; internal set; }
 
     public Position Position { get; internal set; }
 
@@ -36,6 +36,12 @@ public sealed class MonsterState
     public int StunTurns { get; internal set; }
 
     public bool IsStunned => StunTurns > 0;
+
+    public int FearTurns { get; internal set; }
+
+    public int MutationTurns { get; internal set; }
+
+    public bool IsMutating => MutationTurns > 0;
 }
 
 public sealed class GrilleState

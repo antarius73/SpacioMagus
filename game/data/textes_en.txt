@@ -146,6 +146,24 @@ The green blob
 [blob_vert]
 Zorgus's favourite guard: soft, sticky and stubborn. If it touches you, it engulfs you and you will wait inside it for the master. Once it has seen you, it never lets go.
 
+[blob_rouge_titre]
+The red blob
+
+[blob_rouge]
+A green blob that got too scared of fire. Fire no longer stops it, but water terrifies it. Cornered by its fear, it turns green again.
+
+[torche_titre]
+The torch
+
+[torche]
+Green blobs fear fire: they never enter the three tiles below a torch, nor attack there. Blocked for too long, a green blob turns red.
+
+[brasero_titre]
+The brazier
+
+[brasero]
+A fire you cannot cross, but sight and magic pass through it. Green blobs keep away from the tiles around it.
+
 [escalier_titre]
 The stairs
 
