@@ -8,8 +8,14 @@ public static class UserSettings
     private const string FilePath = "user://reglages.cfg";
     private const string Section = "jeu";
     private const string LanguageKey = "langue";
+    private const string SoundKey = "son";
+    private const string MusicKey = "musique";
 
     public static string Language { get; private set; } = SystemLanguage();
+
+    public static bool SoundEnabled { get; private set; } = true;
+
+    public static bool MusicEnabled { get; private set; } = true;
 
     public static void Load()
     {
@@ -17,6 +23,8 @@ public static class UserSettings
         if (config.Load(FilePath) == Error.Ok)
         {
             Language = config.GetValue(Section, LanguageKey, Language).AsString();
+            SoundEnabled = config.GetValue(Section, SoundKey, SoundEnabled).AsBool();
+            MusicEnabled = config.GetValue(Section, MusicKey, MusicEnabled).AsBool();
         }
 
         if (!Texts.Languages.Contains(Language))
@@ -29,6 +37,18 @@ public static class UserSettings
     {
         Language = language;
         Save(LanguageKey, language);
+    }
+
+    public static void SetSoundEnabled(bool enabled)
+    {
+        SoundEnabled = enabled;
+        Save(SoundKey, enabled);
+    }
+
+    public static void SetMusicEnabled(bool enabled)
+    {
+        MusicEnabled = enabled;
+        Save(MusicKey, enabled);
     }
 
     private static string SystemLanguage()

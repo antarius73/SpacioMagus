@@ -5,6 +5,7 @@
 # = mur
 . = sol
 G = grille
+P = porte
 > = escalier
 @ = depart
 b = blob_vert

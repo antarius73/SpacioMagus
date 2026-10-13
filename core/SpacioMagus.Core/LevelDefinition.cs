@@ -3,6 +3,7 @@ namespace SpacioMagus.Core;
 public sealed class LevelDefinition
 {
     private readonly Terrain[] _cells;
+    private readonly HashSet<Position> _doors;
 
     public LevelDefinition(
         string name,
@@ -12,7 +13,8 @@ public sealed class LevelDefinition
         Position magusStart,
         IReadOnlyList<MonsterSpawn> monsters,
         IReadOnlyList<Position> potions,
-        IReadOnlyList<Position>? torches = null)
+        IReadOnlyList<Position>? torches = null,
+        IReadOnlyList<Position>? doors = null)
     {
         ArgumentNullException.ThrowIfNull(cells);
         ArgumentNullException.ThrowIfNull(monsters);
@@ -36,6 +38,8 @@ public sealed class LevelDefinition
         Monsters = monsters.ToArray();
         Potions = potions.ToArray();
         Torches = (torches ?? Array.Empty<Position>()).ToArray();
+        Doors = (doors ?? Array.Empty<Position>()).ToArray();
+        _doors = new HashSet<Position>(Doors);
         Validate();
     }
 
@@ -54,6 +58,10 @@ public sealed class LevelDefinition
     public IReadOnlyList<Position> Potions { get; }
 
     public IReadOnlyList<Position> Torches { get; }
+
+    public IReadOnlyList<Position> Doors { get; }
+
+    public bool IsDoor(Position position) => _doors.Contains(position);
 
     public static bool IsObstacle(Terrain terrain) => terrain is Terrain.Brazier or Terrain.Water;
 
@@ -140,6 +148,11 @@ public sealed class LevelDefinition
 
     private void Validate()
     {
+        foreach (var door in Doors.Where(door => TerrainAt(door) != Terrain.Grille))
+        {
+            throw new LevelDefinitionException($"La porte en {door} doit être sur une case de grille.");
+        }
+
         if (TerrainAt(MagusStart) != Terrain.Floor)
         {
             throw new LevelDefinitionException($"Le départ du magus {MagusStart} doit être une case de sol.");

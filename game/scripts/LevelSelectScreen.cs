@@ -91,7 +91,11 @@ public partial class LevelGrid : Control
             Position = new Vector2((PanelSize.X - ButtonWidth) / 2f, top),
             Size = new Vector2(ButtonWidth, ButtonHeight),
         };
-        backButton.Pressed += back;
+        backButton.Pressed += () =>
+        {
+            Sounds.Play("ui.back");
+            back();
+        };
         AddChild(backButton);
 
         if (pages <= 1)
@@ -178,12 +182,21 @@ public partial class LevelGrid : Control
                 break;
             }
 
-            if (DoorRect(slot).Grow(6).HasPoint(click.Position) && _levels[index].State != DoorState.Locked)
+            if (!DoorRect(slot).Grow(6).HasPoint(click.Position))
             {
-                AcceptEvent();
-                _choose(index);
+                continue;
+            }
+
+            AcceptEvent();
+            if (_levels[index].State == DoorState.Locked)
+            {
+                Sounds.Play("ui.locked");
                 return;
             }
+
+            Sounds.Play("ui.confirm");
+            _choose(index);
+            return;
         }
     }
 
@@ -222,7 +235,11 @@ public partial class LevelGrid : Control
             Position = position,
             Size = new Vector2(PageButtonWidth, ButtonHeight),
         };
-        button.Pressed += action;
+        button.Pressed += () =>
+        {
+            Sounds.Play("ui.tap");
+            action();
+        };
         return button;
     }
 

@@ -6,6 +6,7 @@ namespace SpacioMagus;
 public enum InfoSubject
 {
     Door,
+    Grille,
     Potion,
     GreenBlob,
     Stairs,
@@ -30,7 +31,8 @@ public partial class InfoPopup : CanvasLayer
     {
         var (title, body, illustration) = subject switch
         {
-            InfoSubject.Door => (Texts.DoorTitle, Texts.Door, (Control)new DoorIllustration()),
+            InfoSubject.Door => (Texts.DoorTitle, Texts.Door, (Control)new DoorIllustration(DoorIllustration.WoodColumn)),
+            InfoSubject.Grille => (Texts.GrilleTitle, Texts.Grille, (Control)new DoorIllustration(DoorIllustration.GrilleColumn)),
             InfoSubject.Potion => (Texts.PotionTitle, Texts.Potion, (Control)new PotionIllustration()),
             InfoSubject.Stairs => (Texts.StairsTitle, Texts.Stairs, (Control)new StairsIllustration()),
             InfoSubject.RedBlob => (Texts.RedBlobTitle, Texts.RedBlob, (Control)new BlobIllustration(BlobIllustration.RedRow)),
@@ -120,6 +122,7 @@ public partial class InfoPopup : CanvasLayer
         }
 
         QueueFree();
+        Sounds.Play("ui.popup_close");
         Closed?.Invoke();
     }
 }
@@ -175,7 +178,16 @@ public partial class DoorIllustration : Illustration
     private const int DoorStride = 48;
     private static readonly Vector2 SceneSize = new(96, 64);
 
+    public const int WoodColumn = 32;
+    public const int GrilleColumn = 0;
+
     private readonly Texture2D _doors = Load("res://assets/sprites/donjon_portes.png");
+    private readonly int _column;
+
+    public DoorIllustration(int column)
+    {
+        _column = column;
+    }
 
     public override void _Draw()
     {
@@ -207,7 +219,7 @@ public partial class DoorIllustration : Illustration
             frame = DoorFrames - 1 - Swing((t - ClosedHold - SwingDuration - openFor) / SwingDuration);
         }
 
-        DrawTextureRectRegion(_doors, new Rect2(32, 16, 32, 32), new Rect2(32, 16 + frame * DoorStride, 32, 32));
+        DrawTextureRectRegion(_doors, new Rect2(32, 16, 32, 32), new Rect2(_column, 16 + frame * DoorStride, 32, 32));
         if (counter is { } value)
         {
             GuiAssets.DrawNumber(this, value, new Vector2(48, 22));

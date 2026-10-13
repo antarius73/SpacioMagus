@@ -73,6 +73,7 @@ public static class LevelFile
         var starts = new List<(Position Position, SourceLine Line, int Column)>();
         var monsters = new List<MonsterSpawn>();
         var potions = new List<Position>();
+        var doors = new List<Position>();
         var usedMarkers = new HashSet<char>();
 
         for (var y = 0; y < height; y++)
@@ -118,7 +119,7 @@ public static class LevelFile
                 {
                     ElementIds.Wall => Terrain.Wall,
                     ElementIds.Void => Terrain.Void,
-                    ElementIds.Grille => Terrain.Grille,
+                    ElementIds.Grille or ElementIds.Door => Terrain.Grille,
                     ElementIds.Stairs => Terrain.Stairs,
                     ElementIds.Brazier => Terrain.Brazier,
                     ElementIds.Water => Terrain.Water,
@@ -140,6 +141,9 @@ public static class LevelFile
                         break;
                     case ElementIds.Potion or ElementIds.BarrelPotion or ElementIds.CratePotion:
                         potions.Add(position);
+                        break;
+                    case ElementIds.Door:
+                        doors.Add(position);
                         break;
                 }
             }
@@ -188,7 +192,7 @@ public static class LevelFile
 
         try
         {
-            var definition = new LevelDefinition(name, width, height, cells, starts[0].Position, monsters, potions, torches);
+            var definition = new LevelDefinition(name, width, height, cells, starts[0].Position, monsters, potions, torches, doors);
             return new LoadedLevel(definition, rules, decor, stars);
         }
         catch (LevelDefinitionException exception)

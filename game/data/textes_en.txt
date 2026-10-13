@@ -65,6 +65,12 @@ Magus: an_ghoul (an-ghoul.itch.io).
 
 Blob, potion and cobwebs: Kao (kaopxl.itch.io).
 
+Interface sounds: May Genko (maygenko.itch.io).
+
+8-bit sound effects: drtwelele (drtwelele.itch.io).
+
+Sound effects: Juhani Junkala (opengameart.org/users/subspaceaudio), CC0 licence.
+
 [erreur_titre]
 Data error
 
@@ -155,11 +161,35 @@ All stars and records will be lost.
 [langue_choix]
 Language
 
+[son_choix]
+Sound
+
+[son_oui]
+On
+
+[son_non]
+Off
+
+[musique_choix]
+Music
+
+[musique_oui]
+On
+
+[musique_non]
+Off
+
 [porte_titre]
 Doors
 
 [porte]
 Tap a neighbouring door to open it. The number tells how many turns until it shuts, pushing away whoever stands in it.
+
+[grille_titre]
+Portcullises
+
+[grille]
+Tap a neighbouring portcullis to raise it. The number tells how many turns until it drops, pushing away whoever stands under it.
 
 [fiole_titre]
 Potions

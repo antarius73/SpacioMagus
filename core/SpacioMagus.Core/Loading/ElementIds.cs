@@ -6,6 +6,7 @@ public static class ElementIds
     public const string Floor = "sol";
     public const string Void = "vide";
     public const string Grille = "grille";
+    public const string Door = "porte";
     public const string Stairs = "escalier";
     public const string Start = "depart";
     public const string BlobVert = "blob_vert";
@@ -32,6 +33,6 @@ public static class ElementIds
 
     public static readonly IReadOnlySet<string> MapElements = new HashSet<string>
     {
-        Wall, Floor, Void, Grille, Stairs, Start, BlobVert, BlobRouge, Potion, Brazier, Water, Barrel, BarrelPotion, Crate, CratePotion,
+        Wall, Floor, Void, Grille, Door, Stairs, Start, BlobVert, BlobRouge, Potion, Brazier, Water, Barrel, BarrelPotion, Crate, CratePotion,
     };
 }

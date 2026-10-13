@@ -27,9 +27,14 @@ public partial class Main : Node
     private LevelView _view = null!;
     private Camera2D _camera = null!;
     private Hud _hud = null!;
+    private Sounds _sounds = null!;
     private CanvasLayer? _screen;
     private Cell? _firstCreature;
-    private const float LanguageChoiceWidth = 120f;
+    private const float ChoiceWidth = 120f;
+    private const float ChoiceHeight = 28f;
+    private const int ChoiceSeparation = 8;
+    private const double DefeatJingleDelay = 0.6;
+    private const double FinalFanfareDelay = 1.3;
     private bool _pendingConclusion;
     private const float PressSlop = 10f;
     private InfoPopup? _infoPopup;
@@ -42,6 +47,11 @@ public partial class Main : Node
         RenderingServer.SetDefaultClearColor(LevelView.BackgroundColor);
         UserSettings.Load();
         _records = RecordStore.Load();
+
+        _sounds = new Sounds { Name = "Sons" };
+        AddChild(_sounds);
+        Sounds.SetEnabled(UserSettings.SoundEnabled);
+        Sounds.SetMusicEnabled(UserSettings.MusicEnabled);
 
         _view = new LevelView { Name = "LevelView" };
         AddChild(_view);
@@ -62,6 +72,7 @@ public partial class Main : Node
             _settings = GameData.LoadSettings();
             _legend = GameData.LoadLegend();
             _levels = GameData.LoadLevelList();
+            _sounds.Load(GameData.LoadSounds());
         }
         catch (Exception exception) when (exception is LevelLoadException or System.IO.IOException)
         {
@@ -77,6 +88,8 @@ public partial class Main : Node
 
     private void ShowTitle()
     {
+        Sounds.CancelPending();
+        Sounds.PlayMusic("mu.title");
         _game = null;
         _journal = null;
         _firstCreature = null;
@@ -272,7 +285,7 @@ public partial class Main : Node
 
         InfoSubject? subject = _game.MonsterAt(cell) is { Kind: MonsterKind.BlobVert } ? InfoSubject.GreenBlob
             : _game.MonsterAt(cell) is { Kind: MonsterKind.BlobRouge } ? InfoSubject.RedBlob
-            : _game.GrilleAt(cell) is not null ? InfoSubject.Door
+            : _game.GrilleAt(cell) is not null ? (_game.Level.IsDoor(cell) ? InfoSubject.Door : InfoSubject.Grille)
             : _game.Level.Torches.Contains(cell) ? InfoSubject.Torch
             : _game.Level.TerrainAt(cell) == Terrain.Brazier ? InfoSubject.Brazier
             : _game.IsContainer(cell) ? InfoSubject.Container
@@ -301,6 +314,7 @@ public partial class Main : Node
         _infoPopup = popup;
         _infoSubject = subject;
         AddChild(popup);
+        Sounds.Play("ui.popup_open");
     }
 
     public override void _Input(InputEvent @event)
@@ -381,6 +395,11 @@ public partial class Main : Node
         var next = _levelIndex + 1;
         var index = _levelIndex;
         var victory = _lastVictory;
+        if (next >= _levels.Count)
+        {
+            Sounds.PlayMusic("mu.final", FinalFanfareDelay);
+        }
+
         ShowScreen(() =>
         {
             var buttons = new List<(string Text, Action Action)>();
@@ -417,6 +436,7 @@ public partial class Main : Node
     private void ShowDefeat()
     {
         var index = _levelIndex;
+        Sounds.Play("end.lose", DefeatJingleDelay);
         ShowScreen(() => MenuScreen.Create(
             Texts.DefeatTitle,
             Texts.Defeat,
@@ -453,7 +473,7 @@ public partial class Main : Node
         ShowScreen(() => MenuScreen.CreateWithControl(
             Texts.SettingsTitle,
             string.Empty,
-            LanguageChoice(back),
+            SettingsChoices(back),
             (Texts.ClearRecordsButton, () => ConfirmClearRecords(back)),
             (Texts.BackButton, back)));
     }
@@ -471,27 +491,63 @@ public partial class Main : Node
             (Texts.CancelButton, () => ShowSettings(back))));
     }
 
-    private Control LanguageChoice(Action back)
+    private Control SettingsChoices(Action back)
     {
-        var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
-        var label = new Label { Text = Texts.LanguageLabel, VerticalAlignment = VerticalAlignment.Center };
-        label.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
-        row.AddChild(label);
+        var grid = new GridContainer { Columns = 2 };
+        grid.AddThemeConstantOverride("h_separation", ChoiceSeparation);
+        grid.AddThemeConstantOverride("v_separation", ChoiceSeparation);
 
-        var choice = new OptionButton { CustomMinimumSize = new Vector2(LanguageChoiceWidth, 28) };
-        for (var index = 0; index < Texts.Languages.Count; index++)
+        var languages = Texts.Languages.Select(Texts.LanguageName).ToList();
+        var current = Texts.Languages.ToList().IndexOf(Texts.Language);
+        AddChoice(grid, Texts.LanguageLabel, languages, current, selected => ChangeLanguage(Texts.Languages[selected], back));
+
+        var sound = new[] { Texts.SoundOn, Texts.SoundOff };
+        AddChoice(grid, Texts.SoundLabel, sound, UserSettings.SoundEnabled ? 0 : 1, selected => ChangeSound(selected == 0));
+
+        var music = new[] { Texts.MusicOn, Texts.MusicOff };
+        AddChoice(grid, Texts.MusicLabel, music, UserSettings.MusicEnabled ? 0 : 1, selected => ChangeMusic(selected == 0));
+        return grid;
+    }
+
+    private static void AddChoice(GridContainer grid, string text, IReadOnlyList<string> items, int selected, Action<int> changed)
+    {
+        var label = new Label { Text = text, VerticalAlignment = VerticalAlignment.Center };
+        label.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
+        grid.AddChild(label);
+
+        var choice = new OptionButton { CustomMinimumSize = new Vector2(ChoiceWidth, ChoiceHeight) };
+        for (var index = 0; index < items.Count; index++)
         {
-            choice.AddItem(Texts.LanguageName(Texts.Languages[index]), index);
-            if (Texts.Languages[index] == Texts.Language)
-            {
-                choice.Selected = index;
-            }
+            choice.AddItem(items[index], index);
         }
 
-        choice.ItemSelected += selected => ChangeLanguage(Texts.Languages[(int)selected], back);
-        row.AddChild(choice);
-        return row;
+        choice.Selected = Math.Clamp(selected, 0, items.Count - 1);
+        choice.ItemSelected += index => changed((int)index);
+        grid.AddChild(choice);
+    }
+
+    private static void ChangeMusic(bool enabled)
+    {
+        if (enabled == UserSettings.MusicEnabled)
+        {
+            return;
+        }
+
+        UserSettings.SetMusicEnabled(enabled);
+        Sounds.SetMusicEnabled(enabled);
+        Sounds.Play("ui.toggle");
+    }
+
+    private static void ChangeSound(bool enabled)
+    {
+        if (enabled == UserSettings.SoundEnabled)
+        {
+            return;
+        }
+
+        UserSettings.SetSoundEnabled(enabled);
+        Sounds.SetEnabled(enabled);
+        Sounds.Play("ui.toggle");
     }
 
     private void ChangeLanguage(string language, Action back)
@@ -512,12 +568,13 @@ public partial class Main : Node
         }
 
         UserSettings.SetLanguage(language);
+        Sounds.Play("ui.toggle");
         ShowSettings(back);
     }
 
     private void ShowCredits(Action back)
     {
-        ShowScreen(() => MenuScreen.Create(Texts.CreditsTitle, Texts.Credits, (Texts.BackButton, back)));
+        ShowScreen(() => MenuScreen.CreateScrolling(Texts.CreditsTitle, Texts.Credits, (Texts.BackButton, back)));
     }
 
     private void Resume()
@@ -586,6 +643,7 @@ public partial class Main : Node
             journal = new GameJournal(loaded.Definition, loaded.Rules, NewSeed());
         }
 
+        Sounds.StopMusic();
         _levelIndex = index;
         _view.Visible = true;
         _journal = journal;
@@ -662,14 +720,21 @@ public partial class Main : Node
     private void TapFirstCreature(Game game, Cell cell)
     {
         var candidates = game.SwapCandidates().Select(monster => monster.Position).ToList();
-        if (!candidates.Contains(cell) || game.Magus.Magic < game.Rules.SpellCost || candidates.Count < 2)
+        if (!candidates.Contains(cell) || candidates.Count < 2)
         {
             Reject(cell);
             return;
         }
 
+        if (game.Magus.Magic < game.Rules.SpellCost)
+        {
+            Reject(cell, noMagic: true);
+            return;
+        }
+
         _firstCreature = cell;
         _view.Flash(cell, TapKind.Creature);
+        Sounds.Play("sp.select");
         Refresh();
     }
 
@@ -686,7 +751,7 @@ public partial class Main : Node
         var candidates = game.SwapCandidates().Select(monster => monster.Position).ToList();
         if (!candidates.Contains(cell))
         {
-            _view.Flash(cell, TapKind.Invalid);
+            Reject(cell);
             Refresh();
             return;
         }
@@ -700,9 +765,10 @@ public partial class Main : Node
         Apply(result, cell, TapKind.Creature);
     }
 
-    private void Reject(Cell cell)
+    private void Reject(Cell cell, bool noMagic = false)
     {
         _view.Flash(cell, TapKind.Invalid);
+        Sounds.Play(noMagic ? "mg.nomagic" : "mg.invalid");
     }
 
     private void Apply(ActionResult result, Cell cell, TapKind kind)
@@ -714,9 +780,14 @@ public partial class Main : Node
 
         if (!result.Success)
         {
-            Reject(cell);
+            Reject(cell, result.Error == ActionError.NotEnoughMagic);
             Refresh();
             return;
+        }
+
+        if (kind == TapKind.Wait)
+        {
+            Sounds.Play("mg.wait");
         }
 
         _view.Flash(cell, kind);

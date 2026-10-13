@@ -1,0 +1,47 @@
+; Sons du jeu : clé = fichier(s) dans res://assets/sons, volume en dB (facultatif, 0 par défaut).
+; Plusieurs fichiers séparés par des espaces : tirage au hasard sans répéter le précédent.
+; Un son absent de cette liste reste muet.
+[sons]
+ui.tap        = interface/menu_select_beep_1.ogg, -1
+ui.back       = interface/menu_back_1.ogg, -2
+ui.confirm    = interface/fast_up_123123.ogg, -5
+ui.locked     = interface/bad_beeps_2.ogg, -1
+ui.popup_open = interface/select_6.wav, 10
+ui.popup_close= interface/menu_back_1.ogg, -2
+ui.toggle     = interface/ba_da_1.ogg, -2
+ui.title      = interface/start_1.wav, 3
+ui.star       = interface/pick_up_3.ogg, -2
+ui.record     = interface/small_victory_slide_up.ogg, -6
+
+mg.step       = jeu/pas_1.wav jeu/pas_2.wav jeu/pas_3.wav jeu/pas_4.wav jeu/pas_5.wav, -4
+mg.wait       = jeu/low_beep.ogg, -1
+mg.invalid    = jeu/bad_beeps_3.ogg, -1
+mg.nomagic    = jeu/error_8.wav, 10
+
+sp.magus_out  = jeu/riser_6.wav, 7
+sp.magus_in   = jeu/portal_3.wav, -4
+sp.select     = jeu/select_2.wav, 6
+sp.creatura   = jeu/power_1.wav, 7
+
+it.break      = jeu/exp_shortest_soft_1.wav, 2
+it.reveal     = jeu/item_1.wav, 12
+it.drink      = jeu/powerup_4.wav, 3
+
+mo.mut_on     = jeu/riser_4.wav, 11
+mo.mut_off    = jeu/shutdown_1.wav, -2
+mo.stun       = jeu/double_attack.ogg, -4
+
+dr.open       = jeu/porte_ouvre.wav, -2
+dr.close      = jeu/porte_ferme.wav, -3
+
+gr.open       = jeu/herse_ouvre.wav, -3
+gr.close      = jeu/herse_ferme.wav, -6
+
+dc.torch      = decor/torche_douce.wav, -8
+
+end.caught    = jeu/hurt_1.wav, 9
+end.lose      = jeu/falling_2.wav, 12
+end.win       = jeu/small_victory_chords.ogg, -7
+
+mu.title      = musique/titre_hall_de_zorgus.wav, -4
+mu.final      = musique/victoire_fanfare.wav, -2

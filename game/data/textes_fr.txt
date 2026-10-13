@@ -65,6 +65,12 @@ Magus : an_ghoul (an-ghoul.itch.io).
 
 Blob, fiole et toiles : Kao (kaopxl.itch.io).
 
+Sons d'interface : May Genko (maygenko.itch.io).
+
+Effets sonores 8 bits : drtwelele (drtwelele.itch.io).
+
+Bruitages : Juhani Junkala (opengameart.org/users/subspaceaudio), licence CC0.
+
 [erreur_titre]
 Erreur de données
 
@@ -155,11 +161,35 @@ Toutes les étoiles et tous les records seront perdus.
 [langue_choix]
 Langue
 
+[son_choix]
+Son
+
+[son_oui]
+Activé
+
+[son_non]
+Coupé
+
+[musique_choix]
+Musique
+
+[musique_oui]
+Activée
+
+[musique_non]
+Coupée
+
 [porte_titre]
 Les portes
 
 [porte]
 Touchez une porte voisine pour l'ouvrir. Le chiffre indique dans combien de tours elle se referme, en repoussant qui se tient dessous.
+
+[grille_titre]
+Les grilles
+
+[grille]
+Touchez une grille voisine pour la lever. Le chiffre indique dans combien de tours elle retombe, en repoussant qui se tient dessous.
 
 [fiole_titre]
 Les fioles

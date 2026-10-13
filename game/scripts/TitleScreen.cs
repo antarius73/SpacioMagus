@@ -71,15 +71,15 @@ public partial class TitleScreen : CanvasLayer
         buttons.AddThemeConstantOverride("separation", 5);
         panel.AddChild(buttons);
 
-        AddButton(buttons, Texts.NewGameButton, newGame, true);
-        AddButton(buttons, Texts.ContinueButton, continueGame, canContinue);
-        AddButton(buttons, Texts.LevelsButton, levels, true);
-        AddButton(buttons, Texts.SettingsButton, settings, true);
-        AddButton(buttons, Texts.CreditsButton, credits, true);
+        AddButton(buttons, Texts.NewGameButton, newGame, true, "ui.title");
+        AddButton(buttons, Texts.ContinueButton, continueGame, canContinue, "ui.title");
+        AddButton(buttons, Texts.LevelsButton, levels, true, "ui.tap");
+        AddButton(buttons, Texts.SettingsButton, settings, true, "ui.tap");
+        AddButton(buttons, Texts.CreditsButton, credits, true, "ui.tap");
         return screen;
     }
 
-    private static void AddButton(VBoxContainer box, string text, Action action, bool enabled)
+    private static void AddButton(VBoxContainer box, string text, Action action, bool enabled, string sound)
     {
         var button = new Button
         {
@@ -89,7 +89,11 @@ public partial class TitleScreen : CanvasLayer
             Disabled = !enabled,
             Modulate = enabled ? Colors.White : DisabledModulate,
         };
-        button.Pressed += action;
+        button.Pressed += () =>
+        {
+            Sounds.Play(sound);
+            action();
+        };
         box.AddChild(button);
     }
 }

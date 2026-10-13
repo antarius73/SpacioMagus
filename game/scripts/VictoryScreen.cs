@@ -53,7 +53,7 @@ public partial class VictoryScreen : CanvasLayer
         title.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
         box.AddChild(title);
 
-        box.AddChild(new StarRow(stars) { SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter });
+        box.AddChild(new StarRow(stars, newRecord) { SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter });
 
         box.AddChild(Line(Texts.TurnsResult(turns), GuiAssets.TextOnParchment));
         if (newRecord)
@@ -72,7 +72,11 @@ public partial class VictoryScreen : CanvasLayer
         foreach (var (text, action) in buttons)
         {
             var button = new Button { Text = text, CustomMinimumSize = new Vector2(ButtonWidth, ButtonHeight) };
-            button.Pressed += action;
+            button.Pressed += () =>
+            {
+                Sounds.Play(Sounds.ButtonKey(text));
+                action();
+            };
             row.AddChild(button);
         }
 
@@ -100,11 +104,15 @@ public partial class StarRow : Control
     private static readonly Vector2 RowSize = new(150, 64);
 
     private readonly int _stars;
+    private readonly bool _newRecord;
     private double _time;
+    private int _announcedStars;
+    private bool _announcedRecord;
 
-    public StarRow(int stars)
+    public StarRow(int stars, bool newRecord)
     {
         _stars = Math.Clamp(stars, 0, 3);
+        _newRecord = newRecord;
         CustomMinimumSize = RowSize;
         MouseFilter = MouseFilterEnum.Ignore;
     }
@@ -112,7 +120,23 @@ public partial class StarRow : Control
     public override void _Process(double delta)
     {
         _time += delta;
+        AnnounceStars();
         QueueRedraw();
+    }
+
+    private void AnnounceStars()
+    {
+        while (_announcedStars < _stars && _time >= FirstDelay + _announcedStars * StarInterval)
+        {
+            _announcedStars++;
+            Sounds.Play("ui.star");
+        }
+
+        if (_newRecord && !_announcedRecord && _time >= FirstDelay + _stars * StarInterval + PopDuration)
+        {
+            _announcedRecord = true;
+            Sounds.Play("ui.record");
+        }
     }
 
     public override void _Draw()

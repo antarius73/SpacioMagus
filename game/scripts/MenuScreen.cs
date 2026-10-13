@@ -20,7 +20,12 @@ public partial class MenuScreen : CanvasLayer
     private const float ButtonHeight = 28f;
     private const float IllustrationWidth = 224f;
     private const float IllustrationHeight = 128f;
+    private const int ScreenMargin = 24;
+    private const float ScrollHeight = 300f;
+    private const int ScrollBarWidth = 4;
+    private const int ScrollTextGap = 8;
     private static readonly Color Backdrop = new(0.07f, 0.05f, 0.1f, 0.9f);
+    private static readonly Color ScrollTrack = new(0.36f, 0.24f, 0.15f, 0.15f);
 
     public static MenuScreen Create(string title, string body, params (string Text, Action Action)[] buttons) =>
         Create(title, body, Array.Empty<Texture2D>(), buttons);
@@ -30,21 +35,24 @@ public partial class MenuScreen : CanvasLayer
         string body,
         IReadOnlyList<Texture2D> icons,
         params (string Text, Action Action)[] buttons) =>
-        Build(title, body, icons, null, null, buttons);
+        Build(title, body, icons, null, null, false, buttons);
+
+    public static MenuScreen CreateScrolling(string title, string body, params (string Text, Action Action)[] buttons) =>
+        Build(title, body, Array.Empty<Texture2D>(), null, null, true, buttons);
 
     public static MenuScreen CreateWithControl(
         string title,
         string body,
         Control control,
         params (string Text, Action Action)[] buttons) =>
-        Build(title, body, Array.Empty<Texture2D>(), null, control, buttons);
+        Build(title, body, Array.Empty<Texture2D>(), null, control, false, buttons);
 
     public static MenuScreen CreateIllustrated(
         string title,
         string body,
         Control illustration,
         params (string Text, Action Action)[] buttons) =>
-        Build(title, body, Array.Empty<Texture2D>(), illustration, null, buttons);
+        Build(title, body, Array.Empty<Texture2D>(), illustration, null, false, buttons);
 
     private static MenuScreen Build(
         string title,
@@ -52,6 +60,7 @@ public partial class MenuScreen : CanvasLayer
         IReadOnlyList<Texture2D> icons,
         Control? illustration,
         Control? control,
+        bool scrollBody,
         (string Text, Action Action)[] buttons)
     {
         var screen = new MenuScreen { Layer = 10 };
@@ -64,9 +73,17 @@ public partial class MenuScreen : CanvasLayer
         background.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         root.AddChild(background);
 
-        var center = new CenterContainer();
-        center.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        root.AddChild(center);
+        var margins = new MarginContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        margins.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        foreach (var side in new[] { "margin_left", "margin_right", "margin_top", "margin_bottom" })
+        {
+            margins.AddThemeConstantOverride(side, ScreenMargin);
+        }
+
+        root.AddChild(margins);
+
+        var center = new CenterContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        margins.AddChild(center);
 
         var panel = new PanelContainer { CustomMinimumSize = new Vector2(PanelWidth, 0) };
         panel.AddThemeStyleboxOverride("panel", new StyleBoxTexture
@@ -128,7 +145,7 @@ public partial class MenuScreen : CanvasLayer
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             };
             bodyLabel.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
-            box.AddChild(bodyLabel);
+            box.AddChild(scrollBody ? Scrolling(bodyLabel) : bodyLabel);
         }
 
         if (control is not null)
@@ -153,12 +170,43 @@ public partial class MenuScreen : CanvasLayer
                 }
 
                 var button = new Button { Text = text, CustomMinimumSize = new Vector2(ButtonWidth, ButtonHeight) };
-                button.Pressed += action;
+                button.Pressed += () =>
+                {
+                    Sounds.Play(Sounds.ButtonKey(text));
+                    action();
+                };
                 row.AddChild(button);
             }
         }
 
         return screen;
+    }
+
+    private static Control Scrolling(Control content)
+    {
+        var scroll = new ScrollContainer
+        {
+            CustomMinimumSize = new Vector2(0, ScrollHeight),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
+        };
+
+        var bar = scroll.GetVScrollBar();
+        bar.CustomMinimumSize = new Vector2(ScrollBarWidth, 0);
+        bar.AddThemeStyleboxOverride("scroll", new StyleBoxFlat { BgColor = ScrollTrack });
+        bar.AddThemeStyleboxOverride("scroll_focus", new StyleBoxFlat { BgColor = ScrollTrack });
+        var grabber = new StyleBoxFlat { BgColor = GuiAssets.TextOnParchment };
+        bar.AddThemeStyleboxOverride("grabber", grabber);
+        bar.AddThemeStyleboxOverride("grabber_highlight", grabber);
+        bar.AddThemeStyleboxOverride("grabber_pressed", grabber);
+
+        var padding = new MarginContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        padding.AddThemeConstantOverride("margin_right", ScrollTextGap);
+        content.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        padding.AddChild(content);
+        scroll.AddChild(padding);
+        return scroll;
     }
 
     private static Control Spacer(float height) => new() { CustomMinimumSize = new Vector2(0, height), MouseFilter = Control.MouseFilterEnum.Ignore };

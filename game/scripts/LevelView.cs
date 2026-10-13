@@ -78,7 +78,7 @@ public partial class LevelView : Node2D
     private const int ContainerBottomMargin = 2;
     private const double BreakBlinkDuration = 0.25;
     private const int BreakBlinks = 3;
-    private const double PotionAppearDelay = 0.3;
+    public const double PotionAppearDelay = 0.3;
     private const double PotionBounceDuration = 0.35;
     private const float PotionBounceHeight = 8f;
 
@@ -90,6 +90,8 @@ public partial class LevelView : Node2D
     private const int ThickDoorColumn = 32;
     private const int ThickDoorTop = 16;
     private const int ThinDoorColumn = 96;
+    private const int ThickGrilleColumn = 0;
+    private const int ThinGrilleColumn = 64;
     private const int WebSize = 16;
     private const int WebOffsetY = -2;
     private const int ShieldOffsetY = 5;
@@ -154,6 +156,7 @@ public partial class LevelView : Node2D
     private Texture2D _animations = null!;
     private Texture2D _potion = null!;
     private Texture2D _magusPixel = null!;
+    private TorchAmbience _ambience = null!;
     private Game? _game;
     private IReadOnlyList<DecorItem> _decor = Array.Empty<DecorItem>();
     private Cell? _selected;
@@ -196,7 +199,7 @@ public partial class LevelView : Node2D
     }
     private readonly Dictionary<int, (Cell From, double Start)> _monsterGlides = new();
 
-    private const double MoveDuration = 0.15;
+    public const double MoveDuration = 0.15;
     private const int DefaultFacing = -1;
     private const float HoldRingRadius = 14f;
     private const float HoldRingWidth = 2f;
@@ -222,6 +225,8 @@ public partial class LevelView : Node2D
         _animations = LoadTexture("res://assets/sprites/animations.png");
         _potion = LoadTexture("res://assets/sprites/fiole_bleue.png");
         _magusPixel = LoadTexture("res://assets/sprites/magus_pixel.png");
+        _ambience = new TorchAmbience { Name = "Torches", Listener = () => MagusFocus };
+        AddChild(_ambience);
     }
 
     public void ShowLevel(Game game, IReadOnlyList<DecorItem> decor)
@@ -249,6 +254,8 @@ public partial class LevelView : Node2D
         Array.Fill(_darkness, OutsideZoneDarkness);
         Array.Fill(_darknessTarget, OutsideZoneDarkness);
         ClearHighlights();
+        Sounds.CancelPending();
+        _ambience.ShowTorches(game.Level.Torches.Concat(_braziers));
     }
 
     public void SetMagicZone(IEnumerable<Cell> zone, bool canCast)
@@ -371,6 +378,7 @@ public partial class LevelView : Node2D
         }
 
         UpdateFacings(events, monstersStart);
+        TurnSounds.Play(events, monstersStart - _time, _game?.Level);
     }
 
     private void UpdateFacings(IReadOnlyList<GameEvent> events, double since)
@@ -858,16 +866,19 @@ public partial class LevelView : Node2D
         var frameTop = GrilleFrame(grille) * DoorFrameStride;
         var x = grille.Position.X * Tile;
         var y = grille.Position.Y * Tile;
+        var wooden = _game?.Level.IsDoor(grille.Position) ?? true;
         if (IsThinDoor(grille.Position))
         {
             var height = foreground ? SubTile : Tile + SubTile;
-            DrawTextureRectRegion(_doors, new Rect2(x, y - SubTile, Tile, height), new Rect2(ThinDoorColumn, frameTop, Tile, height));
+            var column = wooden ? ThinDoorColumn : ThinGrilleColumn;
+            DrawTextureRectRegion(_doors, new Rect2(x, y - SubTile, Tile, height), new Rect2(column, frameTop, Tile, height));
             return;
         }
 
         if (!foreground)
         {
-            DrawTextureRectRegion(_doors, new Rect2(x, y, Tile, Tile), new Rect2(ThickDoorColumn, ThickDoorTop + frameTop, Tile, Tile));
+            var column = wooden ? ThickDoorColumn : ThickGrilleColumn;
+            DrawTextureRectRegion(_doors, new Rect2(x, y, Tile, Tile), new Rect2(column, ThickDoorTop + frameTop, Tile, Tile));
         }
     }
 

@@ -10,6 +10,7 @@ public class LoadingTests
         # = mur
         . = sol
         G = grille
+        P = porte
         > = escalier
         @ = depart
         b = blob_vert
@@ -265,6 +266,44 @@ public class LoadingTests
 
         Assert.Equal(7, level.Rules.SpellRange);
         Assert.Equal(RuleSet.Default.MagicMax, level.Rules.MagicMax);
+    }
+
+    [Fact]
+    public void DoorsAreGrillesWithTheirOwnLook()
+    {
+        var level = Load("""
+            [carte]
+            #########
+            ##..>..##
+            ####P####
+            #.......#
+            ####G####
+            #...@...#
+            #########
+            """);
+
+        var definition = level.Definition;
+        Assert.Equal(Terrain.Grille, definition.TerrainAt(new Position(4, 2)));
+        Assert.Equal(Terrain.Grille, definition.TerrainAt(new Position(4, 4)));
+        Assert.True(definition.IsDoor(new Position(4, 2)));
+        Assert.False(definition.IsDoor(new Position(4, 4)));
+        Assert.Equal(new[] { new Position(4, 2) }, definition.Doors);
+        Assert.Equal(2, definition.Grilles().Count());
+    }
+
+    [Fact]
+    public void DoorOutsideAGrilleIsRejected()
+    {
+        var cells = new[]
+        {
+            Terrain.Wall, Terrain.Wall, Terrain.Wall,
+            Terrain.Wall, Terrain.Floor, Terrain.Wall,
+            Terrain.Wall, Terrain.Stairs, Terrain.Wall,
+            Terrain.Wall, Terrain.Wall, Terrain.Wall,
+        };
+
+        Assert.Throws<LevelDefinitionException>(() => new LevelDefinition(
+            "t", 3, 4, cells, new Position(1, 1), Array.Empty<MonsterSpawn>(), Array.Empty<Position>(), null, new[] { new Position(1, 2) }));
     }
 
     [Fact]

@@ -25,6 +25,22 @@ public class GameDataTests
     }
 
     [Fact]
+    public void EverySoundFileExists()
+    {
+        var sounds = SoundTable.Parse("sons.txt", File.ReadAllText(DataPath("sons.txt")));
+
+        Assert.NotEmpty(sounds);
+        foreach (var (key, entry) in sounds)
+        {
+            foreach (var file in entry.Files)
+            {
+                var path = Path.Combine(GameDirectory.Value, "assets", "sons", file);
+                Assert.True(File.Exists(path), $"{key} : fichier son introuvable {path}");
+            }
+        }
+    }
+
+    [Fact]
     public void Level01CanBeWonWithSpells()
     {
         var level = LoadLevel01();

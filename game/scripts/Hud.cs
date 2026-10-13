@@ -69,7 +69,11 @@ public partial class Hud : CanvasLayer
         top.AddChild(icons);
 
         var pause = IconButton(0);
-        pause.Pressed += () => PausePressed?.Invoke();
+        pause.Pressed += () =>
+        {
+            Sounds.Play("ui.tap");
+            PausePressed?.Invoke();
+        };
         icons.AddChild(pause);
 
         var style = new StyleBoxTexture

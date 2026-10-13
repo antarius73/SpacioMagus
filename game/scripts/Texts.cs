@@ -96,6 +96,18 @@ public static class Texts
 
     public static string LanguageLabel => Get("langue_choix");
 
+    public static string SoundLabel => Get("son_choix");
+
+    public static string SoundOn => Get("son_oui");
+
+    public static string SoundOff => Get("son_non");
+
+    public static string MusicLabel => Get("musique_choix");
+
+    public static string MusicOn => Get("musique_oui");
+
+    public static string MusicOff => Get("musique_non");
+
     public static string GameTitle => Get("jeu_titre");
 
     public static string NewGameButton => Get("bouton_nouvelle_partie");
@@ -121,6 +133,10 @@ public static class Texts
     public static string DoorTitle => Get("porte_titre");
 
     public static string Door => Get("porte");
+
+    public static string GrilleTitle => Get("grille_titre");
+
+    public static string Grille => Get("grille");
 
     public static string PotionTitle => Get("fiole_titre");
 

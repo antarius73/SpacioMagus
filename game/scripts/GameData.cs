@@ -19,6 +19,9 @@ public static class GameData
     public static IReadOnlyList<string> LoadLevelList() =>
         LevelList.Parse("niveaux.txt", Read($"{DataDirectory}/niveaux.txt"));
 
+    public static IReadOnlyDictionary<string, SoundEntry> LoadSounds() =>
+        SoundTable.Parse("sons.txt", Read($"{DataDirectory}/sons.txt"));
+
     public static LoadedLevel LoadLevel(string fileName, string content, Legend legend, RuleSet rules) =>
         LevelFile.Parse(fileName, content, legend, rules);
 
