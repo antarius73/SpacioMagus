@@ -8,7 +8,7 @@ public static class Texts
 {
     public const string DefaultLanguage = "fr";
 
-    public static readonly IReadOnlyList<string> Languages = new[] { "fr", "en" };
+    public static readonly IReadOnlyList<string> Languages = new[] { "fr", "en", "es", "pt", "de" };
 
     private const string NameKey = "langue";
 

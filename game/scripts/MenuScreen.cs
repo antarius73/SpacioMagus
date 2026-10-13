@@ -20,7 +20,8 @@ public partial class MenuScreen : CanvasLayer
     private const float ButtonHeight = 28f;
     private const float IllustrationWidth = 224f;
     private const float IllustrationHeight = 128f;
-    private const int ScreenMargin = 24;
+    private const int ScreenMarginX = 10;
+    private const int ScreenMarginY = 24;
     private const float ScrollHeight = 300f;
     private const int ScrollBarWidth = 4;
     private const int ScrollTextGap = 8;
@@ -75,10 +76,10 @@ public partial class MenuScreen : CanvasLayer
 
         var margins = new MarginContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         margins.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        foreach (var side in new[] { "margin_left", "margin_right", "margin_top", "margin_bottom" })
-        {
-            margins.AddThemeConstantOverride(side, ScreenMargin);
-        }
+        margins.AddThemeConstantOverride("margin_left", ScreenMarginX);
+        margins.AddThemeConstantOverride("margin_right", ScreenMarginX);
+        margins.AddThemeConstantOverride("margin_top", ScreenMarginY);
+        margins.AddThemeConstantOverride("margin_bottom", ScreenMarginY);
 
         root.AddChild(margins);
 

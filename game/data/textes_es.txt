@@ -1,0 +1,245 @@
+# Textos del juego en español.
+# Cada texto empieza con su clave entre corchetes y termina en la clave siguiente.
+# Una línea vacía dentro de un texto crea un párrafo. {0} se sustituye por un valor (nombre del nivel).
+
+[langue]
+Español
+
+[histoire_titre]
+Mob le Magus
+
+[histoire]
+Zorgus te confió su mazmorra. Probaste un hechizo casero. Mala idea.
+
+Huiste a casa de tu amiga Isabela, que te dio una poción come-magia.
+
+Corre a la sala de experimentos y arréglalo todo antes de que vuelva el maestro.
+
+[spacio_magus_titre]
+Spacio Magus
+
+[spacio_magus]
+La zona iluminada muestra el alcance de tu magia.
+¡Toca una de esas casillas para teletransportarte!
+Cada hechizo cuesta una gema de magia.
+
+Tocar una casilla vecina te hace caminar.
+Tocar al magus pasa tu turno.
+
+[spacio_creatura_titre]
+Spacio Creatura
+
+[spacio_creatura]
+Toca una criatura iluminada y luego otra:
+
+intercambian su lugar y quedan aturdidas durante el número de turnos escrito sobre ellas.
+
+[victoire_titre]
+¡Victoria!
+
+[victoire]
+Has llegado a la escalera.
+
+[defaite_titre]
+Capturado…
+
+[defaite]
+¡Engullido! Esperarás el regreso de Zorgus dentro de un blob. No le va a hacer ninguna gracia.
+
+[menu_titre]
+Menú
+
+[credits_titre]
+Créditos
+
+[credits]
+Mob le Magus
+
+Fuente Digital Disco: jeti (fontenddev.com), licencia CC BY 4.0.
+
+Mazmorra e interfaz: CraftPix.net.
+
+Efectos: Raphael Hatencia (RagnaPixel Studio), licencia CC BY 4.0.
+
+Magus: an_ghoul (an-ghoul.itch.io).
+
+Blob, poción y telarañas: Kao (kaopxl.itch.io).
+
+Sonidos de interfaz: May Genko (maygenko.itch.io).
+
+Efectos de sonido 8 bits: drtwelele (drtwelele.itch.io).
+
+Sonidos del juego: Juhani Junkala (opengameart.org/users/subspaceaudio), licencia CC0.
+
+[erreur_titre]
+Error de datos
+
+[debut_niveau]
+{0}
+
+[bouton_suivant]
+Siguiente
+
+[bouton_passer]
+Saltar
+
+[bouton_reprendre]
+Reanudar
+
+[bouton_recommencer]
+Reiniciar
+
+[bouton_rejouer]
+Jugar de nuevo
+
+[bouton_niveau_suivant]
+Siguiente nivel
+
+[bouton_credits]
+Créditos
+
+[jeu_titre]
+Mob le Magus
+
+[bouton_nouvelle_partie]
+Nueva partida
+
+[bouton_continuer]
+Continuar
+
+[bouton_reglages]
+Ajustes
+
+[bouton_retour]
+Volver
+
+[bouton_menu_principal]
+Menú principal
+
+[reglages_titre]
+Ajustes
+
+[confirmation_titre]
+¿Nueva partida?
+
+[confirmation]
+Se perderá tu partida en curso.
+
+[bouton_confirmer]
+Confirmar
+
+[bouton_annuler]
+Cancelar
+
+[tour_compteur]
+Turno {0}
+
+[tours_resultat]
+Turnos: {0}
+
+[record]
+Récord: {0}
+
+[nouveau_record]
+¡Nuevo récord!
+
+[bouton_niveaux]
+Niveles
+
+[niveaux_titre]
+Niveles
+
+[bouton_effacer_records]
+Borrar récords
+
+[effacer_records_titre]
+¿Borrar los récords?
+
+[effacer_records]
+Se perderán todas las estrellas y todos los récords.
+
+[langue_choix]
+Idioma
+
+[son_choix]
+Sonido
+
+[son_oui]
+Activado
+
+[son_non]
+Desactivado
+
+[musique_choix]
+Música
+
+[musique_oui]
+Activada
+
+[musique_non]
+Desactivada
+
+[porte_titre]
+Las puertas
+
+[porte]
+Toca una puerta vecina para abrirla. El número indica en cuántos turnos se cierra, empujando a quien esté debajo.
+
+[grille_titre]
+Las rejas
+
+[grille]
+Toca una reja vecina para levantarla. El número indica en cuántos turnos vuelve a caer, empujando a quien esté debajo.
+
+[fiole_titre]
+Los frascos
+
+[fiole]
+Un trago y todas tus gemas se llenan. Camina sobre él para beberlo. Si ya las tienes llenas, te esperará tranquilamente.
+
+[blob_vert_titre]
+El blob verde
+
+[blob_vert]
+El guardián favorito de Zorgus: blando, pegajoso y terco. Si te toca, te engulle y esperarás dentro el regreso del maestro. Cuando te ha visto, ya no te suelta.
+
+[blob_rouge_titre]
+El blob rojo
+
+[blob_rouge]
+Un blob verde que pasó demasiado miedo con el fuego. El fuego ya no lo detiene, pero el agua lo aterra. Acorralado por su miedo, vuelve a ser verde.
+
+[torche_titre]
+La antorcha
+
+[torche]
+Los blobs verdes temen el fuego: no entran en las tres casillas bajo la antorcha ni atacan allí. Bloqueado demasiado tiempo, un blob verde se vuelve rojo.
+
+[brasero_titre]
+El brasero
+
+[brasero]
+Un fuego infranqueable que deja pasar la vista y la magia. Los blobs verdes no se acercan a las casillas que lo rodean.
+
+[contenant_titre]
+Cajas y barriles
+
+[contenant]
+No puedes teletransportarte a ellos. Toca uno cuando estés al lado para romperlo: lleva un turno. A veces esconde un frasco.
+
+[escalier_titre]
+La escalera
+
+[escalier]
+La salida del nivel. Camina sobre ella para bajar más hondo en la mazmorra.
+
+[geste_titre]
+Pulsación larga
+
+[geste]
+Para saberlo todo sobre una puerta, una criatura, un objeto o el propio magus, mantén el dedo pulsado encima.
+
+En PC, basta con un clic derecho.
+
+[fermer_indication]
+Toca para cerrar

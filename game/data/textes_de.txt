@@ -1,0 +1,245 @@
+# Spieltexte auf Deutsch.
+# Jeder Text beginnt mit seinem Schlüssel in eckigen Klammern und endet beim nächsten Schlüssel.
+# Eine Leerzeile in einem Text erzeugt einen Absatz. {0} wird durch einen Wert ersetzt (Name des Levels).
+
+[langue]
+Deutsch
+
+[histoire_titre]
+Mob le Magus
+
+[histoire]
+Zorgus hat dir seinen Kerker anvertraut. Du hast einen selbstgebastelten Zauber ausprobiert. Schlechte Idee.
+
+Du bist zu deiner Freundin Isabela geflohen, die dir einen Magiefresser-Trank gegeben hat.
+
+Lauf in den Versuchsraum und bring alles in Ordnung, bevor der Meister zurückkommt.
+
+[spacio_magus_titre]
+Spacio Magus
+
+[spacio_magus]
+Der beleuchtete Bereich zeigt die Reichweite deiner Magie.
+Tippe auf eines dieser Felder, um dich dorthin zu teleportieren!
+Jeder Zauber kostet einen Magie-Edelstein.
+
+Tippst du ein Nachbarfeld an, gehst du dorthin.
+Tippst du den Magus an, setzt du eine Runde aus.
+
+[spacio_creatura_titre]
+Spacio Creatura
+
+[spacio_creatura]
+Tippe eine beleuchtete Kreatur an, dann eine zweite:
+
+Sie tauschen die Plätze und sind so viele Runden betäubt, wie über ihnen steht.
+
+[victoire_titre]
+Sieg!
+
+[victoire]
+Du hast die Treppe erreicht.
+
+[defaite_titre]
+Gefangen…
+
+[defaite]
+Verschluckt! Du wartest im Bauch eines Blobs auf die Rückkehr von Zorgus. Er wird nicht begeistert sein.
+
+[menu_titre]
+Menü
+
+[credits_titre]
+Credits
+
+[credits]
+Mob le Magus
+
+Schriftart Digital Disco: jeti (fontenddev.com), Lizenz CC BY 4.0.
+
+Kerker und Oberfläche: CraftPix.net.
+
+Effekte: Raphael Hatencia (RagnaPixel Studio), Lizenz CC BY 4.0.
+
+Magus: an_ghoul (an-ghoul.itch.io).
+
+Blob, Trank und Spinnweben: Kao (kaopxl.itch.io).
+
+Oberflächen-Sounds: May Genko (maygenko.itch.io).
+
+8-Bit-Soundeffekte: drtwelele (drtwelele.itch.io).
+
+Geräusche: Juhani Junkala (opengameart.org/users/subspaceaudio), Lizenz CC0.
+
+[erreur_titre]
+Datenfehler
+
+[debut_niveau]
+{0}
+
+[bouton_suivant]
+Weiter
+
+[bouton_passer]
+Überspringen
+
+[bouton_reprendre]
+Fortsetzen
+
+[bouton_recommencer]
+Neu starten
+
+[bouton_rejouer]
+Nochmal spielen
+
+[bouton_niveau_suivant]
+Nächstes Level
+
+[bouton_credits]
+Credits
+
+[jeu_titre]
+Mob le Magus
+
+[bouton_nouvelle_partie]
+Neues Spiel
+
+[bouton_continuer]
+Weiterspielen
+
+[bouton_reglages]
+Einstellungen
+
+[bouton_retour]
+Zurück
+
+[bouton_menu_principal]
+Hauptmenü
+
+[reglages_titre]
+Einstellungen
+
+[confirmation_titre]
+Neues Spiel?
+
+[confirmation]
+Dein laufendes Spiel geht verloren.
+
+[bouton_confirmer]
+Bestätigen
+
+[bouton_annuler]
+Abbrechen
+
+[tour_compteur]
+Runde {0}
+
+[tours_resultat]
+Runden: {0}
+
+[record]
+Rekord: {0}
+
+[nouveau_record]
+Neuer Rekord!
+
+[bouton_niveaux]
+Level
+
+[niveaux_titre]
+Level
+
+[bouton_effacer_records]
+Rekorde löschen
+
+[effacer_records_titre]
+Rekorde löschen?
+
+[effacer_records]
+Alle Sterne und alle Rekorde gehen verloren.
+
+[langue_choix]
+Sprache
+
+[son_choix]
+Ton
+
+[son_oui]
+An
+
+[son_non]
+Aus
+
+[musique_choix]
+Musik
+
+[musique_oui]
+An
+
+[musique_non]
+Aus
+
+[porte_titre]
+Die Türen
+
+[porte]
+Tippe eine benachbarte Tür an, um sie zu öffnen. Die Zahl zeigt, in wie vielen Runden sie wieder zufällt und dabei jeden wegschiebt, der darin steht.
+
+[grille_titre]
+Die Gitter
+
+[grille]
+Tippe ein benachbartes Gitter an, um es hochzuziehen. Die Zahl zeigt, in wie vielen Runden es wieder herunterfällt und dabei jeden wegschiebt, der darunter steht.
+
+[fiole_titre]
+Die Tränke
+
+[fiole]
+Ein Schluck und alle deine Edelsteine sind voll. Geh darauf, um ihn zu trinken. Hast du schon alles voll, wartet er brav auf dich.
+
+[blob_vert_titre]
+Der grüne Blob
+
+[blob_vert]
+Zorgus' Lieblingswächter: weich, klebrig und stur. Berührt er dich, verschluckt er dich, und du wartest darin auf die Rückkehr des Meisters. Hat er dich einmal gesehen, lässt er nicht mehr locker.
+
+[blob_rouge_titre]
+Der rote Blob
+
+[blob_rouge]
+Ein grüner Blob, der zu viel Angst vor dem Feuer hatte. Feuer hält ihn nicht mehr auf, aber Wasser jagt ihm Angst ein. In seiner Angst gefangen, wird er wieder grün.
+
+[torche_titre]
+Die Fackel
+
+[torche]
+Grüne Blobs fürchten das Feuer: Sie betreten die drei Felder unter der Fackel nicht und greifen dort nicht an. Steckt ein grüner Blob zu lange fest, wird er rot.
+
+[brasero_titre]
+Die Feuerschale
+
+[brasero]
+Ein unüberwindbares Feuer, das Sicht und Magie durchlässt. Grüne Blobs meiden die Felder rund um sie.
+
+[contenant_titre]
+Kisten und Fässer
+
+[contenant]
+Du kannst dich nicht hineinteleportieren. Tippe eines an, wenn du daneben stehst, um es zu zerschlagen: Das dauert eine Runde. Manchmal steckt ein Trank darin.
+
+[escalier_titre]
+Die Treppe
+
+[escalier]
+Der Ausgang des Levels. Geh darauf, um tiefer in den Kerker hinabzusteigen.
+
+[geste_titre]
+Lange drücken
+
+[geste]
+Um alles über eine Tür, eine Kreatur, einen Gegenstand oder den Magus selbst zu erfahren, halte den Finger darauf gedrückt.
+
+Am Computer genügt ein Rechtsklick.
+
+[fermer_indication]
+Tippen zum Schließen
