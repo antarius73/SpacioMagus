@@ -10,11 +10,11 @@ public class SpacioMagusSpellTests
             "#@........>#",
             "############");
 
-        Assert.Equal(ActionError.OutOfRange, TestMaps.NewGame(level).CastSpacioMagus(new Position(10, 1)).Error);
+        Assert.Equal(ActionError.OutOfRange, TestMaps.NewGame(level).CastSpacioMagus(new Position(7, 1)).Error);
 
         var game = TestMaps.NewGame(level);
-        Assert.True(game.CastSpacioMagus(new Position(9, 1)).Success);
-        Assert.Equal(new Position(9, 1), game.Magus.Position);
+        Assert.True(game.CastSpacioMagus(new Position(6, 1)).Success);
+        Assert.Equal(new Position(6, 1), game.Magus.Position);
         Assert.Equal(3, game.Magus.Magic);
     }
 

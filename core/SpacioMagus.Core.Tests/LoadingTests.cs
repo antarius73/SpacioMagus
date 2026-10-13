@@ -255,7 +255,7 @@ public class LoadingTests
     {
         var level = Load("""
             [niveau]
-            portee_sort = 5
+            portee_sort = 7
 
             [carte]
             #####
@@ -263,7 +263,7 @@ public class LoadingTests
             #####
             """);
 
-        Assert.Equal(5, level.Rules.SpellRange);
+        Assert.Equal(7, level.Rules.SpellRange);
         Assert.Equal(RuleSet.Default.MagicMax, level.Rules.MagicMax);
     }
 

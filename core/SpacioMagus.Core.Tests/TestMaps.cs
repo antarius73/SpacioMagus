@@ -74,6 +74,17 @@ internal static class TestMaps
             level.Potions,
             level.Torches);
 
+    public static LevelDefinition WithRoute(LevelDefinition level, Position start, params Position[] waypoints) =>
+        new(
+            level.Name,
+            level.Width,
+            level.Height,
+            level.Cells,
+            level.MagusStart,
+            level.Monsters.Select(spawn => spawn.Start == start ? spawn with { Route = PatrolRoute.Expand(waypoints) } : spawn).ToList(),
+            level.Potions,
+            level.Torches);
+
     public static Game NewGame(LevelDefinition level, RuleSet? rules = null) =>
         new(level, rules, new FixedRandom());
 }

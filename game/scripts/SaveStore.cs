@@ -37,15 +37,16 @@ public static class SaveStore
         }
     }
 
-    public static void Write(SaveGame save)
+    public static void Write(SaveGame save) => WriteAtomic(FilePath, TempPath, SaveCodec.Serialize(save));
+
+    public static bool WriteAtomic(string path, string tempPath, string content)
     {
-        var content = SaveCodec.Serialize(save);
-        using (var file = FileAccess.Open(TempPath, FileAccess.ModeFlags.Write))
+        using (var file = FileAccess.Open(tempPath, FileAccess.ModeFlags.Write))
         {
             if (file is null)
             {
-                GD.PushWarning($"Sauvegarde impossible ({TempPath}) : {FileAccess.GetOpenError()}.");
-                return;
+                GD.PushWarning($"Écriture impossible ({tempPath}) : {FileAccess.GetOpenError()}.");
+                return false;
             }
 
             file.StoreString(content);
@@ -53,10 +54,10 @@ public static class SaveStore
             file.Close();
         }
 
-        var source = ProjectSettings.GlobalizePath(TempPath);
-        var target = ProjectSettings.GlobalizePath(FilePath);
+        var source = ProjectSettings.GlobalizePath(tempPath);
+        var target = ProjectSettings.GlobalizePath(path);
         var error = DirAccess.RenameAbsolute(source, target);
-        if (error != Error.Ok && FileAccess.FileExists(FilePath))
+        if (error != Error.Ok && FileAccess.FileExists(path))
         {
             DirAccess.RemoveAbsolute(target);
             error = DirAccess.RenameAbsolute(source, target);
@@ -64,8 +65,34 @@ public static class SaveStore
 
         if (error != Error.Ok)
         {
-            GD.PushWarning($"Sauvegarde non remplacée ({FilePath}) : {error}.");
+            GD.PushWarning($"Fichier non remplacé ({path}) : {error}.");
+            return false;
         }
+
+        return true;
+    }
+
+    public static void Archive(SaveGame save, string outcome)
+    {
+        const string folder = "user://parties";
+        var error = DirAccess.MakeDirRecursiveAbsolute(ProjectSettings.GlobalizePath(folder));
+        if (error != Error.Ok)
+        {
+            GD.PushWarning($"Dossier des parties impossible à créer ({folder}) : {error}.");
+            return;
+        }
+
+        var level = System.IO.Path.GetFileNameWithoutExtension(save.LevelFile);
+        var path = $"{folder}/{level}_{System.DateTime.Now:yyyyMMdd-HHmmss}_{outcome}.json";
+        using var file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
+        if (file is null)
+        {
+            GD.PushWarning($"Partie non enregistrée ({path}) : {FileAccess.GetOpenError()}.");
+            return;
+        }
+
+        file.StoreString(SaveCodec.Serialize(save));
+        GD.Print($"Partie enregistrée : {ProjectSettings.GlobalizePath(path)}");
     }
 
     public static void Delete()

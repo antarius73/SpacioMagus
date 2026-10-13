@@ -1,4 +1,5 @@
 using SpacioMagus.Core.Loading;
+using SpacioMagus.Core.Saving;
 
 namespace SpacioMagus.Core.Tests;
 
@@ -19,84 +20,91 @@ public class GameDataTests
             Assert.True(File.Exists(path), $"Fichier de niveau introuvable : {path}");
             var level = LevelFile.Parse(file, File.ReadAllText(path), legend, settings.Rules);
             Assert.NotNull(level.Definition);
+            Assert.True(level.Stars is not null, $"{file} : seuils « etoiles » absents de [niveau].");
         }
     }
 
     [Fact]
     public void Level01CanBeWonWithSpells()
     {
-        var game = NewLevel01();
+        var level = LoadLevel01();
+        var journal = new GameJournal(level.Definition, level.Rules, 5233681745578830002UL);
+        var actions = new GameAction[]
+        {
+            new MoveAction(new Position(5, 21)),
+            new MoveAction(new Position(5, 20)),
+            new MoveAction(new Position(4, 19)),
+            new OpenGrilleAction(new Position(4, 18)),
+            new SpacioCreaturaAction(new Position(4, 17), new Position(4, 15)),
+            new SpacioMagusAction(new Position(4, 14)),
+            new MoveAction(new Position(4, 13)),
+            new MoveAction(new Position(4, 12)),
+            new OpenGrilleAction(new Position(4, 11)),
+            new MoveAction(new Position(4, 11)),
+            new MoveAction(new Position(4, 10)),
+            new SpacioCreaturaAction(new Position(4, 8), new Position(4, 6)),
+            new SpacioMagusAction(new Position(4, 5)),
+            new MoveAction(new Position(4, 4)),
+            new OpenGrilleAction(new Position(4, 3)),
+            new MoveAction(new Position(4, 3)),
+            new MoveAction(new Position(4, 2)),
+            new MoveAction(new Position(4, 1)),
+        };
 
-        Play(game,
-            g => g.Move(new Position(3, 20)),
-            g => g.Move(new Position(4, 19)),
-            g => g.OpenGrille(new Position(4, 18)),
-            g => g.Move(new Position(4, 18)),
-            g => g.Move(new Position(4, 17)),
-            g => g.Move(new Position(4, 16)),
-            g => g.CastSpacioMagus(new Position(4, 12)),
-            g => g.OpenGrille(new Position(4, 11)),
-            g => g.Move(new Position(4, 11)),
-            g => g.Move(new Position(4, 10)),
-            g => g.Move(new Position(3, 9)),
-            g => g.Move(new Position(2, 9)),
-            g => g.Break(new Position(1, 9)),
-            g => g.Move(new Position(1, 9)),
-            g => g.Move(new Position(2, 9)),
-            g => g.Move(new Position(3, 9)),
-            g => g.Move(new Position(4, 9)),
-            g => g.Move(new Position(4, 8)),
-            g => g.Move(new Position(4, 7)),
-            g => g.Move(new Position(4, 6)),
-            g => g.CastSpacioCreatura(new Position(2, 5), new Position(6, 5)),
-            g => g.Move(new Position(4, 5)),
-            g => g.Move(new Position(4, 4)),
-            g => g.OpenGrille(new Position(4, 3)),
-            g => g.CastSpacioMagus(new Position(4, 1)));
+        for (var index = 0; index < actions.Length && journal.Game.Status == GameStatus.Playing; index++)
+        {
+            var result = journal.Play(actions[index]);
+            Assert.True(result.Success, $"Action {index + 1} refusée : {result.Error}.");
+        }
 
-        Assert.Equal(GameStatus.Won, game.Status);
+        Assert.Equal(GameStatus.Won, journal.Game.Status);
+        Assert.Equal(actions.Length, journal.Game.Turn);
     }
 
     [Fact]
     public void Level01CorridorCannotBeCrossedOnFoot()
     {
         var game = NewLevel01();
+        var path = new List<Position> { new(3, 20), new(4, 19) };
+        for (var y = 18; y >= 1; y--)
+        {
+            path.Add(new Position(4, y));
+        }
 
-        Play(game,
-            g => g.Move(new Position(3, 20)),
-            g => g.Move(new Position(4, 19)),
-            g => g.OpenGrille(new Position(4, 18)),
-            g => g.Move(new Position(4, 18)),
-            g => g.Move(new Position(4, 17)),
-            g => g.Move(new Position(4, 16)),
-            g => g.Move(new Position(4, 15)),
-            g => g.Move(new Position(4, 14)),
-            g => g.Move(new Position(4, 13)),
-            g => g.Move(new Position(4, 12)),
-            g => g.OpenGrille(new Position(4, 11)));
+        var step = 0;
+        while (game.Status == GameStatus.Playing && game.Turn < 40 && step < path.Count)
+        {
+            var target = path[step];
+            if (game.GrilleAt(target) is { IsOpen: false })
+            {
+                Assert.True(game.OpenGrille(target).Success);
+                continue;
+            }
+
+            if (game.Move(target).Success)
+            {
+                step++;
+                continue;
+            }
+
+            Assert.True(game.Wait().Success);
+        }
 
         Assert.Equal(GameStatus.Lost, game.Status);
     }
 
     private static Game NewLevel01()
     {
-        var settings = LoadSettings();
-        var level = LevelFile.Parse(
-            "niveau_01.txt",
-            File.ReadAllText(Path.Combine(GameDirectory.Value, "niveaux", "niveau_01.txt")),
-            LoadLegend(),
-            settings.Rules);
+        var level = LoadLevel01();
         return new Game(level.Definition, level.Rules, new FixedRandom());
     }
 
-    private static void Play(Game game, params Func<Game, ActionResult>[] actions)
-    {
-        for (var index = 0; index < actions.Length && game.Status == GameStatus.Playing; index++)
-        {
-            var result = actions[index](game);
-            Assert.True(result.Success, $"Action {index + 1} refusée : {result.Error}.");
-        }
-    }
+    private static LoadedLevel LoadLevel01() =>
+        LevelFile.Parse(
+            "niveau_01.txt",
+            File.ReadAllText(Path.Combine(GameDirectory.Value, "niveaux", "niveau_01.txt")),
+            LoadLegend(),
+            LoadSettings().Rules);
 
     private static GameSettings LoadSettings() =>
         GameSettings.Parse("regles.txt", File.ReadAllText(DataPath("regles.txt")));

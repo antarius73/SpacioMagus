@@ -1,10 +1,11 @@
 using System.Text.RegularExpressions;
+using SpacioMagus.Core.Progress;
 
 namespace SpacioMagus.Core.Loading;
 
 public sealed record DecorItem(Position Position, string Id);
 
-public sealed record LoadedLevel(LevelDefinition Definition, RuleSet Rules, IReadOnlyList<DecorItem> Decor);
+public sealed record LoadedLevel(LevelDefinition Definition, RuleSet Rules, IReadOnlyList<DecorItem> Decor, StarThresholds? Stars = null);
 
 public static class LevelFile
 {
@@ -32,6 +33,7 @@ public static class LevelFile
         var document = SectionedText.Parse(fileName, content, issues, Sections, null);
 
         var name = Path.GetFileNameWithoutExtension(fileName);
+        StarThresholds? stars = null;
         var rules = baseRules;
         foreach (var (line, rawKey, value) in SectionedText.KeyValues(fileName, document.Lines(LevelSection), issues))
         {
@@ -40,13 +42,17 @@ public static class LevelFile
             {
                 name = value;
             }
+            else if (key == "etoiles")
+            {
+                stars = ParseStars(fileName, line, value, issues);
+            }
             else if (RuleKeys.IsRuleKey(key))
             {
                 rules = RuleKeys.Apply(rules, fileName, line, key, value, issues);
             }
             else
             {
-                issues.Add(new LoadIssue(fileName, line.Number, 0, $"Clé inconnue « {key} » dans [{LevelSection}]. Clés possibles : nom, {string.Join(", ", RuleKeys.Names)}."));
+                issues.Add(new LoadIssue(fileName, line.Number, 0, $"Clé inconnue « {key} » dans [{LevelSection}]. Clés possibles : nom, etoiles, {string.Join(", ", RuleKeys.Names)}."));
             }
         }
 
@@ -78,6 +84,7 @@ public static class LevelFile
                 var position = new Position(x, y);
                 string elementId;
                 Position? post = null;
+                IReadOnlyList<Position>? route = null;
 
                 if (symbol == ' ')
                 {
@@ -94,6 +101,7 @@ public static class LevelFile
                     usedMarkers.Add(symbol);
                     elementId = marker.Id;
                     post = marker.Post;
+                    route = marker.Route;
                 }
                 else if (legend.TryGet(symbol, out var entry) && entry.Layer == LegendLayer.Map)
                 {
@@ -125,10 +133,10 @@ public static class LevelFile
                         starts.Add((position, row, x + 1));
                         break;
                     case ElementIds.BlobVert:
-                        monsters.Add(new MonsterSpawn(MonsterKind.BlobVert, position, post ?? position));
+                        monsters.Add(new MonsterSpawn(MonsterKind.BlobVert, position, post ?? position, route));
                         break;
                     case ElementIds.BlobRouge:
-                        monsters.Add(new MonsterSpawn(MonsterKind.BlobRouge, position, post ?? position));
+                        monsters.Add(new MonsterSpawn(MonsterKind.BlobRouge, position, post ?? position, route));
                         break;
                     case ElementIds.Potion or ElementIds.BarrelPotion or ElementIds.CratePotion:
                         potions.Add(position);
@@ -181,7 +189,7 @@ public static class LevelFile
         try
         {
             var definition = new LevelDefinition(name, width, height, cells, starts[0].Position, monsters, potions, torches);
-            return new LoadedLevel(definition, rules, decor);
+            return new LoadedLevel(definition, rules, decor, stars);
         }
         catch (LevelDefinitionException exception)
         {
@@ -190,6 +198,22 @@ public static class LevelFile
                 new LoadIssue(fileName, 0, 0, $"{exception.Message} Les positions sont (colonne, ligne) dans la carte, à partir de 0 en haut à gauche."),
             });
         }
+    }
+
+    private static StarThresholds? ParseStars(string fileName, SourceLine line, string value, List<LoadIssue> issues)
+    {
+        var parts = value.Split(',', StringSplitOptions.TrimEntries);
+        if (parts.Length != 2
+            || !int.TryParse(parts[0], out var three)
+            || !int.TryParse(parts[1], out var two)
+            || three < 1
+            || two < three)
+        {
+            issues.Add(new LoadIssue(fileName, line.Number, 0, $"« etoiles » attend deux nombres de tours croissants « 3 étoiles, 2 étoiles », par exemple « 14, 18 » : « {value} »."));
+            return null;
+        }
+
+        return new StarThresholds(three, two);
     }
 
     private static bool IsWallFace(Terrain[] cells, int width, int height, Position position)
@@ -239,6 +263,7 @@ public static class LevelFile
             }
 
             Position? post = null;
+            IReadOnlyList<Position>? route = null;
             var valid = true;
             foreach (Match match in ParameterPattern.Matches(parameters))
             {
@@ -255,6 +280,33 @@ public static class LevelFile
                     }
 
                     post = new Position(int.Parse(coordinates.Groups["x"].Value), int.Parse(coordinates.Groups["y"].Value));
+                }
+                else if (parameter == "ronde" && id is ElementIds.BlobVert or ElementIds.BlobRouge)
+                {
+                    var waypoints = new List<Position>();
+                    foreach (var token in parameterValue.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                    {
+                        var coordinates = CoordinatesPattern.Match(token);
+                        if (!coordinates.Success)
+                        {
+                            issues.Add(new LoadIssue(fileName, line.Number, 0, $"« ronde » attend des points « colonne,ligne » séparés par des espaces : « {token} »."));
+                            valid = false;
+                            break;
+                        }
+
+                        waypoints.Add(new Position(int.Parse(coordinates.Groups["x"].Value), int.Parse(coordinates.Groups["y"].Value)));
+                    }
+
+                    if (valid && waypoints.Count == 0)
+                    {
+                        issues.Add(new LoadIssue(fileName, line.Number, 0, "« ronde » ne contient aucun point."));
+                        valid = false;
+                    }
+
+                    if (valid)
+                    {
+                        route = PatrolRoute.Expand(waypoints);
+                    }
                 }
                 else
                 {
@@ -274,7 +326,7 @@ public static class LevelFile
                 continue;
             }
 
-            if (!markers.TryAdd(key[0], new Marker(key[0], id, post, line.Number)))
+            if (!markers.TryAdd(key[0], new Marker(key[0], id, post, route, line.Number)))
             {
                 issues.Add(new LoadIssue(fileName, line.Number, 0, $"Repère « {key} » défini deux fois."));
             }
@@ -328,5 +380,5 @@ public static class LevelFile
         return decor;
     }
 
-    private sealed record Marker(char Symbol, string Id, Position? Post, int Line);
+    private sealed record Marker(char Symbol, string Id, Position? Post, IReadOnlyList<Position>? Route, int Line);
 }

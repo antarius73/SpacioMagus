@@ -125,6 +125,33 @@ Confirmer
 [bouton_annuler]
 Annuler
 
+[tour_compteur]
+Tour {0}
+
+[tours_resultat]
+Tours : {0}
+
+[record]
+Record : {0}
+
+[nouveau_record]
+Nouveau record !
+
+[bouton_niveaux]
+Niveaux
+
+[niveaux_titre]
+Niveaux
+
+[bouton_effacer_records]
+Effacer les records
+
+[effacer_records_titre]
+Effacer les records ?
+
+[effacer_records]
+Toutes les étoiles et tous les records seront perdus.
+
 [langue_choix]
 Langue
 

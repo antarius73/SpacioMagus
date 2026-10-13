@@ -8,7 +8,7 @@ public sealed record RuleSet
 
     public int SpellCost { get; init; } = 1;
 
-    public int SpellRange { get; init; } = 8;
+    public int SpellRange { get; init; } = 5;
 
     public int StunDuration { get; init; } = 4;
 

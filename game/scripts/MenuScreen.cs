@@ -7,8 +7,15 @@ namespace SpacioMagus;
 public partial class MenuScreen : CanvasLayer
 {
     private const int ParchmentMargin = 10;
-    private const int ScreenMargin = 10;
     private const int InnerMargin = 16;
+    private const float PanelWidth = 268f;
+    private const float IllustrationGap = 10f;
+    private const float IconGap = 8f;
+    private const float TitleGap = 12f;
+    private const float SectionGap = 16f;
+    private const float ButtonsGap = 20f;
+    private const int ButtonSeparation = 6;
+    private const float BackGap = 18f;
     private const float ButtonWidth = 160f;
     private const float ButtonHeight = 28f;
     private const float IllustrationWidth = 224f;
@@ -57,32 +64,35 @@ public partial class MenuScreen : CanvasLayer
         background.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         root.AddChild(background);
 
-        var parchment = GuiAssets.Panel(GuiAssets.Parchment, ParchmentMargin);
-        parchment.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        parchment.OffsetLeft = ScreenMargin;
-        parchment.OffsetTop = ScreenMargin;
-        parchment.OffsetRight = -ScreenMargin;
-        parchment.OffsetBottom = -ScreenMargin;
-        root.AddChild(parchment);
+        var center = new CenterContainer();
+        center.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        root.AddChild(center);
 
-        var margin = new MarginContainer();
-        margin.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        foreach (var side in new[] { "margin_left", "margin_right", "margin_top", "margin_bottom" })
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(PanelWidth, 0) };
+        panel.AddThemeStyleboxOverride("panel", new StyleBoxTexture
         {
-            margin.AddThemeConstantOverride(side, InnerMargin);
-        }
-
-        parchment.AddChild(margin);
+            Texture = GuiAssets.Parchment,
+            TextureMarginLeft = ParchmentMargin,
+            TextureMarginRight = ParchmentMargin,
+            TextureMarginTop = ParchmentMargin,
+            TextureMarginBottom = ParchmentMargin,
+            ContentMarginLeft = InnerMargin,
+            ContentMarginRight = InnerMargin,
+            ContentMarginTop = InnerMargin,
+            ContentMarginBottom = InnerMargin,
+        });
+        center.AddChild(panel);
 
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 8);
-        margin.AddChild(box);
+        box.AddThemeConstantOverride("separation", 0);
+        panel.AddChild(box);
 
         if (illustration is not null)
         {
             illustration.CustomMinimumSize = new Vector2(IllustrationWidth, IllustrationHeight);
             illustration.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
             box.AddChild(illustration);
+            box.AddChild(Spacer(IllustrationGap));
         }
 
         if (icons.Count > 0)
@@ -95,6 +105,7 @@ public partial class MenuScreen : CanvasLayer
             }
 
             box.AddChild(iconRow);
+            box.AddChild(Spacer(IconGap));
         }
 
         var titleLabel = new Label
@@ -107,39 +118,48 @@ public partial class MenuScreen : CanvasLayer
         titleLabel.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
         box.AddChild(titleLabel);
 
-        var scroll = new ScrollContainer
+        if (!string.IsNullOrWhiteSpace(body))
         {
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-        };
-        box.AddChild(scroll);
-
-        var bodyLabel = new Label
-        {
-            Text = body,
-            AutowrapMode = TextServer.AutowrapMode.WordSmart,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-        };
-        bodyLabel.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
-        scroll.AddChild(bodyLabel);
+            box.AddChild(Spacer(TitleGap));
+            var bodyLabel = new Label
+            {
+                Text = body,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            };
+            bodyLabel.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
+            box.AddChild(bodyLabel);
+        }
 
         if (control is not null)
         {
+            box.AddChild(Spacer(SectionGap));
             control.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
             box.AddChild(control);
         }
 
-        var row = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter };
-        row.AddThemeConstantOverride("separation", 6);
-        box.AddChild(row);
-
-        foreach (var (text, action) in buttons)
+        if (buttons.Length > 0)
         {
-            var button = new Button { Text = text, CustomMinimumSize = new Vector2(ButtonWidth, ButtonHeight) };
-            button.Pressed += action;
-            row.AddChild(button);
+            box.AddChild(Spacer(ButtonsGap));
+            var row = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter };
+            row.AddThemeConstantOverride("separation", ButtonSeparation);
+            box.AddChild(row);
+            for (var index = 0; index < buttons.Length; index++)
+            {
+                var (text, action) = buttons[index];
+                if (index > 0 && index == buttons.Length - 1 && text == Texts.BackButton)
+                {
+                    row.AddChild(Spacer(BackGap - ButtonSeparation));
+                }
+
+                var button = new Button { Text = text, CustomMinimumSize = new Vector2(ButtonWidth, ButtonHeight) };
+                button.Pressed += action;
+                row.AddChild(button);
+            }
         }
 
         return screen;
     }
+
+    private static Control Spacer(float height) => new() { CustomMinimumSize = new Vector2(0, height), MouseFilter = Control.MouseFilterEnum.Ignore };
 }

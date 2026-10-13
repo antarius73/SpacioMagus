@@ -15,12 +15,14 @@ public sealed class MagusState
 
 public sealed class MonsterState
 {
-    internal MonsterState(int id, MonsterKind kind, Position position, Position post)
+    internal MonsterState(int id, MonsterKind kind, Position position, Position post, IReadOnlyList<Position> route, int routeOffset)
     {
         Id = id;
         Kind = kind;
         Position = position;
         Post = post;
+        Route = route;
+        RouteOffset = routeOffset;
     }
 
     public int Id { get; }
@@ -30,6 +32,10 @@ public sealed class MonsterState
     public Position Position { get; internal set; }
 
     public Position Post { get; }
+
+    public IReadOnlyList<Position> Route { get; }
+
+    public int RouteOffset { get; }
 
     public bool IsTracking { get; internal set; }
 

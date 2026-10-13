@@ -34,6 +34,24 @@ public static class Texts
 
     public static string LevelStart(string levelName) => string.Format(Get("debut_niveau"), levelName);
 
+    public static string TurnCounter(int turn) => string.Format(Get("tour_compteur"), turn);
+
+    public static string TurnsResult(int turns) => string.Format(Get("tours_resultat"), turns);
+
+    public static string Record(int turns) => string.Format(Get("record"), turns);
+
+    public static string NewRecord => Get("nouveau_record");
+
+    public static string LevelsButton => Get("bouton_niveaux");
+
+    public static string LevelsTitle => Get("niveaux_titre");
+
+    public static string ClearRecordsButton => Get("bouton_effacer_records");
+
+    public static string ClearRecordsTitle => Get("effacer_records_titre");
+
+    public static string ClearRecords => Get("effacer_records");
+
     public static string StoryTitle => Get("histoire_titre");
 
     public static string Story => Get("histoire");

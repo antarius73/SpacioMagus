@@ -14,6 +14,9 @@ public partial class Hud : CanvasLayer
     private const float GemsX = 31f;
     private const float GemsY = 10f;
     private const float TouchSize = 32f;
+    private const float TurnX = 104f;
+    private const float TurnY = 8f;
+    private const int TurnOutline = 2;
     private const float PopupWidth = 224f;
     private const int PopupScreenMargin = 16;
     private const int PopupTextureMargin = 10;
@@ -21,6 +24,7 @@ public partial class Hud : CanvasLayer
     private const double MessageFadeDuration = 0.25;
 
     private readonly MagicBar _magic = new();
+    private readonly Label _turn = new();
     private readonly Label _message = new();
     private readonly PanelContainer _popup = new();
     private double _time;
@@ -49,6 +53,13 @@ public partial class Hud : CanvasLayer
         _magic.Position = new Vector2(GemsX, GemsY);
         _magic.MouseFilter = Control.MouseFilterEnum.Ignore;
         top.AddChild(_magic);
+
+        _turn.Position = new Vector2(TurnX, TurnY);
+        _turn.MouseFilter = Control.MouseFilterEnum.Ignore;
+        _turn.AddThemeColorOverride("font_color", GuiAssets.TextOnWood);
+        _turn.AddThemeColorOverride("font_outline_color", GuiAssets.AlertOutline);
+        _turn.AddThemeConstantOverride("outline_size", TurnOutline);
+        top.AddChild(_turn);
 
         var icons = new HBoxContainer();
         icons.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.RightWide);
@@ -97,9 +108,10 @@ public partial class Hud : CanvasLayer
         _popup.AddChild(_message);
     }
 
-    public void Refresh(int magic, int maxMagic)
+    public void Refresh(int magic, int maxMagic, int turn)
     {
         _magic.SetMagic(magic, maxMagic);
+        _turn.Text = Texts.TurnCounter(turn);
     }
 
     public void ShowMessage(string message)

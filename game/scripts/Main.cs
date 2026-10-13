@@ -4,6 +4,7 @@ using System.Linq;
 using Godot;
 using SpacioMagus.Core;
 using SpacioMagus.Core.Loading;
+using SpacioMagus.Core.Progress;
 using SpacioMagus.Core.Saving;
 using Cell = SpacioMagus.Core.Position;
 
@@ -12,6 +13,9 @@ namespace SpacioMagus;
 public partial class Main : Node
 {
     private GameSettings _settings = GameSettings.Default;
+    private RecordBook _records = new();
+    private StarThresholds? _levelStars;
+    private (int Stars, int Turns, int? Record, bool NewRecord) _lastVictory = (1, 0, null, false);
     private Legend? _legend;
     private IReadOnlyList<string> _levels = Array.Empty<string>();
     private int _levelIndex;
@@ -37,6 +41,7 @@ public partial class Main : Node
     {
         RenderingServer.SetDefaultClearColor(LevelView.BackgroundColor);
         UserSettings.Load();
+        _records = RecordStore.Load();
 
         _view = new LevelView { Name = "LevelView" };
         AddChild(_view);
@@ -83,6 +88,7 @@ public partial class Main : Node
             canContinue,
             RequestNewGame,
             ContinueGame,
+            () => ShowLevelSelect(0),
             () => ShowSettings(ShowTitle),
             () => ShowCredits(ShowTitle)));
     }
@@ -100,6 +106,40 @@ public partial class Main : Node
             Texts.ConfirmNewGame,
             (Texts.ConfirmButton, StartNewGame),
             (Texts.CancelButton, ShowTitle)));
+    }
+
+    private void ShowLevelSelect(int page)
+    {
+        ShowScreen(() => LevelSelectScreen.Create(LevelEntries(), page, ChooseLevel, ShowLevelSelect, ShowTitle));
+    }
+
+    private List<LevelEntry> LevelEntries()
+    {
+        var entries = new List<LevelEntry>();
+        for (var index = 0; index < _levels.Count; index++)
+        {
+            var record = _records.Get(_levels[index]);
+            var unlocked = index == 0 || _records.IsCompleted(_levels[index - 1]);
+            var state = record is not null ? DoorState.Completed : unlocked ? DoorState.Next : DoorState.Locked;
+            entries.Add(new LevelEntry(state, record?.MostStars ?? 0));
+        }
+
+        return entries;
+    }
+
+    private void ChooseLevel(int index)
+    {
+        if (ResumableSave() is null)
+        {
+            StartLevel(index);
+            return;
+        }
+
+        ShowScreen(() => MenuScreen.Create(
+            Texts.ConfirmNewGameTitle,
+            Texts.ConfirmNewGame,
+            (Texts.ConfirmButton, () => StartLevel(index)),
+            (Texts.CancelButton, () => ShowLevelSelect(index / LevelGrid.PerPage))));
     }
 
     private void StartNewGame()
@@ -138,6 +178,18 @@ public partial class Main : Node
         }
 
         var levelFile = _levels[_levelIndex];
+        if (_journal.Game.Status == GameStatus.Won)
+        {
+            RecordVictory(levelFile);
+        }
+
+        if (OS.IsDebugBuild() && _journal.Game.Status != GameStatus.Playing)
+        {
+            SaveStore.Archive(
+                SaveGame.InProgress(levelFile, _levelFingerprint, _journal),
+                _journal.Game.Status == GameStatus.Won ? "victoire" : "defaite");
+        }
+
         switch (_journal.Game.Status)
         {
             case GameStatus.Playing:
@@ -327,6 +379,8 @@ public partial class Main : Node
     private void ShowVictory()
     {
         var next = _levelIndex + 1;
+        var index = _levelIndex;
+        var victory = _lastVictory;
         ShowScreen(() =>
         {
             var buttons = new List<(string Text, Action Action)>();
@@ -335,11 +389,29 @@ public partial class Main : Node
                 buttons.Add((Texts.NextLevelButton, () => StartLevel(next)));
             }
 
-            buttons.Add((Texts.PlayAgainButton, () => StartLevel(0)));
+            buttons.Add((Texts.PlayAgainButton, () => StartLevel(index)));
             buttons.Add((Texts.MainMenuButton, ShowTitle));
-            var stars = new[] { GuiAssets.Star, GuiAssets.Star, GuiAssets.Star };
-            return MenuScreen.Create(Texts.VictoryTitle, Texts.Victory, stars, buttons.ToArray());
+            return VictoryScreen.Create(victory.Stars, victory.Turns, victory.Record, victory.NewRecord, buttons.ToArray());
         });
+    }
+
+    private void RecordVictory(string levelFile)
+    {
+        if (_journal is null)
+        {
+            return;
+        }
+
+        var turns = _journal.Game.Turn;
+        var stars = _levelStars?.Rate(turns) ?? 1;
+        var result = new LevelResult(
+            turns,
+            stars,
+            _journal.Actions.Count(action => action is SpacioMagusAction),
+            _journal.Actions.Count(action => action is SpacioCreaturaAction));
+        var update = _records.Submit(levelFile, result);
+        RecordStore.Save(_records);
+        _lastVictory = (stars, turns, update.Current.FewestTurns, update.FewestTurns);
     }
 
     private void ShowDefeat()
@@ -382,7 +454,21 @@ public partial class Main : Node
             Texts.SettingsTitle,
             string.Empty,
             LanguageChoice(back),
+            (Texts.ClearRecordsButton, () => ConfirmClearRecords(back)),
             (Texts.BackButton, back)));
+    }
+
+    private void ConfirmClearRecords(Action back)
+    {
+        ShowScreen(() => MenuScreen.Create(
+            Texts.ClearRecordsTitle,
+            Texts.ClearRecords,
+            (Texts.ConfirmButton, () =>
+            {
+                RecordStore.Clear(_records);
+                ShowSettings(back);
+            }),
+            (Texts.CancelButton, () => ShowSettings(back))));
     }
 
     private Control LanguageChoice(Action back)
@@ -504,6 +590,7 @@ public partial class Main : Node
         _view.Visible = true;
         _journal = journal;
         _levelFingerprint = fingerprint;
+        _levelStars = loaded.Stars;
         _game = journal.Game;
         _view.ShowLevel(_game, loaded.Decor);
 
@@ -699,7 +786,7 @@ public partial class Main : Node
 
         var magus = _game.Magus;
         var canCast = magus.Magic >= _game.Rules.SpellCost;
-        _hud.Refresh(magus.Magic, _game.Rules.MagicMax);
+        _hud.Refresh(magus.Magic, _game.Rules.MagicMax, _game.Turn);
         _camera.Position = _view.MagusFocus;
 
         var candidates = _game.SwapCandidates().Select(monster => monster.Position).ToList();

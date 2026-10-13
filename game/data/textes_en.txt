@@ -125,6 +125,33 @@ Confirm
 [bouton_annuler]
 Cancel
 
+[tour_compteur]
+Turn {0}
+
+[tours_resultat]
+Turns: {0}
+
+[record]
+Best: {0}
+
+[nouveau_record]
+New record!
+
+[bouton_niveaux]
+Levels
+
+[niveaux_titre]
+Levels
+
+[bouton_effacer_records]
+Clear records
+
+[effacer_records_titre]
+Clear records?
+
+[effacer_records]
+All stars and records will be lost.
+
 [langue_choix]
 Language
 

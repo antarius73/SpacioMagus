@@ -15,7 +15,7 @@ public partial class TitleScreen : CanvasLayer
     private const float ButtonHeight = 28f;
     private static readonly Color DisabledModulate = new(0.75f, 0.75f, 0.75f);
 
-    public static TitleScreen Create(bool canContinue, Action newGame, Action continueGame, Action settings, Action credits)
+    public static TitleScreen Create(bool canContinue, Action newGame, Action continueGame, Action levels, Action settings, Action credits)
     {
         var screen = new TitleScreen { Layer = 10 };
 
@@ -73,6 +73,7 @@ public partial class TitleScreen : CanvasLayer
 
         AddButton(buttons, Texts.NewGameButton, newGame, true);
         AddButton(buttons, Texts.ContinueButton, continueGame, canContinue);
+        AddButton(buttons, Texts.LevelsButton, levels, true);
         AddButton(buttons, Texts.SettingsButton, settings, true);
         AddButton(buttons, Texts.CreditsButton, credits, true);
         return screen;

@@ -112,6 +112,32 @@ public sealed class LevelDefinition
 
     private static bool IsOpenGround(Terrain terrain) => terrain is Terrain.Floor or Terrain.Stairs;
 
+    private void ValidateRoute(MonsterSpawn spawn)
+    {
+        var route = spawn.Patrol;
+        for (var index = 0; index < route.Count; index++)
+        {
+            var cell = route[index];
+            if (!IsOpenGround(TerrainAt(cell)))
+            {
+                throw new LevelDefinitionException($"La ronde du monstre en {spawn.Start} passe par {cell}, qui n'est pas une case de sol.");
+            }
+
+            var next = route[(index + 1) % route.Count];
+            if (cell.ChebyshevTo(next) > 1)
+            {
+                throw new LevelDefinitionException($"La ronde du monstre en {spawn.Start} saute de {cell} à {next} : les cases doivent être voisines.");
+            }
+
+            var delta = next - cell;
+            if (delta.X != 0 && delta.Y != 0
+                && (IsSolid(TerrainAt(new Position(next.X, cell.Y))) || IsSolid(TerrainAt(new Position(cell.X, next.Y)))))
+            {
+                throw new LevelDefinitionException($"La ronde du monstre en {spawn.Start} coupe un coin de mur entre {cell} et {next}.");
+            }
+        }
+    }
+
     private void Validate()
     {
         if (TerrainAt(MagusStart) != Terrain.Floor)
@@ -136,6 +162,8 @@ public sealed class LevelDefinition
             {
                 throw new LevelDefinitionException($"Le poste {spawn.Post} du monstre en {spawn.Start} doit être une case de sol.");
             }
+
+            ValidateRoute(spawn);
 
             if (!occupied.Add(spawn.Start))
             {

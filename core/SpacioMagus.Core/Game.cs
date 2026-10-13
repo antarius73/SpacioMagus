@@ -11,7 +11,7 @@ public sealed class Game
     private readonly HashSet<Position> _waterZone;
     private List<GameEvent> _events = new();
 
-    public const int RulesVersion = 3;
+    public const int RulesVersion = 4;
 
     public Game(LevelDefinition level, RuleSet? rules = null, IRandomSource? random = null)
     {
@@ -21,7 +21,13 @@ public sealed class Game
         _random = random ?? new SystemRandomSource();
         Magus = new MagusState(level.MagusStart, Rules.MagicMax);
         _monsters = level.Monsters
-            .Select((spawn, index) => new MonsterState(index + 1, spawn.Kind, spawn.Start, spawn.Post))
+            .Select((spawn, index) => new MonsterState(
+                index + 1,
+                spawn.Kind,
+                spawn.Start,
+                spawn.Post,
+                spawn.Patrol,
+                Math.Max(0, spawn.Patrol.ToList().IndexOf(spawn.Start))))
             .ToList();
         _grilles = new Dictionary<Position, GrilleState>();
         foreach (var position in level.Grilles())
@@ -43,11 +49,44 @@ public sealed class Game
                 }
             }
         }
+
         _fireZone = BuildFireZone(level);
         _waterZone = BuildWaterZone(level);
     }
 
+    private Game(Game source, IRandomSource random)
+    {
+        Level = source.Level;
+        Rules = source.Rules;
+        _random = random;
+        Status = source.Status;
+        Turn = source.Turn;
+        Magus = new MagusState(source.Magus.Position, source.Magus.Magic);
+        _monsters = source._monsters.Select(monster => new MonsterState(monster.Id, monster.Kind, monster.Position, monster.Post, monster.Route, monster.RouteOffset)
+        {
+            IsTracking = monster.IsTracking,
+            StunTurns = monster.StunTurns,
+            FearTurns = monster.FearTurns,
+            MutationTurns = monster.MutationTurns,
+        }).ToList();
+        _grilles = source._grilles.ToDictionary(
+            entry => entry.Key,
+            entry => new GrilleState(entry.Value.Position, entry.Value.FirstSide, entry.Value.SecondSide)
+            {
+                TurnsRemaining = entry.Value.TurnsRemaining,
+                OpenedThisTurn = entry.Value.OpenedThisTurn,
+            });
+        _potions = new HashSet<Position>(source._potions);
+        _containers = new Dictionary<Position, bool>(source._containers);
+        _fireZone = source._fireZone;
+        _waterZone = source._waterZone;
+    }
+
     public LevelDefinition Level { get; }
+
+    public int PatrolPeriod => PatrolRoute.Period(_monsters.Select(monster => monster.Route.Count));
+
+    public Game Clone(IRandomSource random) => new(this, random ?? throw new ArgumentNullException(nameof(random)));
 
     public RuleSet Rules { get; }
 
@@ -593,13 +632,75 @@ public sealed class Game
             return;
         }
 
-        if (monster.Position != monster.Post
-            && !IsFeared(monster.Kind, monster.Post)
-            && FirstStep(monster.Position, monster.Post, monster.Kind) is { } step)
+        Patrol(monster);
+    }
+
+    private void Patrol(MonsterState monster)
+    {
+        var route = monster.Route;
+        if (monster.Position == Scheduled(monster, Turn - 1))
         {
-            TryStep(monster, step);
+            var next = Scheduled(monster, Turn);
+            if (next != monster.Position && !IsFeared(monster.Kind, next))
+            {
+                TryStep(monster, next);
+            }
+
+            return;
+        }
+
+        var start = monster.Position;
+        var cameFrom = new Dictionary<Position, Position> { [start] = start };
+        var distances = new Dictionary<Position, int> { [start] = 0 };
+        var queue = new Queue<Position>();
+        queue.Enqueue(start);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            foreach (var direction in Position.Directions)
+            {
+                var next = current + direction;
+                if (distances.ContainsKey(next) || !IsPlannable(next) || !IsPlannableCorner(current, next) || IsFeared(monster.Kind, next))
+                {
+                    continue;
+                }
+
+                distances[next] = distances[current] + 1;
+                cameFrom[next] = current;
+                queue.Enqueue(next);
+            }
+        }
+
+        Position? target = null;
+        var bestTime = int.MaxValue;
+        var bestDistance = int.MaxValue;
+        for (var index = 0; index < route.Count; index++)
+        {
+            if (!distances.TryGetValue(route[index], out var distance))
+            {
+                continue;
+            }
+
+            var arrival = Turn - 1 + distance;
+            var time = arrival + Modulo(index - monster.RouteOffset - arrival, route.Count);
+            if (time < bestTime || (time == bestTime && distance < bestDistance))
+            {
+                bestTime = time;
+                bestDistance = distance;
+                target = route[index];
+            }
+        }
+
+        if (target is { } goal && goal != start)
+        {
+            TryStep(monster, FirstOnPath(cameFrom, start, goal));
         }
     }
+
+    private static Position Scheduled(MonsterState monster, int turn) =>
+        monster.Route[Modulo(turn + monster.RouteOffset, monster.Route.Count)];
+
+    private static int Modulo(int value, int divisor) => ((value % divisor) + divisor) % divisor;
 
     private void Chase(MonsterState monster, bool wasAfraid)
     {

@@ -37,6 +37,24 @@ public static class GuiAssets
 
     public static Texture2D Cross { get; } = Load("res://assets/gui/croix.png");
 
+    public static Texture2D VictorySheet { get; } = Load("res://assets/gui/victoire.png");
+
+    public static Texture2D LevelsSheet { get; } = Load("res://assets/gui/niveaux.png");
+
+    public static readonly Rect2 BigStarFull = new(161, 386, 29, 28);
+    public static readonly Rect2 BigStarEmpty = new(241, 386, 29, 28);
+    public static readonly Rect2 SmallStarFull = new(199, 392, 17, 17);
+    public static readonly Rect2 SmallStarEmpty = new(279, 392, 17, 17);
+    public static readonly Rect2 LevelPanel = new(7, 0, 114, 133);
+    public static readonly Rect2 LevelPanelHeaderPatch = new(30, 2, 12, 11);
+    public static readonly Vector2 LevelPanelCloseOffset = new(100, 2);
+    public static readonly Rect2 DoorCompleted = new(168, 162, 17, 19);
+    public static readonly Rect2 DoorNext = new(264, 162, 17, 19);
+    public static readonly Rect2 DoorLocked = new(296, 162, 17, 27);
+    public static readonly Rect2 MiniStarFull = new(165, 182, 7, 7);
+    public static readonly Rect2 MiniStarEmpty = new(205, 182, 7, 7);
+    public static readonly Rect2 NextMarker = new(268, 183, 9, 6);
+
     public static Theme Theme => _theme ??= BuildTheme();
 
     public static AtlasTexture Region(Texture2D texture, Rect2 region) => new() { Atlas = texture, Region = region };
