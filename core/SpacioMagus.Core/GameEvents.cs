@@ -46,4 +46,8 @@ public sealed record MagusBitten(int MonsterId) : GameEvent;
 
 public sealed record MagusFainted(int MonsterId) : GameEvent;
 
+public sealed record AlcoveLit(Position Position) : GameEvent;
+
+public sealed record PotionsRevealed : GameEvent;
+
 public sealed record LevelCompleted : GameEvent;

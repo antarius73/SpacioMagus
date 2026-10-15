@@ -775,6 +775,18 @@ public partial class Main : Node
             return;
         }
 
+        if (game.Script is not null && game.Level.Alcoves.Contains(cell))
+        {
+            if (game.Magus.Position.IsAdjacentTo(cell) && !game.IsActivated(cell))
+            {
+                Apply(Play(new ActivateAction(cell)), cell, TapKind.Move);
+                return;
+            }
+
+            Reject(cell);
+            return;
+        }
+
         if (game.Level.LeverTarget(cell) is not null)
         {
             if (game.Magus.Position.IsAdjacentTo(cell))

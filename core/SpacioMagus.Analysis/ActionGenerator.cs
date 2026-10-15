@@ -17,6 +17,11 @@ public static class ActionGenerator
         }
 
         yield return new WaitAction();
+        foreach (var target in game.Activables())
+        {
+            yield return new ActivateAction(target);
+        }
+
         var magus = game.Magus.Position;
         foreach (var direction in Position.Directions)
         {
@@ -82,6 +87,7 @@ public static class ActionGenerator
         OpenGrilleAction grille => $"ouvrir la porte {grille.Target}",
         BreakAction breaking => $"briser {breaking.Target}",
         LeverAction lever => $"manette {lever.Target}",
+        ActivateAction activate => $"activer {activate.Target}",
         SpacioMagusAction teleport => $"Spacio Magus {teleport.Target}",
         SpacioCreaturaAction swap => $"Spacio Creatura {swap.First} ↔ {swap.Second}",
         _ => action.ToString() ?? "?",

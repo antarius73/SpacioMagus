@@ -24,7 +24,7 @@ public static class GameDigest
 
         foreach (var container in game.Containers.OrderBy(container => container.Y).ThenBy(container => container.X))
         {
-            text.Append(CultureInfo.InvariantCulture, $"contenant {container.X} {container.Y}\n");
+            text.Append(CultureInfo.InvariantCulture, $"contenant {container.X} {container.Y} {game.ContainerHasPotion(container)}\n");
         }
 
         foreach (var potion in game.Potions.OrderBy(potion => potion.Y).ThenBy(potion => potion.X))
@@ -32,6 +32,12 @@ public static class GameDigest
             text.Append(CultureInfo.InvariantCulture, $"fiole {potion.X} {potion.Y}\n");
         }
 
+        foreach (var cell in game.ActivatedCells.OrderBy(cell => cell.Y).ThenBy(cell => cell.X))
+        {
+            text.Append(CultureInfo.InvariantCulture, $"active {cell.X} {cell.Y}\n");
+        }
+
+        text.Append(CultureInfo.InvariantCulture, $"fioles_revelees {game.PotionsAreRevealed}\n");
         return Hash(text.ToString());
     }
 

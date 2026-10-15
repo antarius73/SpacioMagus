@@ -1,3 +1,5 @@
+using SpacioMagus.Core.Scripting;
+
 namespace SpacioMagus.Core;
 
 public sealed class Game
@@ -9,9 +11,10 @@ public sealed class Game
     private readonly IRandomSource _random;
     private readonly HashSet<Position> _fireZone;
     private readonly HashSet<Position> _waterZone;
+    private readonly HashSet<Position> _activated = new();
     private List<GameEvent> _events = new();
 
-    public const int RulesVersion = 6;
+    public const int RulesVersion = 7;
     private const int BatSatedTurns = 2;
 
     public Game(LevelDefinition level, RuleSet? rules = null, IRandomSource? random = null)
@@ -53,6 +56,8 @@ public sealed class Game
 
         _fireZone = BuildFireZone(level);
         _waterZone = BuildWaterZone(level);
+        Script = LevelScripts.Find(level.Script);
+        Script?.Setup(this, _random);
     }
 
     private Game(Game source, IRandomSource random)
@@ -83,6 +88,9 @@ public sealed class Game
         _containers = new Dictionary<Position, bool>(source._containers);
         _fireZone = source._fireZone;
         _waterZone = source._waterZone;
+        _activated = new HashSet<Position>(source._activated);
+        PotionsAreRevealed = source.PotionsAreRevealed;
+        Script = source.Script;
     }
 
     public LevelDefinition Level { get; }
@@ -98,6 +106,44 @@ public sealed class Game
     public LossReason LossReason { get; private set; }
 
     public bool IsStranded { get; private set; }
+
+    public ILevelScript? Script { get; }
+
+    public bool PotionsAreRevealed { get; private set; }
+
+    public IReadOnlyCollection<Position> ActivatedCells => _activated;
+
+    public bool IsActivated(Position position) => _activated.Contains(position);
+
+    public bool ContainerHasPotion(Position position) => _containers.TryGetValue(position, out var potion) && potion;
+
+    public IEnumerable<Position> Activables() =>
+        Script is { } script && Status == GameStatus.Playing
+            ? script.Activables(this).Where(cell => script.CanActivate(this, cell) == ActionError.None)
+            : Enumerable.Empty<Position>();
+
+    internal void SetContainerPotion(Position position, bool potion)
+    {
+        if (_containers.ContainsKey(position))
+        {
+            _containers[position] = potion;
+        }
+    }
+
+    internal void MarkActivated(Position position) => _activated.Add(position);
+
+    internal void Emit(GameEvent gameEvent) => _events.Add(gameEvent);
+
+    internal void RevealPotions()
+    {
+        if (PotionsAreRevealed)
+        {
+            return;
+        }
+
+        PotionsAreRevealed = true;
+        _events.Add(new PotionsRevealed());
+    }
 
     public int Turn { get; private set; }
 
@@ -212,6 +258,7 @@ public sealed class Game
         SpacioCreaturaAction swap => CastSpacioCreatura(swap.First, swap.Second),
         BreakAction breaking => Break(breaking.Target),
         LeverAction lever => PullLever(lever.Target),
+        ActivateAction activate => Activate(activate.Target),
         _ => throw new ArgumentException($"Action inconnue : {action.GetType().Name}.", nameof(action)),
     };
 
@@ -321,6 +368,42 @@ public sealed class Game
         BeginTurn();
         _events.Add(new LeverPulled(target, linked));
         OpenGate(grille);
+        foreach (var other in LeverGrilles(target).Where(position => position != linked))
+        {
+            if (GrilleAt(other) is { } chained)
+            {
+                OpenGate(chained);
+            }
+        }
+
+        return EndTurn();
+    }
+
+    public IEnumerable<Position> LeverGrilles(Position lever) =>
+        Script is { } script
+            ? script.LeverGrilles(Level, lever)
+            : Level.LeverTarget(lever) is { } grille ? new[] { grille } : Array.Empty<Position>();
+
+    public ActionResult Activate(Position target)
+    {
+        if (Status != GameStatus.Playing)
+        {
+            return ActionResult.Fail(ActionError.GameOver);
+        }
+
+        if (Script is not { } script)
+        {
+            return ActionResult.Fail(ActionError.NotActivable);
+        }
+
+        var error = script.CanActivate(this, target);
+        if (error != ActionError.None)
+        {
+            return ActionResult.Fail(error);
+        }
+
+        BeginTurn();
+        script.Activate(this, target);
         return EndTurn();
     }
 
@@ -600,11 +683,12 @@ public sealed class Game
         {
             var zone = FloodFrom(Magus.Position, openable);
             var grown = false;
-            foreach (var (lever, grille) in Level.Levers)
+            foreach (var lever in Level.Levers.Keys)
             {
-                if (!openable.Contains(grille) && zone.Any(position => position.IsAdjacentTo(lever)))
+                var grilles = LeverGrilles(lever).Where(grille => !openable.Contains(grille)).ToList();
+                if (grilles.Count > 0 && zone.Any(position => position.IsAdjacentTo(lever)))
                 {
-                    openable.Add(grille);
+                    openable.UnionWith(grilles);
                     grown = true;
                 }
             }
@@ -878,7 +962,8 @@ public sealed class Game
     }
 
     private bool CanFlyOver(Position position) =>
-        Level.InBounds(position) && LevelDefinition.IsFlyable(Level.TerrainAt(position));
+        Level.InBounds(position)
+        && (LevelDefinition.IsFlyable(Level.TerrainAt(position)) || GrilleAt(position) is { IsOpen: true });
 
     private bool CanStand(MonsterKind kind, Position position) =>
         kind == MonsterKind.ChauveSouris ? CanFlyOver(position) : IsWalkable(position);

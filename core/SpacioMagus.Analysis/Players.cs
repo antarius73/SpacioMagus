@@ -160,6 +160,7 @@ public sealed class Players
     {
         OpenGrilleAction => 0,
         LeverAction => 0,
+        ActivateAction => 0,
         SpacioMagusAction => 1,
         MoveAction => 2,
         BreakAction => 3,

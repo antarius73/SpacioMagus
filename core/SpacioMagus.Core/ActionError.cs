@@ -21,4 +21,6 @@ public enum ActionError
     NotALever,
     GrilleNeedsLever,
     SwapBlocked,
+    NotActivable,
+    AlreadyActive,
 }

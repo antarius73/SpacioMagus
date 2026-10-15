@@ -368,6 +368,9 @@ public static class TurnSounds
                 case LeverPulled:
                     cues.Add(("gr.lever", 0));
                     break;
+                case AlcoveLit:
+                    cues.Add(("it.alcove", 0));
+                    break;
                 case GrilleOpened opened:
                     cues.Add((Gate(opened.Position, "open"), 0));
                     break;

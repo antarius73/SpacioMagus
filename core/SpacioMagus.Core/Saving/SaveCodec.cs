@@ -23,6 +23,7 @@ public static class SaveCodec
     private const string SpacioCreaturaType = "spacio_creatura";
     private const string BreakType = "briser";
     private const string LeverType = "manette";
+    private const string ActivateType = "activer";
 
     public static string Serialize(SaveGame save)
     {
@@ -139,6 +140,10 @@ public static class SaveCodec
                 writer.WriteString(TypeKey, LeverType);
                 WritePosition(writer, lever.Target, "x", "y");
                 break;
+            case ActivateAction activate:
+                writer.WriteString(TypeKey, ActivateType);
+                WritePosition(writer, activate.Target, "x", "y");
+                break;
             default:
                 throw new ArgumentException($"Action non sauvegardable : {action.GetType().Name}.", nameof(action));
         }
@@ -166,6 +171,7 @@ public static class SaveCodec
                 ReadPosition(element, "x2", "y2", context)),
             BreakType => new BreakAction(ReadPosition(element, "x", "y", context)),
             LeverType => new LeverAction(ReadPosition(element, "x", "y", context)),
+            ActivateType => new ActivateAction(ReadPosition(element, "x", "y", context)),
             _ => throw Fail(fileName, $"Action {index} : type inconnu « {type} »."),
         };
     }

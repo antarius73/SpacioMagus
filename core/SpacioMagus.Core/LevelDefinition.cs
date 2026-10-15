@@ -16,7 +16,8 @@ public sealed class LevelDefinition
         IReadOnlyList<Position>? torches = null,
         IReadOnlyList<Position>? doors = null,
         IReadOnlyList<Position>? alcoves = null,
-        IReadOnlyDictionary<Position, Position>? levers = null)
+        IReadOnlyDictionary<Position, Position>? levers = null,
+        string? script = null)
     {
         ArgumentNullException.ThrowIfNull(cells);
         ArgumentNullException.ThrowIfNull(monsters);
@@ -44,10 +45,13 @@ public sealed class LevelDefinition
         _doors = new HashSet<Position>(Doors);
         Alcoves = (alcoves ?? Array.Empty<Position>()).ToArray();
         Levers = new Dictionary<Position, Position>(levers ?? new Dictionary<Position, Position>());
+        Script = string.IsNullOrWhiteSpace(script) ? null : script;
         Validate();
     }
 
     public string Name { get; }
+
+    public string? Script { get; }
 
     public int Width { get; }
 

@@ -37,6 +37,7 @@ public static class LevelFile
         StarThresholds? stars = null;
         var rules = baseRules;
         var withoutMonsters = false;
+        string? script = null;
         foreach (var (line, rawKey, value) in SectionedText.KeyValues(fileName, document.Lines(LevelSection), issues))
         {
             var key = rawKey.ToLowerInvariant();
@@ -48,6 +49,14 @@ public static class LevelFile
             {
                 stars = ParseStars(fileName, line, value, issues);
             }
+            else if (key == "script")
+            {
+                script = value.Trim();
+                if (Scripting.LevelScripts.Find(script) is null)
+                {
+                    issues.Add(new LoadIssue(fileName, line.Number, 0, $"Script de niveau inconnu « {script} ». Scripts possibles : {string.Join(", ", Scripting.LevelScripts.Ids)}."));
+                }
+            }
             else if (key == "sans_monstres")
             {
                 withoutMonsters = ParseYesNo(fileName, line, key, value, issues);
@@ -58,7 +67,7 @@ public static class LevelFile
             }
             else
             {
-                issues.Add(new LoadIssue(fileName, line.Number, 0, $"Clé inconnue « {key} » dans [{LevelSection}]. Clés possibles : nom, etoiles, sans_monstres, {string.Join(", ", RuleKeys.Names)}."));
+                issues.Add(new LoadIssue(fileName, line.Number, 0, $"Clé inconnue « {key} » dans [{LevelSection}]. Clés possibles : nom, etoiles, script, sans_monstres, {string.Join(", ", RuleKeys.Names)}."));
             }
         }
 
@@ -208,7 +217,13 @@ public static class LevelFile
 
         try
         {
-            var definition = new LevelDefinition(name, width, height, cells, starts[0].Position, withoutMonsters ? Array.Empty<MonsterSpawn>() : monsters, potions, torches, doors, alcoves, levers);
+            var definition = new LevelDefinition(name, width, height, cells, starts[0].Position, withoutMonsters ? Array.Empty<MonsterSpawn>() : monsters, potions, torches, doors, alcoves, levers, script);
+            var scriptIssues = Scripting.LevelScripts.Find(script)?.Validate(definition).ToList() ?? new List<string>();
+            if (scriptIssues.Count > 0)
+            {
+                throw new LevelLoadException(scriptIssues.Select(message => new LoadIssue(fileName, 0, 0, message)).ToList());
+            }
+
             return new LoadedLevel(definition, rules, decor, stars);
         }
         catch (LevelDefinitionException exception)

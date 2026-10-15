@@ -113,6 +113,7 @@ static string CSharp(GameAction action) => action switch
     OpenGrilleAction grille => $"new OpenGrilleAction(new Position({grille.Target.X}, {grille.Target.Y}))",
     BreakAction breaking => $"new BreakAction(new Position({breaking.Target.X}, {breaking.Target.Y}))",
     LeverAction lever => $"new LeverAction(new Position({lever.Target.X}, {lever.Target.Y}))",
+    ActivateAction activate => $"new ActivateAction(new Position({activate.Target.X}, {activate.Target.Y}))",
     SpacioMagusAction teleport => $"new SpacioMagusAction(new Position({teleport.Target.X}, {teleport.Target.Y}))",
     SpacioCreaturaAction swap => $"new SpacioCreaturaAction(new Position({swap.First.X}, {swap.First.Y}), new Position({swap.Second.X}, {swap.Second.Y}))",
     _ => action.ToString() ?? "?",

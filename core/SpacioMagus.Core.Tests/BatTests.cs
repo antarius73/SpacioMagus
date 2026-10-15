@@ -82,6 +82,55 @@ public class BatTests
     }
 
     [Fact]
+    public void BatFliesThroughAnOpenGrille()
+    {
+        var map = TestMaps.Parse(
+            "#######",
+            "#..@.>#",
+            "###G###",
+            "#.....#",
+            "#..u..#",
+            "#######");
+        var level = new LevelDefinition(
+            map.Name, map.Width, map.Height, map.Cells, map.MagusStart,
+            new[] { new MonsterSpawn(MonsterKind.ChauveSouris, new Position(3, 3), new Position(3, 3)) },
+            map.Potions, map.Torches, map.Doors);
+        var game = new Game(level, RuleSet.Default, new FixedRandom());
+
+        Assert.True(game.OpenGrille(new Position(3, 2)).Success);
+        var bitten = false;
+        for (var turn = 0; turn < 3 && !bitten; turn++)
+        {
+            bitten = game.Wait().Events.Any(e => e is MagusBitten);
+        }
+
+        Assert.True(bitten);
+    }
+
+    [Fact]
+    public void BatStopsAtAClosedGrille()
+    {
+        var map = TestMaps.Parse(
+            "#######",
+            "#..@.>#",
+            "###G###",
+            "#.....#",
+            "#..u..#",
+            "#######");
+        var level = new LevelDefinition(
+            map.Name, map.Width, map.Height, map.Cells, map.MagusStart,
+            new[] { new MonsterSpawn(MonsterKind.ChauveSouris, new Position(3, 3), new Position(3, 3)) },
+            map.Potions, map.Torches, map.Doors);
+        var game = new Game(level, RuleSet.Default, new FixedRandom());
+
+        for (var turn = 0; turn < 3; turn++)
+        {
+            Assert.DoesNotContain(game.Wait().Events, e => e is MagusBitten);
+            Assert.Equal(3, game.Monsters.Single().Position.Y);
+        }
+    }
+
+    [Fact]
     public void BatNeverLosesTrack()
     {
         var game = NewGame("""

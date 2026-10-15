@@ -82,9 +82,15 @@ public partial class LevelView : Node2D
     private static readonly Rect2 LeverRegion = new(0, 0, 16, 12);
     private const int LeverFrameStride = 16;
     private const int LeverBottomMargin = 6;
-    private static readonly Rect2 AlcoveRegion = new(0, 16, 21, 23);
-    private const int AlcoveOffsetX = 5;
-    private const int AlcoveOffsetY = -5;
+    private static readonly int[] AlcoveTiles = { 425, 426, 442, 443, 459, 460 };
+    private static readonly int[] CandleTiles = { 12, 13, 18, 19 };
+    private const int CandleColumns = 6;
+    private const int CandleFrameStride = 24;
+    private const int CandleFrames = 3;
+    private const double CandleFrameSeconds = 0.15;
+    private const int SparkleFrames = 4;
+    private const double SparkleFrameRate = 6;
+    private const int SparkleSize = 32;
     private static readonly Rect2 StairsUpRegion = new(64, 16, 48, 64);
     private const int StairsUpRiseY = 3 * SubTile;
     private const int CoastColumns = 29;
@@ -309,6 +315,8 @@ public partial class LevelView : Node2D
     private Texture2D _coastSheet = null!;
     private Texture2D _reflectionSheet = null!;
     private Texture2D _foamSheet = null!;
+    private Texture2D _candleSheet = null!;
+    private Texture2D _sparkleSheet = null!;
     private Texture2D _mechanisms = null!;
     private TorchAmbience _ambience = null!;
     private TorchAmbience _waterAmbience = null!;
@@ -390,6 +398,8 @@ public partial class LevelView : Node2D
         _coastSheet = LoadTexture("res://assets/sprites/eau_berges.png");
         _reflectionSheet = LoadTexture("res://assets/sprites/eau_reflets.png");
         _foamSheet = LoadTexture("res://assets/sprites/eau_ecume.png");
+        _candleSheet = LoadTexture("res://assets/sprites/bougies.png");
+        _sparkleSheet = LoadTexture("res://assets/sprites/etincelles.png");
         _mechanisms = LoadTexture("res://assets/sprites/donjon_mecanismes.png");
         _ambience = new TorchAmbience { Name = "Torches", Listener = () => MagusFocus };
         AddChild(_ambience);
@@ -767,6 +777,22 @@ public partial class LevelView : Node2D
             }
         }
 
+        if (_game.PotionsAreRevealed)
+        {
+            var sparkle = new Rect2((int)(_time * SparkleFrameRate) % SparkleFrames * SparkleSize, 0, SparkleSize, SparkleSize);
+            foreach (var container in _game.Containers.Where(_game.ContainerHasPotion))
+            {
+                if (_containerLooks.TryGetValue(container, out var look))
+                {
+                    var center = ContainerRect(container, look).GetCenter();
+                    DrawTextureRectRegion(
+                        _sparkleSheet,
+                        new Rect2(center.X - SparkleSize / 2f, center.Y - SparkleSize / 2f, SparkleSize, SparkleSize),
+                        sparkle);
+                }
+            }
+        }
+
         foreach (var (cell, broken) in _breaks)
         {
             var elapsed = _time - broken.Start;
@@ -870,10 +896,7 @@ public partial class LevelView : Node2D
 
         foreach (var alcove in _alcoves)
         {
-            DrawTextureRectRegion(
-                _mechanisms,
-                new Rect2(alcove.X * Tile + AlcoveOffsetX, alcove.Y * Tile + AlcoveOffsetY, AlcoveRegion.Size.X, AlcoveRegion.Size.Y),
-                AlcoveRegion);
+            DrawAlcove(alcove);
         }
 
         foreach (var torch in _frontTorches)
@@ -924,14 +947,38 @@ public partial class LevelView : Node2D
         }
     }
 
-    private void DrawContainer(Cell cell, Rect2 look, Color tint)
-    {
-        var target = new Rect2(
+    private void DrawContainer(Cell cell, Rect2 look, Color tint) =>
+        DrawTextureRectRegion(_objects, ContainerRect(cell, look), look, tint);
+
+    private static Rect2 ContainerRect(Cell cell, Rect2 look) =>
+        new(
             cell.X * Tile + (Tile - look.Size.X) / 2f,
             cell.Y * Tile + Tile - look.Size.Y - ContainerBottomMargin,
             look.Size.X,
             look.Size.Y);
-        DrawTextureRectRegion(_objects, target, look, tint);
+
+    private void DrawAlcove(Cell alcove)
+    {
+        var origin = new Vector2(alcove.X * Tile, alcove.Y * Tile - SubTile);
+        for (var index = 0; index < AlcoveTiles.Length; index++)
+        {
+            DrawSubTile(AlcoveTiles[index], origin + new Vector2(index % 2 * SubTile, index / 2 * SubTile));
+        }
+
+        if (_game is null || !_game.IsActivated(alcove))
+        {
+            return;
+        }
+
+        var stride = (int)(_time / CandleFrameSeconds) % CandleFrames * CandleFrameStride;
+        for (var index = 0; index < CandleTiles.Length; index++)
+        {
+            var id = CandleTiles[index] + stride;
+            DrawTextureRectRegion(
+                _candleSheet,
+                new Rect2(alcove.X * Tile + index % 2 * SubTile, alcove.Y * Tile + index / 2 * SubTile, SubTile, SubTile),
+                new Rect2(id % CandleColumns * SubTile, id / CandleColumns * SubTile, SubTile, SubTile));
+        }
     }
 
     private int MonsterRow(MonsterState monster)
