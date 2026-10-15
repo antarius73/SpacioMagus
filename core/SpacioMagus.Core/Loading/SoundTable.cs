@@ -15,7 +15,7 @@ public static class SoundTable
         "mg.step", "mg.wait", "mg.invalid", "mg.nomagic",
         "sp.magus_out", "sp.magus_in", "sp.select", "sp.creatura",
         "it.break", "it.break_vase", "it.reveal", "it.drink",
-        "mo.spot", "mo.lost", "mo.fear", "mo.block", "mo.mut_on", "mo.mut_off", "mo.stun", "mo.recover", "mo.bat",
+        "mo.spot", "mo.lost", "mo.fear", "mo.block", "mo.mut_on", "mo.mut_off", "mo.stun", "mo.recover", "mo.bat", "mo.bite", "mo.faint",
         "dr.open", "dr.close", "dr.delayed",
         "gr.lever", "gr.locked", "gr.open", "gr.tick", "gr.last", "gr.close", "gr.push", "gr.delayed",
         "dc.torch", "dc.brazier", "dc.water",

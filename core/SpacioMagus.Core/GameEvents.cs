@@ -42,4 +42,8 @@ public sealed record MagusCaptured(int MonsterId) : GameEvent;
 
 public sealed record MagusStranded(Position Position) : GameEvent;
 
+public sealed record MagusBitten(int MonsterId) : GameEvent;
+
+public sealed record MagusFainted(int MonsterId) : GameEvent;
+
 public sealed record LevelCompleted : GameEvent;

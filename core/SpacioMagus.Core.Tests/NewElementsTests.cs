@@ -291,18 +291,18 @@ public class NewElementsTests
     }
 
     [Fact]
-    public void BatNeverMovesNorCaptures()
+    public void BatWithoutRouteStaysUntilItSeesTheMagus()
     {
         var game = NewGame("""
             [carte]
             #########
-            #@......#
-            #...c..>#
+            #@#.....#
+            #.#.c..>#
             #########
             """);
 
-        Assert.True(game.Move(new Position(2, 1)).Success);
-        Assert.True(game.Move(new Position(3, 1)).Success);
+        Assert.True(game.Move(new Position(1, 2)).Success);
+        Assert.True(game.Move(new Position(1, 1)).Success);
         for (var turn = 0; turn < 6; turn++)
         {
             Assert.True(game.Wait().Success);

@@ -76,6 +76,10 @@ public static class Texts
 
     public static string Stranded => Get("echoue");
 
+    public static string FaintedTitle => Get("evanoui_titre");
+
+    public static string Fainted => Get("evanoui");
+
     public static string PauseTitle => Get("menu_titre");
 
     public static string CreditsTitle => Get("credits_titre");

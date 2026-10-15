@@ -52,6 +52,12 @@ Mob kann nicht schwimmen
 [echoue]
 Kein Tropfen Magie mehr, und der Ausgang liegt auf der anderen Seite. Mob hat sein Leben der Magie gewidmet: Für Schwimmunterricht blieb nie Zeit.
 
+[evanoui_titre]
+Mob ist ohnmächtig
+
+[evanoui]
+Eine Fledermaus hat seinen letzten Tropfen Magie getrunken… und dann ein wenig Blut. Mob schläft, bis Zorgus zurückkehrt.
+
 [menu_titre]
 Menü
 

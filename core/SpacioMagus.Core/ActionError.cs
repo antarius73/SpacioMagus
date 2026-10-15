@@ -20,4 +20,5 @@ public enum ActionError
     NotAContainer,
     NotALever,
     GrilleNeedsLever,
+    SwapBlocked,
 }

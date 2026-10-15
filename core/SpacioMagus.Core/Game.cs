@@ -11,7 +11,8 @@ public sealed class Game
     private readonly HashSet<Position> _waterZone;
     private List<GameEvent> _events = new();
 
-    public const int RulesVersion = 5;
+    public const int RulesVersion = 6;
+    private const int BatSatedTurns = 2;
 
     public Game(LevelDefinition level, RuleSet? rules = null, IRandomSource? random = null)
     {
@@ -307,6 +308,11 @@ public sealed class Game
             return ActionResult.Fail(ActionError.NotAdjacent);
         }
 
+        if (MonsterAt(target) is not null)
+        {
+            return ActionResult.Fail(ActionError.OccupiedByMonster);
+        }
+
         if (grille.IsOpen)
         {
             return ActionResult.Fail(ActionError.GrilleAlreadyOpen);
@@ -340,6 +346,11 @@ public sealed class Game
         if (!Magus.Position.IsAdjacentTo(target))
         {
             return ActionResult.Fail(ActionError.NotAdjacent);
+        }
+
+        if (MonsterAt(target) is not null)
+        {
+            return ActionResult.Fail(ActionError.OccupiedByMonster);
         }
 
         BeginTurn();
@@ -424,6 +435,11 @@ public sealed class Game
         if (errorB != ActionError.None)
         {
             return ActionResult.Fail(errorB);
+        }
+
+        if (!CanStand(a.Kind, second) || !CanStand(b.Kind, first))
+        {
+            return ActionResult.Fail(ActionError.SwapBlocked);
         }
 
         BeginTurn();
@@ -673,7 +689,7 @@ public sealed class Game
 
     private void LoseTrack(MonsterState monster)
     {
-        if (!monster.IsTracking)
+        if (!monster.IsTracking || monster.Kind == MonsterKind.ChauveSouris)
         {
             return;
         }
@@ -700,20 +716,6 @@ public sealed class Game
 
     private void ActMonster(MonsterState monster)
     {
-        if (monster.Kind == MonsterKind.ChauveSouris)
-        {
-            if (monster.StunTurns > 0)
-            {
-                monster.StunTurns--;
-                if (monster.StunTurns == 0)
-                {
-                    _events.Add(new MonsterRecovered(monster.Id));
-                }
-            }
-
-            return;
-        }
-
         if (monster.StunTurns > 0)
         {
             monster.StunTurns--;
@@ -722,6 +724,12 @@ public sealed class Game
                 _events.Add(new MonsterRecovered(monster.Id));
             }
 
+            return;
+        }
+
+        if (monster.Kind == MonsterKind.ChauveSouris)
+        {
+            ActBat(monster);
             return;
         }
 
@@ -786,6 +794,132 @@ public sealed class Game
         Patrol(monster);
     }
 
+    private void ActBat(MonsterState bat)
+    {
+        if (!bat.IsTracking && HasLineOfSight(bat.Position, Magus.Position))
+        {
+            bat.IsTracking = true;
+            _events.Add(new MonsterSpotted(bat.Id));
+        }
+
+        if (!bat.IsTracking)
+        {
+            Patrol(bat);
+            return;
+        }
+
+        if (bat.Position.IsAdjacentTo(Magus.Position) && IsCornerFree(bat.Position, Magus.Position))
+        {
+            Bite(bat);
+            return;
+        }
+
+        if ((FlightStep(bat.Position, Magus.Position) ?? ApproachStep(bat)) is { } step)
+        {
+            TryStep(bat, step);
+        }
+    }
+
+    private Position? ApproachStep(MonsterState bat)
+    {
+        var start = bat.Position;
+        var cameFrom = new Dictionary<Position, Position> { [start] = start };
+        var queue = new Queue<Position>();
+        queue.Enqueue(start);
+        var best = start;
+        var bestScore = ApproachScore(start);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            var score = ApproachScore(current);
+            if (score.CompareTo(bestScore) < 0)
+            {
+                best = current;
+                bestScore = score;
+            }
+
+            foreach (var direction in Position.Directions)
+            {
+                var next = current + direction;
+                if (cameFrom.ContainsKey(next) || !CanFlyOver(next) || IsOccupied(next) || !IsPlannableCorner(current, next))
+                {
+                    continue;
+                }
+
+                cameFrom[next] = current;
+                queue.Enqueue(next);
+            }
+        }
+
+        return best == start ? null : FirstOnPath(cameFrom, start, best);
+    }
+
+    private (int Chebyshev, int Squared) ApproachScore(Position position)
+    {
+        var dx = position.X - Magus.Position.X;
+        var dy = position.Y - Magus.Position.Y;
+        return (Math.Max(Math.Abs(dx), Math.Abs(dy)), dx * dx + dy * dy);
+    }
+
+    private void Bite(MonsterState bat)
+    {
+        if (Magus.Magic <= 0)
+        {
+            _events.Add(new MagusFainted(bat.Id));
+            Status = GameStatus.Lost;
+            LossReason = LossReason.Fainted;
+            return;
+        }
+
+        ChangeMagic(Magus.Magic - 1);
+        _events.Add(new MagusBitten(bat.Id));
+        bat.StunTurns = BatSatedTurns;
+        _events.Add(new MonsterStunned(bat.Id, bat.StunTurns));
+    }
+
+    private bool CanFlyOver(Position position) =>
+        Level.InBounds(position) && LevelDefinition.IsFlyable(Level.TerrainAt(position));
+
+    private bool CanStand(MonsterKind kind, Position position) =>
+        kind == MonsterKind.ChauveSouris ? CanFlyOver(position) : IsWalkable(position);
+
+    private bool IsPlannableFor(MonsterKind kind, Position position) =>
+        kind == MonsterKind.ChauveSouris ? CanFlyOver(position) : IsPlannable(position);
+
+    private Position? FlightStep(Position start, Position goal)
+    {
+        var cameFrom = new Dictionary<Position, Position> { [start] = start };
+        var queue = new Queue<Position>();
+        queue.Enqueue(start);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            foreach (var direction in Position.Directions)
+            {
+                var next = current + direction;
+                if (cameFrom.ContainsKey(next) || !IsPlannableCorner(current, next))
+                {
+                    continue;
+                }
+
+                if (next == goal)
+                {
+                    return current == start ? null : FirstOnPath(cameFrom, start, current);
+                }
+
+                if (!CanFlyOver(next) || IsOccupied(next))
+                {
+                    continue;
+                }
+
+                cameFrom[next] = current;
+                queue.Enqueue(next);
+            }
+        }
+
+        return null;
+    }
+
     private void Patrol(MonsterState monster)
     {
         var route = monster.Route;
@@ -811,7 +945,7 @@ public sealed class Game
             foreach (var direction in Position.Directions)
             {
                 var next = current + direction;
-                if (distances.ContainsKey(next) || !IsPlannable(next) || !IsPlannableCorner(current, next) || IsFeared(monster.Kind, next))
+                if (distances.ContainsKey(next) || !IsPlannableFor(monster.Kind, next) || !IsPlannableCorner(current, next) || IsFeared(monster.Kind, next))
                 {
                     continue;
                 }
@@ -903,7 +1037,7 @@ public sealed class Game
 
     private void TryStep(MonsterState monster, Position step)
     {
-        if (!IsWalkable(step) || IsOccupied(step) || !IsCornerFree(monster.Position, step))
+        if (!CanStand(monster.Kind, step) || IsOccupied(step) || !IsCornerFree(monster.Position, step))
         {
             return;
         }

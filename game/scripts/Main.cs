@@ -438,11 +438,21 @@ public partial class Main : Node
     private void ShowDefeat()
     {
         var index = _levelIndex;
-        var stranded = _game?.LossReason == LossReason.Stranded;
+        var reason = _game?.LossReason ?? LossReason.Captured;
         Sounds.Play("end.lose", DefeatJingleDelay);
         ShowScreen(() => MenuScreen.Create(
-            stranded ? Texts.StrandedTitle : Texts.DefeatTitle,
-            stranded ? Texts.Stranded : Texts.Defeat,
+            reason switch
+            {
+                LossReason.Stranded => Texts.StrandedTitle,
+                LossReason.Fainted => Texts.FaintedTitle,
+                _ => Texts.DefeatTitle,
+            },
+            reason switch
+            {
+                LossReason.Stranded => Texts.Stranded,
+                LossReason.Fainted => Texts.Fainted,
+                _ => Texts.Defeat,
+            },
             new[] { GuiAssets.Cross },
             (Texts.PlayAgainButton, () => StartLevel(index)),
             (Texts.MainMenuButton, ShowTitle)));
@@ -747,6 +757,12 @@ public partial class Main : Node
             return;
         }
 
+        if (game.MonsterAt(cell) is not null)
+        {
+            TapFirstCreature(game, cell);
+            return;
+        }
+
         if (game.IsContainer(cell))
         {
             if (game.Magus.Position.IsAdjacentTo(cell))
@@ -768,12 +784,6 @@ public partial class Main : Node
             }
 
             Reject(cell);
-            return;
-        }
-
-        if (game.MonsterAt(cell) is not null)
-        {
-            TapFirstCreature(game, cell);
             return;
         }
 

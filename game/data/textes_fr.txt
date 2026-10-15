@@ -52,6 +52,12 @@ Mob ne sait pas nager
 [echoue]
 Plus une goutte de magie, et la sortie est de l'autre côté. Mob a consacré sa vie à la magie : il n'a jamais eu le temps d'apprendre à nager.
 
+[evanoui_titre]
+Mob s'est évanoui
+
+[evanoui]
+Une chauve-souris a bu sa dernière goutte de magie… puis un peu de sang. Mob dormira jusqu'au retour de Zorgus.
+
 [menu_titre]
 Menu
 

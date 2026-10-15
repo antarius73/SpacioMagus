@@ -82,6 +82,13 @@ public sealed class LevelDefinition
 
     public static bool IsSolid(Terrain terrain) => terrain is Terrain.Wall or Terrain.Void;
 
+    public static bool IsFlyable(Terrain terrain) =>
+        terrain is Terrain.Floor or Terrain.Stairs or Terrain.Arch or Terrain.Water
+            or Terrain.Barrel or Terrain.Crate or Terrain.Vase or Terrain.Lever;
+
+    private static bool CanStart(MonsterKind kind, Terrain terrain) =>
+        kind == MonsterKind.ChauveSouris ? IsFlyable(terrain) : IsOpenGround(terrain);
+
     public bool InBounds(Position position) =>
         position.X >= 0 && position.Y >= 0 && position.X < Width && position.Y < Height;
 
@@ -143,9 +150,11 @@ public sealed class LevelDefinition
         for (var index = 0; index < route.Count; index++)
         {
             var cell = route[index];
-            if (!IsOpenGround(TerrainAt(cell)))
+            if (!CanStart(spawn.Kind, TerrainAt(cell)))
             {
-                throw new LevelDefinitionException($"La ronde du monstre en {spawn.Start} passe par {cell}, qui n'est pas une case de sol.");
+                throw new LevelDefinitionException(spawn.Kind == MonsterKind.ChauveSouris
+                    ? $"La ronde de la chauve-souris en {spawn.Start} passe par {cell}, qu'elle ne peut pas survoler."
+                    : $"La ronde du monstre en {spawn.Start} passe par {cell}, qui n'est pas une case de sol.");
             }
 
             var next = route[(index + 1) % route.Count];
@@ -183,12 +192,12 @@ public sealed class LevelDefinition
         var occupied = new HashSet<Position> { MagusStart };
         foreach (var spawn in Monsters)
         {
-            if (!IsOpenGround(TerrainAt(spawn.Start)))
+            if (!CanStart(spawn.Kind, TerrainAt(spawn.Start)))
             {
                 throw new LevelDefinitionException($"Le monstre en {spawn.Start} doit commencer sur une case de sol.");
             }
 
-            if (!IsOpenGround(TerrainAt(spawn.Post)))
+            if (!CanStart(spawn.Kind, TerrainAt(spawn.Post)))
             {
                 throw new LevelDefinitionException($"Le poste {spawn.Post} du monstre en {spawn.Start} doit être une case de sol.");
             }

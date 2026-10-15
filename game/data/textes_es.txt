@@ -52,6 +52,12 @@ Mob no sabe nadar
 [echoue]
 Ni una gota de magia, y la salida está al otro lado. Mob dedicó su vida a la magia: nunca tuvo tiempo de aprender a nadar.
 
+[evanoui_titre]
+Mob se ha desmayado
+
+[evanoui]
+Un murciélago se bebió su última gota de magia… y luego un poco de sangre. Mob dormirá hasta que vuelva Zorgus.
+
 [menu_titre]
 Menú
 

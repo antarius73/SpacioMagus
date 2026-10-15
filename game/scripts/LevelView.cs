@@ -248,6 +248,7 @@ public partial class LevelView : Node2D
     private const int BatRow = 9;
     private const int BatFrames = 3;
     private const double BatFrameRate = 8;
+    private const int BatRestingFrame = 2;
     private const float BatHover = 1.5f;
     private const float BatHoverSpeed = 4f;
     private const float BatLift = -3f;
@@ -367,7 +368,7 @@ public partial class LevelView : Node2D
 
     private IEnumerable<(int Id, Vector2 Position)> Bats() =>
         _game?.Monsters
-            .Where(monster => monster.Kind == MonsterKind.ChauveSouris)
+            .Where(monster => monster.Kind == MonsterKind.ChauveSouris && !monster.IsStunned)
             .Select(monster => (monster.Id, CellCenter(monster.Position)))
         ?? Enumerable.Empty<(int, Vector2)>();
 
@@ -826,7 +827,10 @@ public partial class LevelView : Node2D
                 continue;
             }
 
-            var source = new Rect2(monster.IsStunned ? 0 : MonsterFrame(monster, frame) * 32, MonsterRow(monster) * 32, 32, 32);
+            var shownFrame = monster.IsStunned
+                ? monster.Kind == MonsterKind.ChauveSouris ? BatRestingFrame : 0
+                : MonsterFrame(monster, frame);
+            var source = new Rect2(shownFrame * 32, MonsterRow(monster) * 32, 32, 32);
             if (monster.Kind == MonsterKind.ChauveSouris && !monster.IsStunned)
             {
                 shown.Y += BatLift + Mathf.Round(Mathf.Sin((float)_time * BatHoverSpeed + monster.Id) * BatHover);

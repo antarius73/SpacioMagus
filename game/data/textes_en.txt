@@ -52,6 +52,12 @@ Mob cannot swim
 [echoue]
 Not a drop of magic left, and the exit is on the other side. Mob devoted his life to magic: he never found the time to learn how to swim.
 
+[evanoui_titre]
+Mob passed out
+
+[evanoui]
+A bat drank his last drop of magic… then a little blood. Mob will sleep until Zorgus returns.
+
 [menu_titre]
 Menu
 

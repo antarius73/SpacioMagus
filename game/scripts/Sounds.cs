@@ -380,6 +380,12 @@ public static class TurnSounds
                 case MagusCaptured:
                     cues.Add(("end.caught", settled));
                     break;
+                case MagusBitten:
+                    cues.Add(("mo.bite", monstersDelay));
+                    break;
+                case MagusFainted:
+                    cues.Add(("mo.faint", monstersDelay));
+                    break;
                 case LevelCompleted:
                     cues.Add(("end.win", magusArrival));
                     break;
