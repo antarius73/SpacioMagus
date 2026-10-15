@@ -40,4 +40,6 @@ public sealed record ContainerBroken(Position Position, bool HadPotion) : GameEv
 
 public sealed record MagusCaptured(int MonsterId) : GameEvent;
 
+public sealed record MagusStranded(Position Position) : GameEvent;
+
 public sealed record LevelCompleted : GameEvent;

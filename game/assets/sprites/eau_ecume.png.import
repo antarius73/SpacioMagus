@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c0e5wv4dsfkp0"
-path="res://.godot/imported/donjon_eau.png-3a3ec366ac3ca51c25e6b0360ff68640.ctex"
+uid="uid://cvck4qjrgexwg"
+path="res://.godot/imported/eau_ecume.png-9ccf82ea05aebc2f83487942f2452ec3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/donjon_eau.png"
-dest_files=["res://.godot/imported/donjon_eau.png-3a3ec366ac3ca51c25e6b0360ff68640.ctex"]
+source_file="res://assets/sprites/eau_ecume.png"
+dest_files=["res://.godot/imported/eau_ecume.png-9ccf82ea05aebc2f83487942f2452ec3.ctex"]
 
 [params]
 

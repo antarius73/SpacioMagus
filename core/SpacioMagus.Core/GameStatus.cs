@@ -6,3 +6,10 @@ public enum GameStatus
     Won,
     Lost,
 }
+
+public enum LossReason
+{
+    None,
+    Captured,
+    Stranded,
+}

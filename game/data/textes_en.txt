@@ -46,6 +46,12 @@ Caught…
 [defaite]
 Engulfed! You will wait for Zorgus inside a blob. He will not be pleased.
 
+[echoue_titre]
+Mob cannot swim
+
+[echoue]
+Not a drop of magic left, and the exit is on the other side. Mob devoted his life to magic: he never found the time to learn how to swim.
+
 [menu_titre]
 Menu
 
@@ -161,23 +167,14 @@ All stars and records will be lost.
 [langue_choix]
 Language
 
-[son_choix]
-Sound
-
-[son_oui]
-On
-
-[son_non]
-Off
-
-[musique_choix]
+[volume_musique]
 Music
 
-[musique_oui]
-On
+[volume_effets]
+Effects
 
-[musique_non]
-Off
+[pourcentage]
+{0}%
 
 [porte_titre]
 Doors

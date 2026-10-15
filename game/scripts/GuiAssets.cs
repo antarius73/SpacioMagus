@@ -41,6 +41,8 @@ public static class GuiAssets
 
     public static Texture2D LevelsSheet { get; } = Load("res://assets/gui/niveaux.png");
 
+    public static Texture2D VolumeSheet { get; } = Load("res://assets/gui/volume.png");
+
     public static readonly Rect2 BigStarFull = new(161, 386, 29, 28);
     public static readonly Rect2 BigStarEmpty = new(241, 386, 29, 28);
     public static readonly Rect2 SmallStarFull = new(199, 392, 17, 17);
@@ -54,6 +56,12 @@ public static class GuiAssets
     public static readonly Rect2 MiniStarFull = new(165, 182, 7, 7);
     public static readonly Rect2 MiniStarEmpty = new(205, 182, 7, 7);
     public static readonly Rect2 NextMarker = new(268, 183, 9, 6);
+    public static readonly Rect2 VolumeTickFull = new(0, 0, 3, 11);
+    public static readonly Rect2 VolumeTickEmpty = new(3, 0, 3, 11);
+    public static readonly Rect2 MusicIconOff = new(6, 0, 13, 13);
+    public static readonly Rect2 MusicIconOn = new(19, 0, 13, 13);
+    public static readonly Rect2 EffectsIconOff = new(32, 0, 13, 12);
+    public static readonly Rect2 EffectsIconOn = new(45, 0, 13, 12);
 
     public static Theme Theme => _theme ??= BuildTheme();
 

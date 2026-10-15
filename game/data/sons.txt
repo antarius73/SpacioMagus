@@ -24,20 +24,25 @@ sp.select     = jeu/select_2.wav, 6
 sp.creatura   = jeu/power_1.wav, 7
 
 it.break      = jeu/exp_shortest_soft_1.wav, 2
+it.break_vase = jeu/vase_brise_1.wav jeu/vase_brise_2.wav, 2
 it.reveal     = jeu/item_1.wav, 12
 it.drink      = jeu/powerup_4.wav, 3
 
 mo.mut_on     = jeu/riser_4.wav, 11
 mo.mut_off    = jeu/shutdown_1.wav, -2
 mo.stun       = jeu/double_attack.ogg, -4
+mo.bat        = decor/chauve_souris_1.wav decor/chauve_souris_2.wav, -10
 
 dr.open       = jeu/porte_ouvre.wav, -2
 dr.close      = jeu/porte_ferme.wav, -3
 
+gr.lever      = jeu/manette.wav, 0
+gr.locked     = jeu/herse_verrouillee.wav, 0
 gr.open       = jeu/herse_ouvre.wav, -3
 gr.close      = jeu/herse_ferme.wav, -6
 
 dc.torch      = decor/torche_douce.wav, -8
+dc.water      = decor/clapotis.wav, -8
 
 end.caught    = jeu/hurt_1.wav, 9
 end.lose      = jeu/falling_2.wav, 12

@@ -46,6 +46,12 @@ Capturado…
 [defaite]
 Engolido! Você vai esperar a volta de Zorgus dentro de um blob. Ele não vai gostar nada disso.
 
+[echoue_titre]
+Mob não sabe nadar
+
+[echoue]
+Nem uma gota de magia, e a saída está do outro lado. Mob dedicou a vida à magia: nunca teve tempo de aprender a nadar.
+
 [menu_titre]
 Menu
 
@@ -161,23 +167,14 @@ Todas as estrelas e todos os recordes serão perdidos.
 [langue_choix]
 Idioma
 
-[son_choix]
-Som
-
-[son_oui]
-Ligado
-
-[son_non]
-Desligado
-
-[musique_choix]
+[volume_musique]
 Música
 
-[musique_oui]
-Ligada
+[volume_effets]
+Efeitos
 
-[musique_non]
-Desligada
+[pourcentage]
+{0} %
 
 [porte_titre]
 As portas

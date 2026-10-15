@@ -46,6 +46,12 @@ Gefangen…
 [defaite]
 Verschluckt! Du wartest im Bauch eines Blobs auf die Rückkehr von Zorgus. Er wird nicht begeistert sein.
 
+[echoue_titre]
+Mob kann nicht schwimmen
+
+[echoue]
+Kein Tropfen Magie mehr, und der Ausgang liegt auf der anderen Seite. Mob hat sein Leben der Magie gewidmet: Für Schwimmunterricht blieb nie Zeit.
+
 [menu_titre]
 Menü
 
@@ -161,23 +167,14 @@ Alle Sterne und alle Rekorde gehen verloren.
 [langue_choix]
 Sprache
 
-[son_choix]
-Ton
-
-[son_oui]
-An
-
-[son_non]
-Aus
-
-[musique_choix]
+[volume_musique]
 Musik
 
-[musique_oui]
-An
+[volume_effets]
+Effekte
 
-[musique_non]
-Aus
+[pourcentage]
+{0} %
 
 [porte_titre]
 Die Türen

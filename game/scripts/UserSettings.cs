@@ -10,12 +10,17 @@ public static class UserSettings
     private const string LanguageKey = "langue";
     private const string SoundKey = "son";
     private const string MusicKey = "musique";
+    private const string EffectsVolumeKey = "volume_effets";
+    private const string MusicVolumeKey = "volume_musique";
+
+    public const int DefaultVolume = 80;
+    public const int MaxVolume = 100;
 
     public static string Language { get; private set; } = SystemLanguage();
 
-    public static bool SoundEnabled { get; private set; } = true;
+    public static int EffectsVolume { get; private set; } = DefaultVolume;
 
-    public static bool MusicEnabled { get; private set; } = true;
+    public static int MusicVolume { get; private set; } = DefaultVolume;
 
     public static void Load()
     {
@@ -23,8 +28,10 @@ public static class UserSettings
         if (config.Load(FilePath) == Error.Ok)
         {
             Language = config.GetValue(Section, LanguageKey, Language).AsString();
-            SoundEnabled = config.GetValue(Section, SoundKey, SoundEnabled).AsBool();
-            MusicEnabled = config.GetValue(Section, MusicKey, MusicEnabled).AsBool();
+            var soundWasOn = config.GetValue(Section, SoundKey, true).AsBool();
+            var musicWasOn = config.GetValue(Section, MusicKey, true).AsBool();
+            EffectsVolume = ClampVolume(config.GetValue(Section, EffectsVolumeKey, soundWasOn ? DefaultVolume : 0).AsInt32());
+            MusicVolume = ClampVolume(config.GetValue(Section, MusicVolumeKey, musicWasOn ? DefaultVolume : 0).AsInt32());
         }
 
         if (!Texts.Languages.Contains(Language))
@@ -39,17 +46,19 @@ public static class UserSettings
         Save(LanguageKey, language);
     }
 
-    public static void SetSoundEnabled(bool enabled)
+    public static void SetEffectsVolume(int volume)
     {
-        SoundEnabled = enabled;
-        Save(SoundKey, enabled);
+        EffectsVolume = ClampVolume(volume);
+        Save(EffectsVolumeKey, EffectsVolume);
     }
 
-    public static void SetMusicEnabled(bool enabled)
+    public static void SetMusicVolume(int volume)
     {
-        MusicEnabled = enabled;
-        Save(MusicKey, enabled);
+        MusicVolume = ClampVolume(volume);
+        Save(MusicVolumeKey, MusicVolume);
     }
+
+    private static int ClampVolume(int volume) => System.Math.Clamp(volume, 0, MaxVolume);
 
     private static string SystemLanguage()
     {

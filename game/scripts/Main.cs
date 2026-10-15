@@ -33,6 +33,8 @@ public partial class Main : Node
     private const float ChoiceWidth = 120f;
     private const float ChoiceHeight = 28f;
     private const int ChoiceSeparation = 8;
+    private const float PercentWidth = 44f;
+    private const int VolumeIconSeparation = 4;
     private const double DefeatJingleDelay = 0.6;
     private const double FinalFanfareDelay = 1.3;
     private bool _pendingConclusion;
@@ -50,8 +52,8 @@ public partial class Main : Node
 
         _sounds = new Sounds { Name = "Sons" };
         AddChild(_sounds);
-        Sounds.SetEnabled(UserSettings.SoundEnabled);
-        Sounds.SetMusicEnabled(UserSettings.MusicEnabled);
+        Sounds.SetEffectsVolume(UserSettings.EffectsVolume / (float)UserSettings.MaxVolume);
+        Sounds.SetMusicVolume(UserSettings.MusicVolume / (float)UserSettings.MaxVolume);
 
         _view = new LevelView { Name = "LevelView" };
         AddChild(_view);
@@ -436,10 +438,11 @@ public partial class Main : Node
     private void ShowDefeat()
     {
         var index = _levelIndex;
+        var stranded = _game?.LossReason == LossReason.Stranded;
         Sounds.Play("end.lose", DefeatJingleDelay);
         ShowScreen(() => MenuScreen.Create(
-            Texts.DefeatTitle,
-            Texts.Defeat,
+            stranded ? Texts.StrandedTitle : Texts.DefeatTitle,
+            stranded ? Texts.Stranded : Texts.Defeat,
             new[] { GuiAssets.Cross },
             (Texts.PlayAgainButton, () => StartLevel(index)),
             (Texts.MainMenuButton, ShowTitle)));
@@ -501,11 +504,15 @@ public partial class Main : Node
         var current = Texts.Languages.ToList().IndexOf(Texts.Language);
         AddChoice(grid, Texts.LanguageLabel, languages, current, selected => ChangeLanguage(Texts.Languages[selected], back));
 
-        var sound = new[] { Texts.SoundOn, Texts.SoundOff };
-        AddChoice(grid, Texts.SoundLabel, sound, UserSettings.SoundEnabled ? 0 : 1, selected => ChangeSound(selected == 0));
-
-        var music = new[] { Texts.MusicOn, Texts.MusicOff };
-        AddChoice(grid, Texts.MusicLabel, music, UserSettings.MusicEnabled ? 0 : 1, selected => ChangeMusic(selected == 0));
+        AddVolume(grid, Texts.MusicLabel, GuiAssets.MusicIconOn, GuiAssets.MusicIconOff, UserSettings.MusicVolume, ChangeMusicVolume, null);
+        AddVolume(
+            grid,
+            Texts.EffectsLabel,
+            GuiAssets.EffectsIconOn,
+            GuiAssets.EffectsIconOff,
+            UserSettings.EffectsVolume,
+            ChangeEffectsVolume,
+            () => Sounds.Play("ui.toggle"));
         return grid;
     }
 
@@ -526,28 +533,80 @@ public partial class Main : Node
         grid.AddChild(choice);
     }
 
-    private static void ChangeMusic(bool enabled)
+    private static void AddVolume(
+        GridContainer grid,
+        string text,
+        Rect2 iconOn,
+        Rect2 iconOff,
+        int value,
+        Action<int> changed,
+        Action? released)
     {
-        if (enabled == UserSettings.MusicEnabled)
+        var heading = new HBoxContainer();
+        heading.AddThemeConstantOverride("separation", VolumeIconSeparation);
+        var icon = new TextureRect
         {
-            return;
+            Texture = GuiAssets.Region(GuiAssets.VolumeSheet, value > 0 ? iconOn : iconOff),
+            StretchMode = TextureRect.StretchModeEnum.KeepCentered,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+        };
+        var label = new Label { Text = text, VerticalAlignment = VerticalAlignment.Center };
+        label.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
+        heading.AddChild(icon);
+        heading.AddChild(label);
+        grid.AddChild(heading);
+
+        var row = new HBoxContainer { CustomMinimumSize = new Vector2(0, ChoiceHeight) };
+        row.AddThemeConstantOverride("separation", ChoiceSeparation);
+        var bar = new VolumeBar
+        {
+            Value = value,
+            SizeFlagsVertical = Control.SizeFlags.Fill,
+        };
+        var percent = new Label
+        {
+            Text = Texts.Percent(value),
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            CustomMinimumSize = new Vector2(PercentWidth, 0),
+        };
+        percent.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
+        bar.Changed += newValue =>
+        {
+            percent.Text = Texts.Percent(newValue);
+            icon.Texture = GuiAssets.Region(GuiAssets.VolumeSheet, newValue > 0 ? iconOn : iconOff);
+            changed(newValue);
+        };
+        if (released is not null)
+        {
+            bar.Released += released;
         }
 
-        UserSettings.SetMusicEnabled(enabled);
-        Sounds.SetMusicEnabled(enabled);
-        Sounds.Play("ui.toggle");
+        row.AddChild(bar);
+        row.AddChild(percent);
+        grid.AddChild(row);
     }
 
-    private static void ChangeSound(bool enabled)
+    private static void ChangeMusicVolume(int volume)
     {
-        if (enabled == UserSettings.SoundEnabled)
+        if (volume == UserSettings.MusicVolume)
         {
             return;
         }
 
-        UserSettings.SetSoundEnabled(enabled);
-        Sounds.SetEnabled(enabled);
-        Sounds.Play("ui.toggle");
+        UserSettings.SetMusicVolume(volume);
+        Sounds.SetMusicVolume(volume / (float)UserSettings.MaxVolume);
+    }
+
+    private static void ChangeEffectsVolume(int volume)
+    {
+        if (volume == UserSettings.EffectsVolume)
+        {
+            return;
+        }
+
+        UserSettings.SetEffectsVolume(volume);
+        Sounds.SetEffectsVolume(volume / (float)UserSettings.MaxVolume);
     }
 
     private void ChangeLanguage(string language, Action back)
@@ -670,6 +729,12 @@ public partial class Main : Node
 
     private void HandleTap(Game game, Cell cell)
     {
+        if (game.IsStranded)
+        {
+            Apply(Play(new WaitAction()), cell, TapKind.Wait);
+            return;
+        }
+
         if (_firstCreature is { } first)
         {
             TapSecondCreature(game, first, cell);
@@ -792,7 +857,16 @@ public partial class Main : Node
 
         if (!result.Success)
         {
-            Reject(cell, result.Error == ActionError.NotEnoughMagic);
+            if (result.Error == ActionError.GrilleNeedsLever)
+            {
+                _view.Flash(cell, TapKind.Invalid);
+                Sounds.Play("gr.locked");
+            }
+            else
+            {
+                Reject(cell, result.Error == ActionError.NotEnoughMagic);
+            }
+
             Refresh();
             return;
         }

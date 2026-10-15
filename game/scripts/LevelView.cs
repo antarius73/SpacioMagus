@@ -87,14 +87,86 @@ public partial class LevelView : Node2D
     private const int AlcoveOffsetY = -5;
     private static readonly Rect2 StairsUpRegion = new(64, 16, 48, 64);
     private const int StairsUpRiseY = 3 * SubTile;
-    private static readonly Rect2 WaterRegion = new(0, 0, 32, 32);
-    private const int RippleColumn = 32;
-    private const int RippleHeight = 16;
-    private const int RippleFrames = 6;
-    private const double RippleFrameRate = 5;
-    private const double RippleChance = 0.6;
-    private const int RippleMinOffsetY = 2;
-    private const int RippleMaxOffsetY = 14;
+    private const int CoastColumns = 29;
+    private const int ReflectionColumns = 37;
+    private const int ReflectionFrameStride = 481;
+    private const int WaterFrames = 6;
+    private const double WaterFrameSeconds = 0.15;
+    private const int ReflectionShownFrames = 14;
+    private const int ReflectionCycleFrames = 15;
+    private const int ReflectionLayers = 2;
+    private const double ReflectionCoverage = 0.95;
+    private const int ReflectionAttempts = 20000;
+    private const int FoamTile = -1;
+    private const int WaterTile = 881;
+    private const int BandTile = 875;
+    private const int BandWestTile = 871;
+    private const int BandEastTile = 873;
+    private const int SlabTile = 263;
+    private const int SlabWestTile = 262;
+    private const int SlabEastTile = 264;
+    private const int WaterFaceTile = 118;
+    private const int WaterFaceWestTile = 117;
+    private const int WaterFaceEastTile = 119;
+    private const int FaceFootTile = 147;
+    private const int FaceFootWestTile = 146;
+    private const int FaceFootEastTile = 148;
+    private const int WallWaterEastTile = 240;
+    private const int WallWaterWestTile = 242;
+    private const int WallWaterEastBandTile = 245;
+    private const int WallWaterWestBandTile = 244;
+    private const int BankWestBandTile = 155;
+    private const int BankEastBandTile = 153;
+    private const int NoShade = -1;
+    private const int BankNorthWestTile = 175;
+    private const int BankNorthTile = 176;
+    private const int BankNorthEastTile = 177;
+    private const int BankWestTile = 204;
+    private const int BankEastTile = 206;
+    private const int BankSouthWestTile = 233;
+    private const int BankSouthTile = 234;
+    private const int BankSouthEastTile = 235;
+    private const int BankCornerNorthEastTile = 266;
+    private const int BankCornerNorthWestTile = 268;
+    private const int BankCornerSouthEastTile = 150;
+    private const int BankCornerSouthWestTile = 152;
+    private static readonly Dictionary<int, int[]> CoastFrames = new()
+    {
+        [117] = new[] { 117, 131, 407, 421, 697, 711 },
+        [119] = new[] { 119, 133, 409, 423, 699, 713 },
+        [146] = new[] { 146, 160, 436, 450, 726, 740 },
+        [147] = new[] { 147, 161, 437, 451, 727, 741 },
+        [148] = new[] { 148, 162, 438, 452, 728, 742 },
+        [175] = new[] { 175, 189, 465, 479, 755, 769 },
+        [177] = new[] { 177, 191, 467, 481, 757, 771 },
+        [204] = new[] { 204, 218, 494, 508, 784, 798 },
+        [206] = new[] { 206, 220, 496, 510, 786, 800 },
+        [153] = new[] { 153, 167, 443, 457, 733, 747 },
+        [155] = new[] { 155, 169, 445, 459, 735, 749 },
+        [244] = new[] { 244, 258, 534, 548, 824, 838 },
+        [245] = new[] { 245, 259, 535, 549, 825, 839 },
+        [233] = new[] { 233, 247, 523, 537, 813, 827 },
+        [235] = new[] { 235, 249, 525, 539, 815, 829 },
+        [240] = new[] { 240, 254, 530, 544, 820, 834 },
+        [242] = new[] { 242, 256, 532, 546, 822, 836 },
+        [262] = new[] { 262, 276, 552, 566, 842, 856 },
+        [263] = new[] { 263, 277, 553, 567, 727, 741 },
+        [264] = new[] { 264, 278, 554, 568, 844, 858 },
+    };
+    private static readonly int[][] ReflectionStamps =
+    {
+        new[] { 0, 0, 55, 0, 1, 92, 0, 2, 129, 1, 0, 56, 1, 1, 93, 1, 2, 130, 2, 0, 57, 2, 1, 94, 2, 2, 131, 3, 0, 58, 3, 1, 95, 3, 2, 132, 4, 0, 59, 4, 1, 96, 4, 2, 133, 5, 0, 60, 5, 1, 97, 5, 2, 134, 6, 0, 61, 6, 1, 98, 6, 2, 135, 7, 0, 62, 7, 1, 99, 7, 2, 136, 8, 0, 63, 8, 1, 100, 8, 2, 137, 9, 0, 64, 9, 1, 101, 9, 2, 138, 10, 0, 65, 10, 1, 102, 10, 2, 139, 11, 0, 66, 11, 1, 103, 11, 2, 140, 12, 0, 67, 12, 1, 104, 12, 2, 141 },
+        new[] { 0, 0, 323, 0, 1, 360, 0, 2, 397, 1, 0, 324, 1, 1, 361, 1, 2, 398, 2, 0, 325, 2, 1, 362, 2, 2, 399, 3, 0, 326, 3, 1, 363, 3, 2, 400, 4, 0, 327, 4, 1, 364, 4, 2, 401 },
+        new[] { 0, 0, 254, 1, 0, 255, 2, 0, 256, 3, 0, 257, 4, 0, 258 },
+        new[] { 0, 0, 325, 0, 1, 362, 1, 0, 326, 1, 1, 363, 2, 0, 327, 2, 1, 364 },
+        new[] { 0, 0, 341, 0, 1, 378, 1, 0, 342, 1, 1, 379, 2, 0, 343, 2, 1, 380, 3, 0, 344, 3, 1, 381, 4, 0, 345, 4, 1, 382, 5, 0, 346, 5, 1, 383, 6, 0, 347, 6, 1, 384 },
+        new[] { 0, 0, 323, 0, 1, 360, 1, 0, 324, 1, 1, 361, 2, 0, 325, 2, 1, 362, 3, 0, 326, 3, 1, 363, 4, 0, 327, 4, 1, 364 },
+        new[] { 0, 0, 105, 1, 0, 106, 2, 0, 107, 3, 0, 108, 4, 0, 109, 5, 0, 110 },
+        new[] { 0, 0, 313, 0, 1, 350, 0, 2, 387, 1, 0, 314, 1, 1, 351, 1, 2, 388, 2, 0, 315, 2, 1, 352, 2, 2, 389, 3, 0, 316, 3, 1, 353, 3, 2, 390, 4, 0, 317, 4, 1, 354, 4, 2, 391, 5, 0, 318, 5, 1, 355, 5, 2, 392 },
+        new[] { 0, 0, 255, 1, 0, 256, 2, 0, 257 },
+        new[] { 0, 0, 211, 0, 1, 248, 1, 0, 212, 1, 1, 249, 2, 0, 213, 2, 1, 250, 3, 0, 214, 3, 1, 251, 4, 0, 215, 4, 1, 252 },
+        new[] { 0, 0, 55, 0, 1, 92, 0, 2, 129, 1, 0, 56, 1, 1, 93, 1, 2, 130, 2, 0, 57, 2, 1, 94, 2, 2, 131, 3, 0, 58, 3, 1, 95, 3, 2, 132, 4, 0, 59, 4, 1, 96, 4, 2, 133, 5, 0, 60, 5, 1, 97, 5, 2, 134, 6, 0, 61, 6, 1, 98, 6, 2, 135, 7, 0, 62, 7, 1, 99, 7, 2, 136, 8, 0, 63, 8, 1, 100, 8, 2, 137, 9, 0, 64, 9, 1, 101, 9, 2, 138, 10, 0, 65, 10, 1, 102, 10, 2, 139, 11, 0, 66, 11, 1, 103, 11, 2, 140 },
+    };
     private const int PillarCapTile = 257;
     private const int PillarUpperTile = 274;
     private const int PillarLowerTile = 291;
@@ -204,7 +276,14 @@ public partial class LevelView : Node2D
     private readonly List<Cell> _stairs = new();
     private readonly List<Cell> _braziers = new();
     private readonly List<Cell> _water = new();
-    private readonly List<(Cell Cell, float OffsetY, int Phase)> _ripples = new();
+    private readonly List<(int TileId, int ShadeId, Vector2 Position)> _waterUnder = new();
+    private readonly Dictionary<(int TileId, int ShadeId), ImageTexture> _shadedCoasts = new();
+    private Image? _coastImage;
+    private Image? _tilesetImage;
+    private Color _floorColor;
+    private readonly List<(int TileId, Vector2 Position)> _waterOver = new();
+    private readonly HashSet<(int X, int Y)> _reflectionArea = new();
+    private readonly List<(int TileId, Vector2 Position)>[] _reflections = { new(), new() };
     private readonly List<Cell> _levers = new();
     private readonly List<Cell> _alcoves = new();
     private readonly List<Cell> _stairsUp = new();
@@ -226,9 +305,13 @@ public partial class LevelView : Node2D
     private Texture2D _animations = null!;
     private Texture2D _potion = null!;
     private Texture2D _magusPixel = null!;
-    private Texture2D _waterSheet = null!;
+    private Texture2D _coastSheet = null!;
+    private Texture2D _reflectionSheet = null!;
+    private Texture2D _foamSheet = null!;
     private Texture2D _mechanisms = null!;
     private TorchAmbience _ambience = null!;
+    private TorchAmbience _waterAmbience = null!;
+    private BatAmbience _batAmbience = null!;
     private Game? _game;
     private IReadOnlyList<DecorItem> _decor = Array.Empty<DecorItem>();
     private Cell? _selected;
@@ -282,6 +365,12 @@ public partial class LevelView : Node2D
     private const int WalkRowOffset = 0;
     private const int IdleRowOffset = 8;
 
+    private IEnumerable<(int Id, Vector2 Position)> Bats() =>
+        _game?.Monsters
+            .Where(monster => monster.Kind == MonsterKind.ChauveSouris)
+            .Select(monster => (monster.Id, CellCenter(monster.Position)))
+        ?? Enumerable.Empty<(int, Vector2)>();
+
     public static Vector2 CellCenter(Cell cell) => new(cell.X * Tile + Tile / 2f, cell.Y * Tile + Tile / 2f);
 
     public static Cell CellAt(Vector2 point) => new(Mathf.FloorToInt(point.X / Tile), Mathf.FloorToInt(point.Y / Tile));
@@ -297,10 +386,16 @@ public partial class LevelView : Node2D
         _animations = LoadTexture("res://assets/sprites/animations.png");
         _potion = LoadTexture("res://assets/sprites/fiole_bleue.png");
         _magusPixel = LoadTexture("res://assets/sprites/magus_pixel.png");
-        _waterSheet = LoadTexture("res://assets/sprites/donjon_eau.png");
+        _coastSheet = LoadTexture("res://assets/sprites/eau_berges.png");
+        _reflectionSheet = LoadTexture("res://assets/sprites/eau_reflets.png");
+        _foamSheet = LoadTexture("res://assets/sprites/eau_ecume.png");
         _mechanisms = LoadTexture("res://assets/sprites/donjon_mecanismes.png");
         _ambience = new TorchAmbience { Name = "Torches", Listener = () => MagusFocus };
         AddChild(_ambience);
+        _waterAmbience = new TorchAmbience { Name = "Eau", Listener = () => MagusFocus, SoundKey = "dc.water", MaxVoices = 1 };
+        AddChild(_waterAmbience);
+        _batAmbience = new BatAmbience { Name = "ChauvesSouris", Listener = () => MagusFocus, Bats = Bats };
+        AddChild(_batAmbience);
     }
 
     public void ShowLevel(Game game, IReadOnlyList<DecorItem> decor)
@@ -329,7 +424,9 @@ public partial class LevelView : Node2D
         Array.Fill(_darknessTarget, OutsideZoneDarkness);
         ClearHighlights();
         Sounds.CancelPending();
-        _ambience.ShowTorches(game.Level.Torches.Concat(_braziers));
+        _ambience.ShowSources(game.Level.Torches.Concat(_braziers));
+        _waterAmbience.ShowSources(_water);
+        _batAmbience.Reset();
     }
 
     public void SetMagicZone(IEnumerable<Cell> zone, bool canCast)
@@ -584,19 +681,7 @@ public partial class LevelView : Node2D
             DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
         }
 
-        foreach (var cell in _water)
-        {
-            DrawTextureRectRegion(_waterSheet, CellRect(cell), WaterRegion);
-        }
-
-        foreach (var (cell, offsetY, phase) in _ripples)
-        {
-            var rippleFrame = ((int)(_time * RippleFrameRate) + phase) % RippleFrames;
-            DrawTextureRectRegion(
-                _waterSheet,
-                new Rect2(cell.X * Tile, cell.Y * Tile + offsetY, Tile, RippleHeight),
-                new Rect2(RippleColumn, rippleFrame * RippleHeight, Tile, RippleHeight));
-        }
+        DrawWater();
 
         foreach (var tile in _paroiTiles)
         {
@@ -998,6 +1083,130 @@ public partial class LevelView : Node2D
     private void DrawSubTile(int tileId, Vector2 position) =>
         DrawTextureRectRegion(_tileset, new Rect2(position, SubTile, SubTile), TileSource(tileId));
 
+    private void DrawWater()
+    {
+        var frame = (int)(_time / WaterFrameSeconds);
+        foreach (var (tileId, shadeId, position) in _waterUnder)
+        {
+            if (shadeId == NoShade)
+            {
+                DrawCoast(tileId, position, frame);
+            }
+            else
+            {
+                DrawTexture(ShadedCoast(CoastFrame(tileId, frame), shadeId), position);
+            }
+        }
+
+        var cycle = frame % (ReflectionCycleFrames * ReflectionLayers);
+        if (cycle % ReflectionCycleFrames < ReflectionShownFrames)
+        {
+            var stride = ReflectionFrameStride * (frame % WaterFrames);
+            foreach (var (tileId, position) in _reflections[cycle / ReflectionCycleFrames])
+            {
+                var id = tileId + stride;
+                DrawTextureRectRegion(
+                    _reflectionSheet,
+                    new Rect2(position, SubTile, SubTile),
+                    new Rect2(id % ReflectionColumns * SubTile, id / ReflectionColumns * SubTile, SubTile, SubTile));
+            }
+        }
+
+        foreach (var (tileId, position) in _waterOver)
+        {
+            if (tileId == FoamTile)
+            {
+                DrawTextureRectRegion(_foamSheet, new Rect2(position, SubTile, SubTile), new Rect2(frame % WaterFrames * SubTile, 0, SubTile, SubTile));
+            }
+            else
+            {
+                DrawCoast(tileId, position, frame);
+            }
+        }
+    }
+
+    private static int CoastFrame(int tileId, int frame) =>
+        CoastFrames.TryGetValue(tileId, out var frames) ? frames[frame % frames.Length] : tileId;
+
+    private ImageTexture ShadedCoast(int coastId, int shadeId)
+    {
+        if (_shadedCoasts.TryGetValue((coastId, shadeId), out var cached))
+        {
+            return cached;
+        }
+
+        _coastImage ??= Readable(_coastSheet.GetImage());
+        if (_tilesetImage is null)
+        {
+            _tilesetImage = Readable(_tileset.GetImage());
+            _floorColor = DominantColor(_tilesetImage, TileSource(FloorTile));
+        }
+
+        var coast = _coastImage.GetRegion(new Rect2I(coastId % CoastColumns * SubTile, coastId / CoastColumns * SubTile, SubTile, SubTile));
+        var shade = _tilesetImage.GetRegion(PixelRect(TileSource(shadeId)));
+        coast.Convert(Image.Format.Rgba8);
+        for (var y = 0; y < SubTile; y++)
+        {
+            for (var x = 0; x < SubTile; x++)
+            {
+                var shadow = shade.GetPixel(x, y);
+                var pixel = coast.GetPixel(x, y);
+                if (shadow.A <= 0f || pixel.A <= 0f)
+                {
+                    continue;
+                }
+
+                coast.SetPixel(x, y, new Color(
+                    Mathf.Min(1f, pixel.R * shadow.R / Mathf.Max(_floorColor.R, 0.001f)),
+                    Mathf.Min(1f, pixel.G * shadow.G / Mathf.Max(_floorColor.G, 0.001f)),
+                    Mathf.Min(1f, pixel.B * shadow.B / Mathf.Max(_floorColor.B, 0.001f)),
+                    pixel.A));
+            }
+        }
+
+        var texture = ImageTexture.CreateFromImage(coast);
+        _shadedCoasts[(coastId, shadeId)] = texture;
+        return texture;
+    }
+
+    private static Rect2I PixelRect(Rect2 region) =>
+        new((int)region.Position.X, (int)region.Position.Y, (int)region.Size.X, (int)region.Size.Y);
+
+    private static Image Readable(Image image)
+    {
+        if (image.IsCompressed())
+        {
+            image.Decompress();
+        }
+
+        return image;
+    }
+
+    private static Color DominantColor(Image image, Rect2 region)
+    {
+        var counts = new Dictionary<Color, int>();
+        var area = PixelRect(region);
+        for (var y = area.Position.Y; y < area.End.Y; y++)
+        {
+            for (var x = area.Position.X; x < area.End.X; x++)
+            {
+                var color = image.GetPixel(x, y);
+                counts[color] = counts.TryGetValue(color, out var count) ? count + 1 : 1;
+            }
+        }
+
+        return counts.OrderByDescending(entry => entry.Value).First().Key;
+    }
+
+    private void DrawCoast(int tileId, Vector2 position, int frame)
+    {
+        var id = CoastFrame(tileId, frame);
+        DrawTextureRectRegion(
+            _coastSheet,
+            new Rect2(position, SubTile, SubTile),
+            new Rect2(id % CoastColumns * SubTile, id / CoastColumns * SubTile, SubTile, SubTile));
+    }
+
     private void DrawParoiTile(ParoiTile tile)
     {
         var source = TileSource(tile.TileId);
@@ -1086,6 +1295,9 @@ public partial class LevelView : Node2D
         _stairs.Clear();
         _braziers.Clear();
         _water.Clear();
+        _waterUnder.Clear();
+        _waterOver.Clear();
+        _reflectionArea.Clear();
         _levers.Clear();
         _stairsUp.Clear();
         _arches.Clear();
@@ -1099,6 +1311,8 @@ public partial class LevelView : Node2D
         Terrain TerrainOf(int sx, int sy) =>
             sx >= 0 && sy >= 0 && sx < width && sy < height ? ShownTerrain(level, new Cell(sx / 2, sy / 2)) : Terrain.Void;
         bool Floor(int sx, int sy) => IsWalkGround(TerrainOf(sx, sy));
+        bool Water(int sx, int sy) => TerrainOf(sx, sy) == Terrain.Water;
+        bool Dry(int sx, int sy) => Floor(sx, sy) && !Water(sx, sy);
         bool Door(int sx, int sy) => TerrainOf(sx, sy) is Terrain.Grille or Terrain.Arch;
         bool FaceBottom(int sx, int sy) => !Floor(sx, sy) && Floor(sx, sy + 1);
         bool FaceTop(int sx, int sy) => !Floor(sx, sy) && !Floor(sx, sy + 1) && Floor(sx, sy + 2);
@@ -1156,14 +1370,80 @@ public partial class LevelView : Node2D
                 : ShadeCenterTile;
         }
 
+        int? BankTile(int sx, int sy)
+        {
+            var north = Water(sx, sy - 1);
+            var south = Water(sx, sy + 1);
+            var east = Water(sx + 1, sy);
+            var west = Water(sx - 1, sy);
+            return north && west ? BankNorthWestTile
+                : north && east ? BankNorthEastTile
+                : north ? BankNorthTile
+                : south && west ? BankSouthWestTile
+                : south && east ? BankSouthEastTile
+                : south ? BankSouthTile
+                : west ? Band(sx - 1, sy) ? BankWestBandTile : BankWestTile
+                : east ? Band(sx + 1, sy) ? BankEastBandTile : BankEastTile
+                : Water(sx + 1, sy - 1) ? BankCornerNorthEastTile
+                : Water(sx - 1, sy - 1) ? BankCornerNorthWestTile
+                : Water(sx + 1, sy + 1) ? BankCornerSouthEastTile
+                : Water(sx - 1, sy + 1) ? BankCornerSouthWestTile
+                : null;
+        }
+
+        bool Band(int sx, int sy) => Water(sx, sy) && (Dry(sx, sy - 1) || FaceBottom(sx, sy - 1));
+
+        void AddWater(int sx, int sy, Vector2 position)
+        {
+            _waterUnder.Add((WaterTile, NoShade, position));
+            if (Band(sx, sy))
+            {
+                _waterUnder.Add((!Band(sx - 1, sy) ? BandWestTile : !Band(sx + 1, sy) ? BandEastTile : BandTile, NoShade, position));
+                _reflectionArea.Add((sx, sy));
+                var foot = FaceBottom(sx, sy - 1)
+                    ? !FaceBottom(sx - 1, sy - 1) ? FaceFootWestTile : !FaceBottom(sx + 1, sy - 1) ? FaceFootEastTile : FaceFootTile
+                    : !Dry(sx - 1, sy - 1) && Water(sx - 1, sy) ? SlabWestTile
+                    : !Dry(sx + 1, sy - 1) && Water(sx + 1, sy) ? SlabEastTile
+                    : SlabTile;
+                _waterOver.Add((foot, position));
+                return;
+            }
+
+            if (!Floor(sx, sy + 1) && !FaceTop(sx, sy + 1))
+            {
+                _waterOver.Add((FoamTile, position));
+                return;
+            }
+
+            _reflectionArea.Add((sx, sy));
+        }
+
         void AddGround(int sx, int sy, Vector2 position)
         {
-            _terrainTiles.Add((FloorTile, position));
-            if (Shaded(sx, sy))
+            if (Water(sx, sy))
             {
-                var shade = ShadeTile(sx, sy);
-                _shading[(sx, sy)] = shade;
-                _terrainTiles.Add((shade, position));
+                AddWater(sx, sy, position);
+                return;
+            }
+
+            var bank = Dry(sx, sy) ? BankTile(sx, sy) : null;
+            var shaded = Shaded(sx, sy);
+            var shadeTile = shaded ? ShadeTile(sx, sy) : NoShade;
+            if (shaded)
+            {
+                _shading[(sx, sy)] = shadeTile;
+            }
+
+            if (bank is { } bankTile)
+            {
+                _waterUnder.Add((bankTile, shadeTile, position));
+                return;
+            }
+
+            _terrainTiles.Add((FloorTile, position));
+            if (shaded)
+            {
+                _terrainTiles.Add((shadeTile, position));
             }
         }
 
@@ -1196,6 +1476,12 @@ public partial class LevelView : Node2D
                     if (bottom)
                     {
                         AddGround(sx, sy, position);
+                        if (Water(sx, sy + 1))
+                        {
+                            var waterFace = Floor(sx - 1, sy) ? WaterFaceWestTile : Floor(sx + 1, sy) ? WaterFaceEastTile : WaterFaceTile;
+                            _waterUnder.Add((waterFace, NoShade, position));
+                            continue;
+                        }
                     }
 
                     var first = bottom ? FaceBottomTile : FaceTopTile;
@@ -1204,6 +1490,18 @@ public partial class LevelView : Node2D
                         : bottom && ThinRun(sx, sy) ? ThinFaceBottomTile
                         : first + 1;
                     _terrainTiles.Add((tileId, position));
+                    continue;
+                }
+
+                if (Water(sx + 1, sy))
+                {
+                    _waterUnder.Add((Band(sx + 1, sy) ? WallWaterEastBandTile : WallWaterEastTile, NoShade, position));
+                    continue;
+                }
+
+                if (Water(sx - 1, sy))
+                {
+                    _waterUnder.Add((Band(sx - 1, sy) ? WallWaterWestBandTile : WallWaterWestTile, NoShade, position));
                     continue;
                 }
 
@@ -1244,7 +1542,7 @@ public partial class LevelView : Node2D
                     _braziers.Add(cell);
                 }
 
-                if (level.TerrainAt(cell) == Terrain.Water || IsParoiInWater(level, cell))
+                if (level.TerrainAt(cell) == Terrain.Water)
                 {
                     _water.Add(cell);
                 }
@@ -1279,7 +1577,6 @@ public partial class LevelView : Node2D
         _shields.Clear();
         _banners.Clear();
         _torches.Clear();
-        _ripples.Clear();
         _alcoves.Clear();
         _containerLooks.Clear();
         _breaks.Clear();
@@ -1324,12 +1621,9 @@ public partial class LevelView : Node2D
 
         _torches.AddRange(level.Torches);
         _alcoves.AddRange(level.Alcoves);
-        foreach (var cell in _water)
+        foreach (var layer in _reflections)
         {
-            if (random.NextDouble() < RippleChance)
-            {
-                _ripples.Add((cell, random.Next(RippleMinOffsetY, RippleMaxOffsetY + 1), random.Next(RippleFrames)));
-            }
+            BuildReflections(layer, random);
         }
 
         foreach (var container in _game?.Containers ?? Array.Empty<Cell>())
@@ -1425,23 +1719,58 @@ public partial class LevelView : Node2D
     private bool IsMass(LevelDefinition level, Cell cell) =>
         IsWallish(level, cell) && !_parois.ContainsKey(cell);
 
-    private bool IsParoiInWater(LevelDefinition level, Cell cell)
+    private void BuildReflections(List<(int TileId, Vector2 Position)> layer, Random random)
     {
-        if (!_parois.ContainsKey(cell))
+        layer.Clear();
+        if (_reflectionArea.Count == 0)
         {
-            return false;
+            return;
         }
 
-        var water = 0;
-        foreach (var (dx, dy) in new[] { (1, 0), (-1, 0), (0, 1), (0, -1) })
+        var area = _reflectionArea.OrderBy(cell => cell.Y).ThenBy(cell => cell.X).ToList();
+        var used = new HashSet<(int X, int Y)>();
+        var goal = ReflectionCoverage * area.Count;
+        var placed = new List<((int X, int Y) Cell, int TileId)>();
+        for (var attempt = 0; attempt < ReflectionAttempts && used.Count < goal; attempt++)
         {
-            if (level.TerrainAt(new Cell(cell.X + dx, cell.Y + dy)) == Terrain.Water)
+            var origin = area[random.Next(area.Count)];
+            var stamp = ReflectionStamps[random.Next(ReflectionStamps.Length)];
+            var width = 0;
+            for (var index = 0; index < stamp.Length; index += 3)
             {
-                water++;
+                width = Math.Max(width, stamp[index] + 1);
+            }
+
+            var shift = random.Next(width);
+            placed.Clear();
+            var tiles = stamp.Length / 3;
+            var overlap = false;
+            for (var index = 0; index < stamp.Length; index += 3)
+            {
+                var cell = (X: origin.X + stamp[index] - shift, Y: origin.Y + stamp[index + 1]);
+                if (used.Contains(cell))
+                {
+                    overlap = true;
+                    break;
+                }
+
+                if (_reflectionArea.Contains(cell))
+                {
+                    placed.Add((cell, stamp[index + 2]));
+                }
+            }
+
+            if (overlap || placed.Count * 2 < tiles)
+            {
+                continue;
+            }
+
+            foreach (var (cell, tileId) in placed)
+            {
+                used.Add(cell);
+                layer.Add((tileId, new Vector2(cell.X * SubTile, cell.Y * SubTile)));
             }
         }
-
-        return water >= 2;
     }
 
     private readonly record struct ParoiTile(int TileId, Vector2 Position, int From, int To, bool Front);

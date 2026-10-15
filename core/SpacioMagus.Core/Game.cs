@@ -11,7 +11,7 @@ public sealed class Game
     private readonly HashSet<Position> _waterZone;
     private List<GameEvent> _events = new();
 
-    public const int RulesVersion = 4;
+    public const int RulesVersion = 5;
 
     public Game(LevelDefinition level, RuleSet? rules = null, IRandomSource? random = null)
     {
@@ -60,6 +60,8 @@ public sealed class Game
         Rules = source.Rules;
         _random = random;
         Status = source.Status;
+        LossReason = source.LossReason;
+        IsStranded = source.IsStranded;
         Turn = source.Turn;
         Magus = new MagusState(source.Magus.Position, source.Magus.Magic);
         _monsters = source._monsters.Select(monster => new MonsterState(monster.Id, monster.Kind, monster.Position, monster.Post, monster.Route, monster.RouteOffset)
@@ -91,6 +93,10 @@ public sealed class Game
     public RuleSet Rules { get; }
 
     public GameStatus Status { get; private set; } = GameStatus.Playing;
+
+    public LossReason LossReason { get; private set; }
+
+    public bool IsStranded { get; private set; }
 
     public int Turn { get; private set; }
 
@@ -190,7 +196,13 @@ public sealed class Game
         return _monsters.Where(monster => CheckSwapTarget(monster) == ActionError.None).ToList();
     }
 
-    public ActionResult Apply(GameAction action) => action switch
+    public ActionResult Apply(GameAction action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        return Status == GameStatus.Playing && IsStranded ? AnnounceStranded() : Dispatch(action);
+    }
+
+    private ActionResult Dispatch(GameAction action) => action switch
     {
         MoveAction move => Move(move.Target),
         WaitAction => Wait(),
@@ -199,7 +211,6 @@ public sealed class Game
         SpacioCreaturaAction swap => CastSpacioCreatura(swap.First, swap.Second),
         BreakAction breaking => Break(breaking.Target),
         LeverAction lever => PullLever(lever.Target),
-        null => throw new ArgumentNullException(nameof(action)),
         _ => throw new ArgumentException($"Action inconnue : {action.GetType().Name}.", nameof(action)),
     };
 
@@ -534,7 +545,93 @@ public sealed class Game
             CheckVictory();
         }
 
+        if (Status == GameStatus.Playing)
+        {
+            IsStranded = CheckStranded();
+        }
+
         return ActionResult.Ok(_events);
+    }
+
+    private ActionResult AnnounceStranded()
+    {
+        _events = new List<GameEvent> { new MagusStranded(Magus.Position) };
+        Status = GameStatus.Lost;
+        LossReason = LossReason.Stranded;
+        return ActionResult.Ok(_events);
+    }
+
+    private bool CheckStranded()
+    {
+        if (Magus.Magic >= Rules.SpellCost)
+        {
+            return false;
+        }
+
+        var zone = ReachableZone();
+        if (zone.Any(position => Level.TerrainAt(position) == Terrain.Stairs || _potions.Contains(position)))
+        {
+            return false;
+        }
+
+        return !_containers.Keys.Any(container => zone.Any(position => position.IsAdjacentTo(container)));
+    }
+
+    private HashSet<Position> ReachableZone()
+    {
+        var openable = new HashSet<Position>(_grilles.Values.Where(grille => grille.IsOpen || Level.IsDoor(grille.Position)).Select(grille => grille.Position));
+        while (true)
+        {
+            var zone = FloodFrom(Magus.Position, openable);
+            var grown = false;
+            foreach (var (lever, grille) in Level.Levers)
+            {
+                if (!openable.Contains(grille) && zone.Any(position => position.IsAdjacentTo(lever)))
+                {
+                    openable.Add(grille);
+                    grown = true;
+                }
+            }
+
+            if (!grown)
+            {
+                return zone;
+            }
+        }
+    }
+
+    private HashSet<Position> FloodFrom(Position start, HashSet<Position> openable)
+    {
+        bool Blocks(Position position) => BlocksSight(position) && !openable.Contains(position);
+        bool Passable(Position position) =>
+            Level.InBounds(position) && !Blocks(position) && !IsObstacleAt(position);
+
+        var zone = new HashSet<Position> { start };
+        var pending = new Queue<Position>();
+        pending.Enqueue(start);
+        while (pending.Count > 0)
+        {
+            var current = pending.Dequeue();
+            foreach (var direction in Position.Directions)
+            {
+                var next = current + direction;
+                if (zone.Contains(next) || !Passable(next))
+                {
+                    continue;
+                }
+
+                if (direction.X != 0 && direction.Y != 0
+                    && (Blocks(new Position(next.X, current.Y)) || Blocks(new Position(current.X, next.Y))))
+                {
+                    continue;
+                }
+
+                zone.Add(next);
+                pending.Enqueue(next);
+            }
+        }
+
+        return zone;
     }
 
     private bool CheckVictory()
@@ -672,6 +769,7 @@ public sealed class Game
                 _events.Add(new MonsterMoved(monster.Id, from, monster.Position, MoveCause.Step));
                 _events.Add(new MagusCaptured(monster.Id));
                 Status = GameStatus.Lost;
+                LossReason = LossReason.Captured;
                 return;
             }
 

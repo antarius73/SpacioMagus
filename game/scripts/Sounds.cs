@@ -27,12 +27,19 @@ public partial class Sounds : Node
     private int _generation;
     private int _musicGeneration;
     private AudioStreamPlayer _music = null!;
+    private AudioStreamPlayer _jingle = null!;
     private string? _musicKey;
     private Tween? _musicFade;
 
-    public static bool Enabled { get; private set; } = true;
+    private static readonly HashSet<string> JingleKeys = new() { "end.win", "end.lose" };
 
-    public static bool MusicEnabled { get; private set; } = true;
+    public static float EffectsVolume { get; private set; } = 1f;
+
+    public static float MusicVolume { get; private set; } = 1f;
+
+    public static bool Enabled => EffectsVolume > 0f;
+
+    public static bool MusicEnabled => MusicVolume > 0f;
 
     public override void _EnterTree()
     {
@@ -59,6 +66,8 @@ public partial class Sounds : Node
 
         _music = new AudioStreamPlayer { Bus = MusicBus };
         AddChild(_music);
+        _jingle = new AudioStreamPlayer { Bus = MusicBus };
+        AddChild(_jingle);
     }
 
     private static void EnsureBuses()
@@ -117,23 +126,32 @@ public partial class Sounds : Node
         }
     }
 
-    public static void SetEnabled(bool enabled)
+    public static void SetEffectsVolume(float volume)
     {
         EnsureBuses();
-        Enabled = enabled;
-        AudioServer.SetBusMute(AudioServer.GetBusIndex(EffectsBus), !enabled);
-        if (!enabled)
+        EffectsVolume = Math.Clamp(volume, 0f, 1f);
+        ApplyBusVolume(EffectsBus, EffectsVolume);
+        if (!Enabled)
         {
             CancelPending();
         }
     }
 
-    public static void SetMusicEnabled(bool enabled)
+    public static void SetMusicVolume(float volume)
     {
         EnsureBuses();
-        MusicEnabled = enabled;
-        AudioServer.SetBusMute(AudioServer.GetBusIndex(MusicBus), !enabled);
+        MusicVolume = Math.Clamp(volume, 0f, 1f);
+        ApplyBusVolume(MusicBus, MusicVolume);
     }
+
+    private static void ApplyBusVolume(string bus, float volume)
+    {
+        var index = AudioServer.GetBusIndex(bus);
+        AudioServer.SetBusMute(index, volume <= 0f);
+        AudioServer.SetBusVolumeDb(index, volume <= 0f ? SilentDb : Mathf.LinearToDb(volume));
+    }
+
+    private static bool IsAudible(string key) => JingleKeys.Contains(key) ? MusicEnabled : Enabled;
 
     public static void PlayMusic(string key, double delay = 0)
     {
@@ -205,7 +223,7 @@ public partial class Sounds : Node
 
     public static void Play(string key, double delay = 0)
     {
-        if (_instance is not { } sounds || !Enabled || !sounds._sounds.ContainsKey(key))
+        if (_instance is not { } sounds || !IsAudible(key) || !sounds._sounds.ContainsKey(key))
         {
             return;
         }
@@ -244,8 +262,16 @@ public partial class Sounds : Node
 
     private void PlayNow(string key)
     {
-        if (!Enabled || !_sounds.TryGetValue(key, out var sound) || _players.Count == 0)
+        if (!IsAudible(key) || !_sounds.TryGetValue(key, out var sound) || _players.Count == 0)
         {
+            return;
+        }
+
+        if (JingleKeys.Contains(key))
+        {
+            _jingle.Stream = sound.Stream;
+            _jingle.VolumeDb = sound.VolumeDb;
+            _jingle.Play();
             return;
         }
 
@@ -323,7 +349,7 @@ public static class TurnSounds
                     cues.Add(("mo.stun", monstersDelay));
                     break;
                 case ContainerBroken broken:
-                    cues.Add(("it.break", 0));
+                    cues.Add((level?.TerrainAt(broken.Position) == Terrain.Vase ? "it.break_vase" : "it.break", 0));
                     if (broken.HadPotion)
                     {
                         cues.Add(("it.reveal", LevelView.PotionAppearDelay));

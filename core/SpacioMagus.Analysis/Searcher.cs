@@ -36,7 +36,7 @@ public static class Searcher
             foreach (var action in ActionGenerator.Candidates(game, filter))
             {
                 var child = game.Clone(random);
-                if (!child.Apply(action).Success || child.Status == GameStatus.Lost)
+                if (!child.Apply(action).Success || child.Status == GameStatus.Lost || child.IsStranded)
                 {
                     continue;
                 }

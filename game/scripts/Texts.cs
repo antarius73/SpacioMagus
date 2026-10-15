@@ -72,6 +72,10 @@ public static class Texts
 
     public static string Defeat => Get("defaite");
 
+    public static string StrandedTitle => Get("echoue_titre");
+
+    public static string Stranded => Get("echoue");
+
     public static string PauseTitle => Get("menu_titre");
 
     public static string CreditsTitle => Get("credits_titre");
@@ -96,17 +100,11 @@ public static class Texts
 
     public static string LanguageLabel => Get("langue_choix");
 
-    public static string SoundLabel => Get("son_choix");
+    public static string MusicLabel => Get("volume_musique");
 
-    public static string SoundOn => Get("son_oui");
+    public static string EffectsLabel => Get("volume_effets");
 
-    public static string SoundOff => Get("son_non");
-
-    public static string MusicLabel => Get("musique_choix");
-
-    public static string MusicOn => Get("musique_oui");
-
-    public static string MusicOff => Get("musique_non");
+    public static string Percent(int value) => string.Format(Get("pourcentage"), value);
 
     public static string GameTitle => Get("jeu_titre");
 

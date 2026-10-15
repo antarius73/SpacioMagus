@@ -8,9 +8,7 @@ namespace SpacioMagus;
 
 public partial class TorchAmbience : Node
 {
-    private const string SoundKey = "dc.torch";
-    private const int MaxVoices = 4;
-    private const float HearingTiles = 6f;
+    private const float HearingReach = LevelView.Tile + 1f;
     private const float SilentDb = -60f;
     private const float FadeDbPerSecond = 40f;
 
@@ -20,9 +18,11 @@ public partial class TorchAmbience : Node
 
     public Func<Vector2>? Listener { get; set; }
 
-    private static float HearingDistance => HearingTiles * LevelView.Tile;
+    public string SoundKey { get; init; } = "dc.torch";
 
-    public void ShowTorches(IEnumerable<Cell> cells)
+    public int MaxVoices { get; init; } = 4;
+
+    public void ShowSources(IEnumerable<Cell> cells)
     {
         Clear();
         if (Sounds.Find(SoundKey) is not { } sound)
@@ -60,7 +60,7 @@ public partial class TorchAmbience : Node
         var origin = active ? Listener!() : Vector2.Zero;
         var nearest = active
             ? _sources
-                .Where(source => source.Position.DistanceTo(origin) < HearingDistance)
+                .Where(source => IsAdjacent(source.Position, origin))
                 .OrderBy(source => source.Position.DistanceTo(origin))
                 .Take(MaxVoices)
                 .Select(source => source.Player)
@@ -70,7 +70,7 @@ public partial class TorchAmbience : Node
         var step = (float)delta * FadeDbPerSecond;
         foreach (var (position, player) in _sources)
         {
-            var target = nearest.Contains(player) ? TargetDb(position.DistanceTo(origin)) : SilentDb;
+            var target = nearest.Contains(player) ? _baseVolumeDb : SilentDb;
             if (target > SilentDb && !player.Playing)
             {
                 player.VolumeDb = SilentDb;
@@ -85,9 +85,6 @@ public partial class TorchAmbience : Node
         }
     }
 
-    private float TargetDb(float distance)
-    {
-        var gain = Mathf.Clamp(1f - distance / HearingDistance, 0f, 1f);
-        return gain <= 0f ? SilentDb : _baseVolumeDb + Mathf.LinearToDb(gain);
-    }
+    private static bool IsAdjacent(Vector2 source, Vector2 listener) =>
+        Mathf.Abs(source.X - listener.X) <= HearingReach && Mathf.Abs(source.Y - listener.Y) <= HearingReach;
 }
