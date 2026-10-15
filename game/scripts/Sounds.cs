@@ -339,6 +339,9 @@ public static class TurnSounds
                 case MonsterMutated:
                     cues.Add(("mo.mut_off", settled));
                     break;
+                case LeverPulled:
+                    cues.Add(("gr.lever", 0));
+                    break;
                 case GrilleOpened opened:
                     cues.Add((Gate(opened.Position, "open"), 0));
                     break;

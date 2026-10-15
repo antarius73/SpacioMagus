@@ -198,6 +198,7 @@ public sealed class Game
         SpacioMagusAction teleport => CastSpacioMagus(teleport.Target),
         SpacioCreaturaAction swap => CastSpacioCreatura(swap.First, swap.Second),
         BreakAction breaking => Break(breaking.Target),
+        LeverAction lever => PullLever(lever.Target),
         null => throw new ArgumentNullException(nameof(action)),
         _ => throw new ArgumentException($"Action inconnue : {action.GetType().Name}.", nameof(action)),
     };
@@ -263,16 +264,54 @@ public sealed class Game
             return ActionResult.Fail(ActionError.NotAdjacent);
         }
 
+        if (!Level.IsDoor(target))
+        {
+            return ActionResult.Fail(ActionError.GrilleNeedsLever);
+        }
+
         if (grille.IsOpen)
         {
             return ActionResult.Fail(ActionError.GrilleAlreadyOpen);
         }
 
         BeginTurn();
+        OpenGate(grille);
+        return EndTurn();
+    }
+
+    public ActionResult PullLever(Position target)
+    {
+        if (Status != GameStatus.Playing)
+        {
+            return ActionResult.Fail(ActionError.GameOver);
+        }
+
+        if (Level.LeverTarget(target) is not { } linked || GrilleAt(linked) is not { } grille)
+        {
+            return ActionResult.Fail(ActionError.NotALever);
+        }
+
+        if (!Magus.Position.IsAdjacentTo(target))
+        {
+            return ActionResult.Fail(ActionError.NotAdjacent);
+        }
+
+        if (grille.IsOpen)
+        {
+            return ActionResult.Fail(ActionError.GrilleAlreadyOpen);
+        }
+
+        BeginTurn();
+        _events.Add(new LeverPulled(target, linked));
+        OpenGate(grille);
+        return EndTurn();
+    }
+
+    private void OpenGate(GrilleState grille)
+    {
         grille.TurnsRemaining = Rules.GrilleOpenDuration;
         grille.OpenedThisTurn = true;
-        _events.Add(new GrilleOpened(target, grille.TurnsRemaining));
-        return EndTurn();
+        _events.Add(new GrilleOpened(grille.Position, grille.TurnsRemaining));
     }
 
     public ActionResult Break(Position target)
@@ -564,6 +603,20 @@ public sealed class Game
 
     private void ActMonster(MonsterState monster)
     {
+        if (monster.Kind == MonsterKind.ChauveSouris)
+        {
+            if (monster.StunTurns > 0)
+            {
+                monster.StunTurns--;
+                if (monster.StunTurns == 0)
+                {
+                    _events.Add(new MonsterRecovered(monster.Id));
+                }
+            }
+
+            return;
+        }
+
         if (monster.StunTurns > 0)
         {
             monster.StunTurns--;

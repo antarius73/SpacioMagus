@@ -11,6 +11,7 @@ internal static class TestMaps
         var monsters = new List<MonsterSpawn>();
         var potions = new List<Position>();
         var torches = new List<Position>();
+        var doors = new List<Position>();
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
@@ -48,6 +49,9 @@ internal static class TestMaps
                     case 'T':
                         torches.Add(position);
                         break;
+                    case 'G':
+                        doors.Add(position);
+                        break;
                 }
             }
         }
@@ -60,7 +64,8 @@ internal static class TestMaps
             magus ?? throw new ArgumentException("Aucun départ de magus."),
             monsters,
             potions,
-            torches);
+            torches,
+            doors);
     }
 
     public static LevelDefinition WithPost(LevelDefinition level, Position start, Position post) =>
@@ -72,7 +77,8 @@ internal static class TestMaps
             level.MagusStart,
             level.Monsters.Select(spawn => spawn.Start == start ? spawn with { Post = post } : spawn).ToList(),
             level.Potions,
-            level.Torches);
+            level.Torches,
+            level.Doors);
 
     public static LevelDefinition WithRoute(LevelDefinition level, Position start, params Position[] waypoints) =>
         new(
@@ -83,7 +89,8 @@ internal static class TestMaps
             level.MagusStart,
             level.Monsters.Select(spawn => spawn.Start == start ? spawn with { Route = PatrolRoute.Expand(waypoints) } : spawn).ToList(),
             level.Potions,
-            level.Torches);
+            level.Torches,
+            level.Doors);
 
     public static Game NewGame(LevelDefinition level, RuleSet? rules = null) =>
         new(level, rules, new FixedRandom());

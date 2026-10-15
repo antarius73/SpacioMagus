@@ -17,7 +17,7 @@ public static class SoundTable
         "it.break", "it.reveal", "it.drink",
         "mo.spot", "mo.lost", "mo.fear", "mo.block", "mo.mut_on", "mo.mut_off", "mo.stun", "mo.recover",
         "dr.open", "dr.close", "dr.delayed",
-        "gr.open", "gr.tick", "gr.last", "gr.close", "gr.push", "gr.delayed",
+        "gr.lever", "gr.open", "gr.tick", "gr.last", "gr.close", "gr.push", "gr.delayed",
         "dc.torch", "dc.brazier",
         "end.caught", "end.lose", "end.win",
         "mu.title", "mu.final",

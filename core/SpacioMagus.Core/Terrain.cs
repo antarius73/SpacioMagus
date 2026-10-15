@@ -11,4 +11,8 @@ public enum Terrain
     Water,
     Barrel,
     Crate,
+    Vase,
+    Lever,
+    StairsUp,
+    Arch,
 }

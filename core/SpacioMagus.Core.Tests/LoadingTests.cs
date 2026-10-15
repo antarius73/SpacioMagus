@@ -31,6 +31,43 @@ public class LoadingTests
         Assert.Throws<LevelLoadException>(() => Load(content));
 
     [Fact]
+    public void WithoutMonstersKeyRemovesEveryMonster()
+    {
+        var level = Load("""
+            [niveau]
+            sans_monstres = oui
+
+            [carte]
+            #########
+            ##..>..##
+            #b.r...p#
+            #...@...#
+            #########
+            """);
+
+        Assert.Empty(level.Definition.Monsters);
+        Assert.Equal(Terrain.Floor, level.Definition.TerrainAt(new Position(1, 2)));
+    }
+
+    [Fact]
+    public void WithoutMonstersKeyExpectsYesOrNo()
+    {
+        var error = LoadFails("""
+            [niveau]
+            sans_monstres = peut-etre
+
+            [carte]
+            #########
+            ##..>..##
+            #b.....p#
+            #...@...#
+            #########
+            """);
+
+        Assert.Contains(error.Issues, issue => issue.Message.Contains("sans_monstres"));
+    }
+
+    [Fact]
     public void ValidLevelIsLoaded()
     {
         var level = Load("""

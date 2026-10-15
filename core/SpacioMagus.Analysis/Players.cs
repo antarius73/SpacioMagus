@@ -159,6 +159,7 @@ public sealed class Players
     private static int Priority(GameAction action) => action switch
     {
         OpenGrilleAction => 0,
+        LeverAction => 0,
         SpacioMagusAction => 1,
         MoveAction => 2,
         BreakAction => 3,

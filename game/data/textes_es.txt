@@ -189,7 +189,7 @@ Toca una puerta vecina para abrirla. El número indica en cuántos turnos se cie
 Las rejas
 
 [grille]
-Toca una reja vecina para levantarla. El número indica en cuántos turnos vuelve a caer, empujando a quien esté debajo.
+No se levanta a mano: acciona su palanca desde una casilla vecina. El número indica en cuántos turnos vuelve a caer, empujando a quien esté debajo.
 
 [fiole_titre]
 Los frascos

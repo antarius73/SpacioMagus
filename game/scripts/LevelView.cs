@@ -72,9 +72,65 @@ public partial class LevelView : Node2D
     private const int BannerOffsetY = -2;
     private static readonly Rect2[] CrateRegions =
     {
-        new(56, 82, 16, 30), new(80, 82, 16, 20), new(96, 80, 16, 24), new(160, 82, 16, 20), new(176, 80, 16, 24),
+        new(55, 84, 20, 28), new(80, 82, 16, 20), new(96, 80, 16, 24), new(160, 82, 16, 20), new(176, 80, 16, 24),
     };
     private static readonly Rect2[] BarrelRegions = { new(112, 80, 16, 24), new(192, 80, 16, 24) };
+    private static readonly Rect2[] VaseRegions =
+    {
+        new(208, 80, 16, 19), new(256, 80, 16, 19), new(224, 83, 16, 16), new(272, 83, 16, 16),
+    };
+    private static readonly Rect2 LeverRegion = new(0, 0, 16, 12);
+    private const int LeverFrameStride = 16;
+    private const int LeverBottomMargin = 6;
+    private static readonly Rect2 AlcoveRegion = new(0, 16, 21, 23);
+    private const int AlcoveOffsetX = 5;
+    private const int AlcoveOffsetY = -5;
+    private static readonly Rect2 StairsUpRegion = new(64, 16, 48, 64);
+    private const int StairsUpRiseY = 3 * SubTile;
+    private static readonly Rect2 WaterRegion = new(0, 0, 32, 32);
+    private const int RippleColumn = 32;
+    private const int RippleHeight = 16;
+    private const int RippleFrames = 6;
+    private const double RippleFrameRate = 5;
+    private const double RippleChance = 0.6;
+    private const int RippleMinOffsetY = 2;
+    private const int RippleMaxOffsetY = 14;
+    private const int PillarCapTile = 257;
+    private const int PillarUpperTile = 274;
+    private const int PillarLowerTile = 291;
+    private const int PillarEndTile = 376;
+    private const int PillarBaseTile = 393;
+    private const int PilasterLedgeTile = 304;
+    private const int PilasterTopTile = 321;
+    private const int PilasterBottomTile = 338;
+    private const int CrossTopTile = 308;
+    private const int CrossMiddleTile = 325;
+    private const int CrossBottomTile = 342;
+    private const int PillarFrom = 4;
+    private const int PillarTo = 13;
+    private const int NotchFrom = 2;
+    private const int NotchTo = 14;
+    private const int BlockWestTopTile = 306;
+    private const int BlockTopLeftTile = 307;
+    private const int BlockTopRightTile = 309;
+    private const int BlockEastTopTile = 310;
+    private const int BlockWestMiddleTile = 323;
+    private const int BlockMiddleLeftTile = 324;
+    private const int BlockMiddleRightTile = 326;
+    private const int BlockEastMiddleTile = 327;
+    private const int BlockWestBottomTile = 340;
+    private const int BlockBottomLeftTile = 341;
+    private const int BlockBottomRightTile = 343;
+    private const int BlockEastBottomTile = 344;
+    private const int CornerWestTopTile = 311;
+    private const int CornerWestMiddleTile = 328;
+    private const int CornerWestBottomTile = 345;
+    private const int CornerEastTopTile = 312;
+    private const int CornerEastMiddleTile = 329;
+    private const int CornerEastBottomTile = 346;
+    private const int PillarWestOffset = 8;
+    private const int PillarCenterOffset = 16;
+    private const int PillarEastOffset = 24;
     private const int ContainerBottomMargin = 2;
     private const double BreakBlinkDuration = 0.25;
     private const int BreakBlinks = 3;
@@ -115,9 +171,14 @@ public partial class LevelView : Node2D
     private static readonly Color StunnedColor = new(0.6f, 0.6f, 0.75f);
     private static readonly Color FireFearColor = new(1f, 0.55f, 0.2f, 0.14f);
     private static readonly Color WaterFearColor = new(0.3f, 0.6f, 1f, 0.14f);
-    private static readonly Color WaterColor = new(0.16f, 0.36f, 0.62f);
     private const int GreenBlobRow = 5;
     private const int RedBlobRow = 6;
+    private const int BatRow = 9;
+    private const int BatFrames = 3;
+    private const double BatFrameRate = 8;
+    private const float BatHover = 1.5f;
+    private const float BatHoverSpeed = 4f;
+    private const float BatLift = -3f;
     private const double MutationBlinkDuration = 0.18;
     private const int BrazierColumn = 128;
     private const int BrazierSize = 48;
@@ -143,6 +204,15 @@ public partial class LevelView : Node2D
     private readonly List<Cell> _stairs = new();
     private readonly List<Cell> _braziers = new();
     private readonly List<Cell> _water = new();
+    private readonly List<(Cell Cell, float OffsetY, int Phase)> _ripples = new();
+    private readonly List<Cell> _levers = new();
+    private readonly List<Cell> _alcoves = new();
+    private readonly List<Cell> _stairsUp = new();
+    private readonly List<Cell> _arches = new();
+    private readonly Dictionary<Cell, bool> _parois = new();
+    private readonly List<ParoiTile> _paroiTiles = new();
+    private readonly List<ParoiTile> _paroiFront = new();
+    private readonly List<Cell> _frontTorches = new();
     private readonly Dictionary<Cell, Rect2> _containerLooks = new();
     private readonly Dictionary<Cell, (double Start, Rect2 Look)> _breaks = new();
     private readonly HashSet<Cell> _thinDoors = new();
@@ -156,6 +226,8 @@ public partial class LevelView : Node2D
     private Texture2D _animations = null!;
     private Texture2D _potion = null!;
     private Texture2D _magusPixel = null!;
+    private Texture2D _waterSheet = null!;
+    private Texture2D _mechanisms = null!;
     private TorchAmbience _ambience = null!;
     private Game? _game;
     private IReadOnlyList<DecorItem> _decor = Array.Empty<DecorItem>();
@@ -225,6 +297,8 @@ public partial class LevelView : Node2D
         _animations = LoadTexture("res://assets/sprites/animations.png");
         _potion = LoadTexture("res://assets/sprites/fiole_bleue.png");
         _magusPixel = LoadTexture("res://assets/sprites/magus_pixel.png");
+        _waterSheet = LoadTexture("res://assets/sprites/donjon_eau.png");
+        _mechanisms = LoadTexture("res://assets/sprites/donjon_mecanismes.png");
         _ambience = new TorchAmbience { Name = "Torches", Listener = () => MagusFocus };
         AddChild(_ambience);
     }
@@ -510,9 +584,36 @@ public partial class LevelView : Node2D
             DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
         }
 
+        foreach (var cell in _water)
+        {
+            DrawTextureRectRegion(_waterSheet, CellRect(cell), WaterRegion);
+        }
+
+        foreach (var (cell, offsetY, phase) in _ripples)
+        {
+            var rippleFrame = ((int)(_time * RippleFrameRate) + phase) % RippleFrames;
+            DrawTextureRectRegion(
+                _waterSheet,
+                new Rect2(cell.X * Tile, cell.Y * Tile + offsetY, Tile, RippleHeight),
+                new Rect2(RippleColumn, rippleFrame * RippleHeight, Tile, RippleHeight));
+        }
+
+        foreach (var tile in _paroiTiles)
+        {
+            DrawParoiTile(tile);
+        }
+
         foreach (var stairs in _stairs)
         {
             DrawTextureRectRegion(_objects, CellRect(stairs), StairsRegion);
+        }
+
+        foreach (var stairs in _stairsUp)
+        {
+            DrawTextureRectRegion(
+                _objects,
+                new Rect2(stairs.X * Tile + Tile - StairsUpRegion.Size.X, stairs.Y * Tile - StairsUpRiseY, StairsUpRegion.Size.X, StairsUpRegion.Size.Y),
+                StairsUpRegion);
         }
 
         foreach (var (source, position) in _banners)
@@ -536,19 +637,17 @@ public partial class LevelView : Node2D
             DrawWeb(position, flipX);
         }
 
-        foreach (var cell in _water)
+        if (_game.Monsters.Any(monster => monster.Kind is MonsterKind.BlobVert or MonsterKind.BlobRouge))
         {
-            DrawRect(CellRect(cell), WaterColor);
-        }
+            foreach (var cell in _game.FearZone(MonsterKind.BlobVert))
+            {
+                DrawRect(CellRect(cell), FireFearColor);
+            }
 
-        foreach (var cell in _game.FearZone(MonsterKind.BlobVert))
-        {
-            DrawRect(CellRect(cell), FireFearColor);
-        }
-
-        foreach (var cell in _game.FearZone(MonsterKind.BlobRouge))
-        {
-            DrawRect(CellRect(cell), WaterFearColor);
+            foreach (var cell in _game.FearZone(MonsterKind.BlobRouge))
+            {
+                DrawRect(CellRect(cell), WaterFearColor);
+            }
         }
 
         foreach (var potion in _game.Potions)
@@ -599,6 +698,19 @@ public partial class LevelView : Node2D
             SpellFx.DrawSakura(this, new Vector2(cell.X * Tile, cell.Y * Tile), elapsed - BreakBlinkDuration);
         }
 
+        foreach (var lever in _levers)
+        {
+            var leverFrame = _game.Level.LeverTarget(lever) is { } target && _game.GrilleAt(target) is { } herse ? GrilleFrame(herse) : 0;
+            DrawTextureRectRegion(
+                _mechanisms,
+                new Rect2(
+                    lever.X * Tile + (Tile - LeverRegion.Size.X) / 2f,
+                    lever.Y * Tile + Tile - LeverRegion.Size.Y - LeverBottomMargin,
+                    LeverRegion.Size.X,
+                    LeverRegion.Size.Y),
+                new Rect2(LeverRegion.Position.X + leverFrame * LeverFrameStride, LeverRegion.Position.Y, LeverRegion.Size.X, LeverRegion.Size.Y));
+        }
+
         var brazierSource = new Rect2(BrazierColumn, (int)(_time * 8) % FireFrames * FireFrameHeight, BrazierSize, BrazierSize);
         foreach (var brazier in _braziers)
         {
@@ -613,6 +725,11 @@ public partial class LevelView : Node2D
             DrawDoor(grille, false);
         }
 
+        foreach (var arch in _arches)
+        {
+            DrawArch(arch, false);
+        }
+
         foreach (var monster in _game.Monsters)
         {
             var color = monster.IsStunned ? StunnedColor : Colors.White;
@@ -624,7 +741,12 @@ public partial class LevelView : Node2D
                 continue;
             }
 
-            var source = new Rect2(monster.IsStunned ? 0 : frame * 32, MonsterRow(monster) * 32, 32, 32);
+            var source = new Rect2(monster.IsStunned ? 0 : MonsterFrame(monster, frame) * 32, MonsterRow(monster) * 32, 32, 32);
+            if (monster.Kind == MonsterKind.ChauveSouris && !monster.IsStunned)
+            {
+                shown.Y += BatLift + Mathf.Round(Mathf.Sin((float)_time * BatHoverSpeed + monster.Id) * BatHover);
+            }
+
             if (Facing(monster.Id) > 0)
             {
                 DrawSetTransform(new Vector2(shown.X + Tile, shown.Y), 0f, new Vector2(-1f, 1f));
@@ -652,9 +774,32 @@ public partial class LevelView : Node2D
                 new Rect2(source.Position.X, source.Position.Y + LedgeCut, SubTile, SubTile - LedgeCut));
         }
 
+        foreach (var tile in _paroiFront)
+        {
+            DrawParoiTile(tile);
+        }
+
+        foreach (var alcove in _alcoves)
+        {
+            DrawTextureRectRegion(
+                _mechanisms,
+                new Rect2(alcove.X * Tile + AlcoveOffsetX, alcove.Y * Tile + AlcoveOffsetY, AlcoveRegion.Size.X, AlcoveRegion.Size.Y),
+                AlcoveRegion);
+        }
+
+        foreach (var torch in _frontTorches)
+        {
+            DrawFire(torch, fireSource);
+        }
+
         foreach (var grille in _game.Grilles)
         {
             DrawDoor(grille, true);
+        }
+
+        foreach (var arch in _arches)
+        {
+            DrawArch(arch, true);
         }
 
         DrawZone(_game.Level);
@@ -712,7 +857,15 @@ public partial class LevelView : Node2D
         return (int)(_time / MutationBlinkDuration) % 2 == 0 ? row : other;
     }
 
-    private static int KindRow(MonsterKind kind) => kind == MonsterKind.BlobRouge ? RedBlobRow : GreenBlobRow;
+    private static int KindRow(MonsterKind kind) => kind switch
+    {
+        MonsterKind.BlobRouge => RedBlobRow,
+        MonsterKind.ChauveSouris => BatRow,
+        _ => GreenBlobRow,
+    };
+
+    private int MonsterFrame(MonsterState monster, int blobFrame) =>
+        monster.Kind == MonsterKind.ChauveSouris ? ((int)(_time * BatFrameRate) + monster.Id) % BatFrames : blobFrame;
 
     private static Texture2D LoadTexture(string path) =>
         GD.Load<Texture2D>(path) ?? throw new InvalidOperationException($"Texture introuvable : {path}");
@@ -723,10 +876,12 @@ public partial class LevelView : Node2D
         new(tileId % TilesetColumns * SubTile, tileId / TilesetColumns * SubTile, SubTile, SubTile);
 
     private static bool IsWalkGround(Terrain terrain) =>
-        terrain is Terrain.Floor or Terrain.Stairs or Terrain.Brazier or Terrain.Water or Terrain.Barrel or Terrain.Crate;
+        terrain is Terrain.Floor or Terrain.Stairs or Terrain.Brazier or Terrain.Water or Terrain.Barrel or Terrain.Crate
+            or Terrain.Vase or Terrain.Lever or Terrain.StairsUp;
 
     private static bool IsOpenGround(Terrain terrain) =>
-        terrain is Terrain.Floor or Terrain.Stairs or Terrain.Grille or Terrain.Brazier or Terrain.Water or Terrain.Barrel or Terrain.Crate;
+        terrain is Terrain.Floor or Terrain.Stairs or Terrain.Grille or Terrain.Arch or Terrain.Brazier or Terrain.Water or Terrain.Barrel
+            or Terrain.Crate or Terrain.Vase or Terrain.Lever or Terrain.StairsUp;
 
     private static int Pick(bool left, bool right, int firstTile) =>
         left && right ? firstTile + 1 : !left ? firstTile : firstTile + 2;
@@ -843,6 +998,16 @@ public partial class LevelView : Node2D
     private void DrawSubTile(int tileId, Vector2 position) =>
         DrawTextureRectRegion(_tileset, new Rect2(position, SubTile, SubTile), TileSource(tileId));
 
+    private void DrawParoiTile(ParoiTile tile)
+    {
+        var source = TileSource(tile.TileId);
+        var width = tile.To - tile.From;
+        DrawTextureRectRegion(
+            _tileset,
+            new Rect2(tile.Position.X + tile.From, tile.Position.Y, width, SubTile),
+            new Rect2(source.Position.X + tile.From, source.Position.Y, width, SubTile));
+    }
+
     private void DrawFire(Cell cell, Rect2 source) =>
         DrawTextureRectRegion(_fire, new Rect2(cell.X * Tile, cell.Y * Tile + FireOffsetY, Tile, FireFrameHeight), source);
 
@@ -882,6 +1047,24 @@ public partial class LevelView : Node2D
         }
     }
 
+    private void DrawArch(Cell cell, bool foreground)
+    {
+        var frameTop = (GrilleFrames - 1) * DoorFrameStride;
+        var x = cell.X * Tile;
+        var y = cell.Y * Tile;
+        if (IsThinDoor(cell))
+        {
+            var height = foreground ? SubTile : Tile + SubTile;
+            DrawTextureRectRegion(_doors, new Rect2(x, y - SubTile, Tile, height), new Rect2(ThinGrilleColumn, frameTop, Tile, height));
+            return;
+        }
+
+        if (!foreground)
+        {
+            DrawTextureRectRegion(_doors, new Rect2(x, y, Tile, Tile), new Rect2(ThickGrilleColumn, ThickDoorTop + frameTop, Tile, Tile));
+        }
+    }
+
     private int GrilleFrame(GrilleState grille)
     {
         var known = _grilleStates.TryGetValue(grille.Position, out var state);
@@ -903,16 +1086,20 @@ public partial class LevelView : Node2D
         _stairs.Clear();
         _braziers.Clear();
         _water.Clear();
+        _levers.Clear();
+        _stairsUp.Clear();
+        _arches.Clear();
         _shading.Clear();
         _thinDoors.Clear();
+        FindParois(level);
 
         var width = level.Width * 2;
         var height = level.Height * 2;
 
         Terrain TerrainOf(int sx, int sy) =>
-            sx >= 0 && sy >= 0 && sx < width && sy < height ? level.TerrainAt(new Cell(sx / 2, sy / 2)) : Terrain.Void;
+            sx >= 0 && sy >= 0 && sx < width && sy < height ? ShownTerrain(level, new Cell(sx / 2, sy / 2)) : Terrain.Void;
         bool Floor(int sx, int sy) => IsWalkGround(TerrainOf(sx, sy));
-        bool Door(int sx, int sy) => TerrainOf(sx, sy) == Terrain.Grille;
+        bool Door(int sx, int sy) => TerrainOf(sx, sy) is Terrain.Grille or Terrain.Arch;
         bool FaceBottom(int sx, int sy) => !Floor(sx, sy) && Floor(sx, sy + 1);
         bool FaceTop(int sx, int sy) => !Floor(sx, sy) && !Floor(sx, sy + 1) && Floor(sx, sy + 2);
         bool Face(int sx, int sy) => FaceBottom(sx, sy) || FaceTop(sx, sy);
@@ -941,7 +1128,8 @@ public partial class LevelView : Node2D
             return true;
         }
 
-        bool ThinDoor(int sx, int sy) => Door(sx, sy) && ThinRun(sx, sy - (sy % 2 + 2) % 2 + 1);
+        bool ThinDoor(int sx, int sy) =>
+            Door(sx, sy) && (Floor(sx, sy - (sy % 2 + 2) % 2 - 1) || ThinRun(sx, sy - (sy % 2 + 2) % 2 + 1));
         bool Ground(int sx, int sy) => Floor(sx, sy) || FaceBottom(sx, sy) || ThinDoor(sx, sy);
         bool Shaded(int sx, int sy) =>
             Ground(sx, sy)
@@ -1056,9 +1244,24 @@ public partial class LevelView : Node2D
                     _braziers.Add(cell);
                 }
 
-                if (level.TerrainAt(cell) == Terrain.Water)
+                if (level.TerrainAt(cell) == Terrain.Water || IsParoiInWater(level, cell))
                 {
                     _water.Add(cell);
+                }
+
+                if (level.TerrainAt(cell) == Terrain.Lever)
+                {
+                    _levers.Add(cell);
+                }
+
+                if (level.TerrainAt(cell) == Terrain.StairsUp)
+                {
+                    _stairsUp.Add(cell);
+                }
+
+                if (level.TerrainAt(cell) == Terrain.Arch)
+                {
+                    _arches.Add(cell);
                 }
 
                 if (ThinDoor(x * 2, y * 2))
@@ -1076,11 +1279,13 @@ public partial class LevelView : Node2D
         _shields.Clear();
         _banners.Clear();
         _torches.Clear();
+        _ripples.Clear();
+        _alcoves.Clear();
         _containerLooks.Clear();
         _breaks.Clear();
 
         bool IsFace(Cell cell) =>
-            level.TerrainAt(cell) == Terrain.Wall && IsOpenGround(level.TerrainAt(new Cell(cell.X, cell.Y + 1)));
+            IsMass(level, cell) && level.TerrainAt(cell) == Terrain.Wall && IsOpenGround(ShownTerrain(level, new Cell(cell.X, cell.Y + 1)));
 
         var faces = new List<Cell>();
         for (var y = 0; y < level.Height; y++)
@@ -1118,9 +1323,23 @@ public partial class LevelView : Node2D
         }
 
         _torches.AddRange(level.Torches);
+        _alcoves.AddRange(level.Alcoves);
+        foreach (var cell in _water)
+        {
+            if (random.NextDouble() < RippleChance)
+            {
+                _ripples.Add((cell, random.Next(RippleMinOffsetY, RippleMaxOffsetY + 1), random.Next(RippleFrames)));
+            }
+        }
+
         foreach (var container in _game?.Containers ?? Array.Empty<Cell>())
         {
-            var looks = level.TerrainAt(container) == Terrain.Barrel ? BarrelRegions : CrateRegions;
+            var looks = level.TerrainAt(container) switch
+            {
+                Terrain.Barrel => BarrelRegions,
+                Terrain.Vase => VaseRegions,
+                _ => CrateRegions,
+            };
             _containerLooks[container] = looks[random.Next(looks.Length)];
         }
 
@@ -1128,12 +1347,12 @@ public partial class LevelView : Node2D
         {
             var left = new Cell(face.X - 1, face.Y);
             var right = new Cell(face.X + 1, face.Y);
-            if (level.TerrainAt(left) == Terrain.Wall && !IsFace(left) && random.NextDouble() < WebChance)
+            if (level.TerrainAt(left) == Terrain.Wall && IsMass(level, left) && !IsFace(left) && random.NextDouble() < WebChance)
             {
                 _webs.Add((new Vector2(face.X * Tile, face.Y * Tile + WebOffsetY), false));
             }
 
-            if (level.TerrainAt(right) == Terrain.Wall && !IsFace(right) && random.NextDouble() < WebChance)
+            if (level.TerrainAt(right) == Terrain.Wall && IsMass(level, right) && !IsFace(right) && random.NextDouble() < WebChance)
             {
                 _webs.Add((new Vector2(face.X * Tile + Tile - WebSize, face.Y * Tile + WebOffsetY), true));
             }
@@ -1149,6 +1368,250 @@ public partial class LevelView : Node2D
             else if (item.Id == ElementIds.Shield)
             {
                 _shields.Add((ShieldRegion, new Rect2(origin.X + SubTile / 2f, origin.Y + ShieldOffsetY, SubTile, SubTile)));
+            }
+        }
+
+        BuildParoiTiles(level);
+    }
+
+    private void FindParois(LevelDefinition level)
+    {
+        _parois.Clear();
+        for (var y = 0; y < level.Height; y++)
+        {
+            for (var x = 0; x < level.Width; x++)
+            {
+                var cell = new Cell(x, y);
+                if (level.TerrainAt(cell) != Terrain.Wall || IsMassWall(level, cell))
+                {
+                    continue;
+                }
+
+                _parois[cell] = IsWallish(level, new Cell(x - 1, y)) || IsWallish(level, new Cell(x + 1, y));
+            }
+        }
+    }
+
+    private static bool IsWallish(LevelDefinition level, Cell cell) =>
+        level.InBounds(cell) && level.TerrainAt(cell) is Terrain.Wall or Terrain.Grille or Terrain.Arch;
+
+    private static bool IsMassWall(LevelDefinition level, Cell cell)
+    {
+        if (cell.X == 0 || cell.Y == 0 || cell.X == level.Width - 1 || cell.Y == level.Height - 1)
+        {
+            return true;
+        }
+
+        for (var dy = -1; dy <= 0; dy++)
+        {
+            for (var dx = -1; dx <= 0; dx++)
+            {
+                if (IsWallish(level, new Cell(cell.X + dx, cell.Y + dy))
+                    && IsWallish(level, new Cell(cell.X + dx + 1, cell.Y + dy))
+                    && IsWallish(level, new Cell(cell.X + dx, cell.Y + dy + 1))
+                    && IsWallish(level, new Cell(cell.X + dx + 1, cell.Y + dy + 1)))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private Terrain ShownTerrain(LevelDefinition level, Cell cell) =>
+        _parois.ContainsKey(cell) ? Terrain.Floor : level.TerrainAt(cell);
+
+    private bool IsMass(LevelDefinition level, Cell cell) =>
+        IsWallish(level, cell) && !_parois.ContainsKey(cell);
+
+    private bool IsParoiInWater(LevelDefinition level, Cell cell)
+    {
+        if (!_parois.ContainsKey(cell))
+        {
+            return false;
+        }
+
+        var water = 0;
+        foreach (var (dx, dy) in new[] { (1, 0), (-1, 0), (0, 1), (0, -1) })
+        {
+            if (level.TerrainAt(new Cell(cell.X + dx, cell.Y + dy)) == Terrain.Water)
+            {
+                water++;
+            }
+        }
+
+        return water >= 2;
+    }
+
+    private readonly record struct ParoiTile(int TileId, Vector2 Position, int From, int To, bool Front);
+
+    private void BuildParoiTiles(LevelDefinition level)
+    {
+        _paroiTiles.Clear();
+        _paroiFront.Clear();
+        _frontTorches.Clear();
+
+        bool IsParoi(Cell cell) => _parois.ContainsKey(cell);
+        bool IsMassWall(Cell cell) => IsMass(level, cell) && level.TerrainAt(cell) == Terrain.Wall;
+        bool Horizontal(Cell cell) => _parois.TryGetValue(cell, out var horizontal) && horizontal;
+        bool EastEnd(Cell cell) => Horizontal(cell) && !IsWallish(level, new Cell(cell.X + 1, cell.Y));
+        bool WestEnd(Cell cell) => Horizontal(cell) && !IsWallish(level, new Cell(cell.X - 1, cell.Y));
+        Cell Up(Cell cell) => new(cell.X, cell.Y - 1);
+        Cell Down(Cell cell) => new(cell.X, cell.Y + 1);
+        bool IsPillar(Cell cell) =>
+            IsParoi(cell)
+            && (!Horizontal(cell) || IsParoi(Up(cell)) || IsMassWall(Up(cell)) || IsParoi(Down(cell)) || IsMassWall(Down(cell)));
+
+        var offsets = new Dictionary<Cell, int>();
+        foreach (var start in _parois.Keys.Where(IsPillar).OrderBy(cell => cell.X).ThenBy(cell => cell.Y))
+        {
+            if (offsets.ContainsKey(start))
+            {
+                continue;
+            }
+
+            var run = new List<Cell> { start };
+            while (IsPillar(Down(run[^1])))
+            {
+                run.Add(Down(run[^1]));
+            }
+
+            var offset = PillarCenterOffset;
+            foreach (var cell in run)
+            {
+                if (EastEnd(cell))
+                {
+                    offset = PillarEastOffset;
+                    break;
+                }
+
+                if (WestEnd(cell))
+                {
+                    offset = PillarWestOffset;
+                    break;
+                }
+            }
+
+            foreach (var cell in run)
+            {
+                offsets[cell] = offset;
+            }
+        }
+
+        var shafts = new List<ParoiTile>();
+        var blocks = new List<ParoiTile>();
+        var overlays = new List<ParoiTile>();
+        ParoiTile Full(int tileId, float x, float y, bool front = false) => new(tileId, new Vector2(x, y), 0, SubTile, front);
+        ParoiTile Pillar(int tileId, float x, float y, bool front = false) => new(tileId, new Vector2(x, y), PillarFrom, PillarTo, front);
+
+        foreach (var cell in _parois.Keys.OrderBy(cell => cell.Y).ThenBy(cell => cell.X))
+        {
+            var x = cell.X * Tile;
+            var y = cell.Y * Tile;
+            var up = IsParoi(Up(cell));
+            var upMass = IsMassWall(Up(cell));
+            var down = IsParoi(Down(cell));
+            var downMass = IsMassWall(Down(cell));
+            var pillar = offsets.TryGetValue(cell, out var pillarOffset);
+            var px = x + (pillar ? pillarOffset : PillarCenterOffset) - SubTile / 2f;
+
+            if (Horizontal(cell))
+            {
+                var linkedUp = up || upMass;
+                var cornerWest = pillar && pillarOffset == PillarWestOffset && WestEnd(cell) && linkedUp;
+                var cornerEast = pillar && pillarOffset == PillarEastOffset && EastEnd(cell) && linkedUp;
+                blocks.Add(Full(cornerWest ? CornerWestTopTile : BlockTopLeftTile, x, y - SubTile, true));
+                blocks.Add(Full(cornerEast ? CornerEastTopTile : BlockTopRightTile, x + SubTile, y - SubTile, true));
+                blocks.Add(Full(cornerWest ? CornerWestMiddleTile : BlockMiddleLeftTile, x, y));
+                blocks.Add(Full(cornerEast ? CornerEastMiddleTile : BlockMiddleRightTile, x + SubTile, y));
+                blocks.Add(Full(cornerWest ? CornerWestBottomTile : BlockBottomLeftTile, x, y + SubTile));
+                blocks.Add(Full(cornerEast ? CornerEastBottomTile : BlockBottomRightTile, x + SubTile, y + SubTile));
+                if (WestEnd(cell) && !cornerWest)
+                {
+                    blocks.Add(Full(BlockWestTopTile, x - SubTile, y - SubTile, true));
+                    blocks.Add(Full(BlockWestMiddleTile, x - SubTile, y));
+                    blocks.Add(Full(BlockWestBottomTile, x - SubTile, y + SubTile));
+                }
+
+                if (EastEnd(cell) && !cornerEast)
+                {
+                    blocks.Add(Full(BlockEastTopTile, x + Tile, y - SubTile, true));
+                    blocks.Add(Full(BlockEastMiddleTile, x + Tile, y));
+                    blocks.Add(Full(BlockEastBottomTile, x + Tile, y + SubTile));
+                }
+
+                if (level.Torches.Contains(cell))
+                {
+                    _frontTorches.Add(cell);
+                }
+
+                if (!pillar)
+                {
+                    continue;
+                }
+
+                var corner = cornerWest || cornerEast;
+                if (upMass)
+                {
+                    shafts.Add(Pillar(PilasterLedgeTile, px, y - 3 * SubTile));
+                    shafts.Add(Pillar(PilasterTopTile, px, y - Tile));
+                }
+
+                if (linkedUp && !corner)
+                {
+                    overlays.Add(new ParoiTile(CrossTopTile, new Vector2(px, y - SubTile), NotchFrom, NotchTo, true));
+                    overlays.Add(Pillar(CrossMiddleTile, px, y));
+                }
+
+                if (down || downMass)
+                {
+                    if (!linkedUp || !corner)
+                    {
+                        overlays.Add(Pillar(CrossMiddleTile, px, y));
+                    }
+
+                    var end = corner || WestEnd(cell) || EastEnd(cell);
+                    overlays.Add(new ParoiTile(
+                        CrossBottomTile,
+                        new Vector2(px, y + SubTile),
+                        end ? PillarFrom : NotchFrom,
+                        end ? PillarTo : NotchTo,
+                        false));
+                }
+
+                continue;
+            }
+
+            if (upMass)
+            {
+                shafts.Add(Pillar(PilasterLedgeTile, px, y - 3 * SubTile));
+                shafts.Add(Pillar(PilasterTopTile, px, y - Tile));
+                shafts.Add(Pillar(PilasterBottomTile, px, y - SubTile));
+            }
+            else if (!up)
+            {
+                shafts.Add(Full(PillarCapTile, px, y - SubTile));
+            }
+
+            shafts.Add(Full(PillarUpperTile, px, y));
+            if (down || downMass)
+            {
+                shafts.Add(Full(PillarLowerTile, px, y + SubTile));
+            }
+            else
+            {
+                shafts.Add(Full(PillarEndTile, px, y + SubTile));
+                shafts.Add(Full(PillarBaseTile, px, y + Tile));
+            }
+        }
+
+        foreach (var tile in shafts.Concat(blocks).Concat(overlays))
+        {
+            _paroiTiles.Add(tile);
+            if (tile.Front)
+            {
+                _paroiFront.Add(tile);
             }
         }
     }

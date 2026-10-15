@@ -22,6 +22,8 @@ public sealed record MonsterRecovered(int MonsterId) : GameEvent;
 
 public sealed record GrilleOpened(Position Position, int TurnsRemaining) : GameEvent;
 
+public sealed record LeverPulled(Position Lever, Position Grille) : GameEvent;
+
 public sealed record GrilleCountdown(Position Position, int TurnsRemaining) : GameEvent;
 
 public sealed record GrilleClosed(Position Position) : GameEvent;

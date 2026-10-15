@@ -189,7 +189,7 @@ Tippe eine benachbarte Tür an, um sie zu öffnen. Die Zahl zeigt, in wie vielen
 Die Gitter
 
 [grille]
-Tippe ein benachbartes Gitter an, um es hochzuziehen. Die Zahl zeigt, in wie vielen Runden es wieder herunterfällt und dabei jeden wegschiebt, der darunter steht.
+Es lässt sich nicht von Hand hochziehen: Betätige seinen Hebel von einem Nachbarfeld aus. Die Zahl zeigt, in wie vielen Runden es wieder herunterfällt und dabei jeden wegschiebt, der darunter steht.
 
 [fiole_titre]
 Die Tränke

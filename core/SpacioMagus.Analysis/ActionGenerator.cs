@@ -27,7 +27,17 @@ public static class ActionGenerator
                 continue;
             }
 
-            if (game.GrilleAt(target) is { IsOpen: false })
+            if (game.Level.LeverTarget(target) is { } herse)
+            {
+                if (game.GrilleAt(herse) is { IsOpen: false })
+                {
+                    yield return new LeverAction(target);
+                }
+
+                continue;
+            }
+
+            if (game.GrilleAt(target) is { IsOpen: false } && game.Level.IsDoor(target))
             {
                 yield return new OpenGrilleAction(target);
                 continue;
@@ -71,6 +81,7 @@ public static class ActionGenerator
         WaitAction => "attendre",
         OpenGrilleAction grille => $"ouvrir la porte {grille.Target}",
         BreakAction breaking => $"briser {breaking.Target}",
+        LeverAction lever => $"manette {lever.Target}",
         SpacioMagusAction teleport => $"Spacio Magus {teleport.Target}",
         SpacioCreaturaAction swap => $"Spacio Creatura {swap.First} ↔ {swap.Second}",
         _ => action.ToString() ?? "?",

@@ -14,7 +14,9 @@ public sealed class LevelDefinition
         IReadOnlyList<MonsterSpawn> monsters,
         IReadOnlyList<Position> potions,
         IReadOnlyList<Position>? torches = null,
-        IReadOnlyList<Position>? doors = null)
+        IReadOnlyList<Position>? doors = null,
+        IReadOnlyList<Position>? alcoves = null,
+        IReadOnlyDictionary<Position, Position>? levers = null)
     {
         ArgumentNullException.ThrowIfNull(cells);
         ArgumentNullException.ThrowIfNull(monsters);
@@ -40,6 +42,8 @@ public sealed class LevelDefinition
         Torches = (torches ?? Array.Empty<Position>()).ToArray();
         Doors = (doors ?? Array.Empty<Position>()).ToArray();
         _doors = new HashSet<Position>(Doors);
+        Alcoves = (alcoves ?? Array.Empty<Position>()).ToArray();
+        Levers = new Dictionary<Position, Position>(levers ?? new Dictionary<Position, Position>());
         Validate();
     }
 
@@ -61,11 +65,17 @@ public sealed class LevelDefinition
 
     public IReadOnlyList<Position> Doors { get; }
 
+    public IReadOnlyList<Position> Alcoves { get; }
+
+    public IReadOnlyDictionary<Position, Position> Levers { get; }
+
+    public Position? LeverTarget(Position lever) => Levers.TryGetValue(lever, out var grille) ? grille : null;
+
     public bool IsDoor(Position position) => _doors.Contains(position);
 
-    public static bool IsObstacle(Terrain terrain) => terrain is Terrain.Brazier or Terrain.Water;
+    public static bool IsObstacle(Terrain terrain) => terrain is Terrain.Brazier or Terrain.Water or Terrain.Lever or Terrain.StairsUp;
 
-    public static bool IsContainer(Terrain terrain) => terrain is Terrain.Barrel or Terrain.Crate;
+    public static bool IsContainer(Terrain terrain) => terrain is Terrain.Barrel or Terrain.Crate or Terrain.Vase;
 
     public static bool IsGround(Terrain terrain) =>
         terrain is Terrain.Floor or Terrain.Stairs || IsObstacle(terrain) || IsContainer(terrain);
@@ -78,14 +88,16 @@ public sealed class LevelDefinition
     public Terrain TerrainAt(Position position) =>
         InBounds(position) ? _cells[position.Y * Width + position.X] : Terrain.Void;
 
-    public IEnumerable<Position> Grilles()
+    public IEnumerable<Position> Grilles() => CellsOf(Terrain.Grille);
+
+    public IEnumerable<Position> CellsOf(Terrain terrain)
     {
         for (var y = 0; y < Height; y++)
         {
             for (var x = 0; x < Width; x++)
             {
                 var position = new Position(x, y);
-                if (TerrainAt(position) == Terrain.Grille)
+                if (TerrainAt(position) == terrain)
                 {
                     yield return position;
                 }
@@ -100,10 +112,15 @@ public sealed class LevelDefinition
             throw new LevelDefinitionException($"Aucune grille en {grille}.");
         }
 
-        var up = grille + new Position(0, -1);
-        var down = grille + new Position(0, 1);
-        var left = grille + new Position(-1, 0);
-        var right = grille + new Position(1, 0);
+        return Passage(grille, "La grille");
+    }
+
+    private (Position First, Position Second) Passage(Position cell, string label)
+    {
+        var up = cell + new Position(0, -1);
+        var down = cell + new Position(0, 1);
+        var left = cell + new Position(-1, 0);
+        var right = cell + new Position(1, 0);
 
         if (IsSolid(TerrainAt(left)) && IsSolid(TerrainAt(right)) && !IsSolid(TerrainAt(up)) && !IsSolid(TerrainAt(down)))
         {
@@ -115,10 +132,10 @@ public sealed class LevelDefinition
             return (left, right);
         }
 
-        throw new LevelDefinitionException($"La grille en {grille} doit être entre deux murs, avec un passage de chaque côté.");
+        throw new LevelDefinitionException($"{label} en {cell} doit être entre deux murs, avec un passage de chaque côté.");
     }
 
-    private static bool IsOpenGround(Terrain terrain) => terrain is Terrain.Floor or Terrain.Stairs;
+    private static bool IsOpenGround(Terrain terrain) => terrain is Terrain.Floor or Terrain.Stairs or Terrain.Arch;
 
     private void ValidateRoute(MonsterSpawn spawn)
     {
@@ -214,6 +231,43 @@ public sealed class LevelDefinition
             if (!torches.Add(torch))
             {
                 throw new LevelDefinitionException($"Deux torchères sur la même case {torch}.");
+            }
+        }
+
+        foreach (var arch in CellsOf(Terrain.Arch))
+        {
+            Passage(arch, "L'arche");
+        }
+
+        foreach (var (lever, grille) in Levers)
+        {
+            if (TerrainAt(lever) != Terrain.Lever)
+            {
+                throw new LevelDefinitionException($"La manette déclarée en {lever} n'est pas sur une case de manette.");
+            }
+
+            if (TerrainAt(grille) != Terrain.Grille || IsDoor(grille))
+            {
+                throw new LevelDefinitionException($"La manette en {lever} doit commander une herse : {grille} n'en est pas une.");
+            }
+        }
+
+        foreach (var lever in CellsOf(Terrain.Lever).Where(lever => !Levers.ContainsKey(lever)))
+        {
+            throw new LevelDefinitionException($"La manette en {lever} ne commande aucune herse : ajoutez-la dans [manettes].");
+        }
+
+        var alcoves = new HashSet<Position>();
+        foreach (var alcove in Alcoves)
+        {
+            if (TerrainAt(alcove) != Terrain.Wall || !IsGround(TerrainAt(alcove + new Position(0, 1))))
+            {
+                throw new LevelDefinitionException($"L'alcôve en {alcove} doit être sur un mur avec du sol juste en dessous.");
+            }
+
+            if (!alcoves.Add(alcove))
+            {
+                throw new LevelDefinitionException($"Deux alcôves sur la même case {alcove}.");
             }
         }
     }

@@ -694,6 +694,18 @@ public partial class Main : Node
             return;
         }
 
+        if (game.Level.LeverTarget(cell) is not null)
+        {
+            if (game.Magus.Position.IsAdjacentTo(cell))
+            {
+                Apply(Play(new LeverAction(cell)), cell, TapKind.Move);
+                return;
+            }
+
+            Reject(cell);
+            return;
+        }
+
         if (game.MonsterAt(cell) is not null)
         {
             TapFirstCreature(game, cell);

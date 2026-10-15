@@ -18,4 +18,6 @@ public enum ActionError
     SameCreature,
     NotEnoughCreatures,
     NotAContainer,
+    NotALever,
+    GrilleNeedsLever,
 }

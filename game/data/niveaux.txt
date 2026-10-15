@@ -1,2 +1,3 @@
 ; Ordre de jeu des niveaux, un fichier par ligne, dans le dossier niveaux.
 niveau_01.txt
+niveau_02.txt

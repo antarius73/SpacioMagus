@@ -105,7 +105,7 @@ public static class Searcher
             {
                 var next = current + direction;
                 var terrain = level.TerrainAt(next);
-                if (distances.ContainsKey(next) || LevelDefinition.IsSolid(terrain) || LevelDefinition.IsObstacle(terrain))
+                if (distances.ContainsKey(next) || LevelDefinition.IsSolid(terrain))
                 {
                     continue;
                 }

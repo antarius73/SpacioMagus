@@ -189,7 +189,7 @@ Toque em uma porta vizinha para abri-la. O número indica em quantos turnos ela 
 As grades
 
 [grille]
-Toque em uma grade vizinha para levantá-la. O número indica em quantos turnos ela desce de novo, empurrando quem estiver embaixo.
+Ela não se levanta com a mão: acione a alavanca dela de uma casa vizinha. O número indica em quantos turnos ela desce de novo, empurrando quem estiver embaixo.
 
 [fiole_titre]
 Os frascos

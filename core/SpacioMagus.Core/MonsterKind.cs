@@ -4,4 +4,5 @@ public enum MonsterKind
 {
     BlobVert,
     BlobRouge,
+    ChauveSouris,
 }

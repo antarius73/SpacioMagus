@@ -13,8 +13,9 @@ public static class LevelFile
     private const string MapSection = "carte";
     private const string DecorSection = "decor";
     private const string MarkersSection = "reperes";
+    private const string LeversSection = "manettes";
 
-    private static readonly string[] Sections = { LevelSection, MapSection, DecorSection, MarkersSection };
+    private static readonly string[] Sections = { LevelSection, MapSection, DecorSection, MarkersSection, LeversSection };
 
     private static readonly Regex ParameterPattern = new(
         @"(?<key>[a-z_]+)\s*=\s*(?<value>[^=]+?)\s*(?=,\s*[a-z_]+\s*=|$)",
@@ -35,6 +36,7 @@ public static class LevelFile
         var name = Path.GetFileNameWithoutExtension(fileName);
         StarThresholds? stars = null;
         var rules = baseRules;
+        var withoutMonsters = false;
         foreach (var (line, rawKey, value) in SectionedText.KeyValues(fileName, document.Lines(LevelSection), issues))
         {
             var key = rawKey.ToLowerInvariant();
@@ -46,13 +48,17 @@ public static class LevelFile
             {
                 stars = ParseStars(fileName, line, value, issues);
             }
+            else if (key == "sans_monstres")
+            {
+                withoutMonsters = ParseYesNo(fileName, line, key, value, issues);
+            }
             else if (RuleKeys.IsRuleKey(key))
             {
                 rules = RuleKeys.Apply(rules, fileName, line, key, value, issues);
             }
             else
             {
-                issues.Add(new LoadIssue(fileName, line.Number, 0, $"Clé inconnue « {key} » dans [{LevelSection}]. Clés possibles : nom, etoiles, {string.Join(", ", RuleKeys.Names)}."));
+                issues.Add(new LoadIssue(fileName, line.Number, 0, $"Clé inconnue « {key} » dans [{LevelSection}]. Clés possibles : nom, etoiles, sans_monstres, {string.Join(", ", RuleKeys.Names)}."));
             }
         }
 
@@ -125,6 +131,10 @@ public static class LevelFile
                     ElementIds.Water => Terrain.Water,
                     ElementIds.Barrel or ElementIds.BarrelPotion => Terrain.Barrel,
                     ElementIds.Crate or ElementIds.CratePotion => Terrain.Crate,
+                    ElementIds.Vase or ElementIds.VasePotion => Terrain.Vase,
+                    ElementIds.Lever => Terrain.Lever,
+                    ElementIds.StairsUp => Terrain.StairsUp,
+                    ElementIds.Arch => Terrain.Arch,
                     _ => Terrain.Floor,
                 };
 
@@ -139,7 +149,10 @@ public static class LevelFile
                     case ElementIds.BlobRouge:
                         monsters.Add(new MonsterSpawn(MonsterKind.BlobRouge, position, post ?? position, route));
                         break;
-                    case ElementIds.Potion or ElementIds.BarrelPotion or ElementIds.CratePotion:
+                    case ElementIds.Bat:
+                        monsters.Add(new MonsterSpawn(MonsterKind.ChauveSouris, position, post ?? position, route));
+                        break;
+                    case ElementIds.Potion or ElementIds.BarrelPotion or ElementIds.CratePotion or ElementIds.VasePotion:
                         potions.Add(position);
                         break;
                     case ElementIds.Door:
@@ -176,7 +189,8 @@ public static class LevelFile
 
         var layer = ParseDecor(fileName, document.Lines(DecorSection), legend, width, height, issues);
         var torches = layer.Where(item => item.Id == ElementIds.Torch).Select(item => item.Position).ToList();
-        var decor = layer.Where(item => item.Id != ElementIds.Torch).ToList();
+        var alcoves = layer.Where(item => item.Id == ElementIds.Alcove).Select(item => item.Position).ToList();
+        var decor = layer.Where(item => item.Id is not ElementIds.Torch and not ElementIds.Alcove).ToList();
         foreach (var item in decor.Where(item => ElementIds.WallDecor.Contains(item.Id)))
         {
             if (!IsWallFace(cells, width, height, item.Position))
@@ -185,6 +199,8 @@ public static class LevelFile
             }
         }
 
+        var levers = ParseLevers(fileName, document.Lines(LeversSection), issues);
+
         if (issues.Count > 0)
         {
             throw new LevelLoadException(issues);
@@ -192,7 +208,7 @@ public static class LevelFile
 
         try
         {
-            var definition = new LevelDefinition(name, width, height, cells, starts[0].Position, monsters, potions, torches, doors);
+            var definition = new LevelDefinition(name, width, height, cells, starts[0].Position, withoutMonsters ? Array.Empty<MonsterSpawn>() : monsters, potions, torches, doors, alcoves, levers);
             return new LoadedLevel(definition, rules, decor, stars);
         }
         catch (LevelDefinitionException exception)
@@ -201,6 +217,20 @@ public static class LevelFile
             {
                 new LoadIssue(fileName, 0, 0, $"{exception.Message} Les positions sont (colonne, ligne) dans la carte, à partir de 0 en haut à gauche."),
             });
+        }
+    }
+
+    private static bool ParseYesNo(string fileName, SourceLine line, string key, string value, List<LoadIssue> issues)
+    {
+        switch (value.Trim().ToLowerInvariant())
+        {
+            case "oui":
+                return true;
+            case "non":
+                return false;
+            default:
+                issues.Add(new LoadIssue(fileName, line.Number, 0, $"« {key} » attend « oui » ou « non » : « {value} »."));
+                return false;
         }
     }
 
@@ -246,6 +276,30 @@ public static class LevelFile
         return result;
     }
 
+    private static Dictionary<Position, Position> ParseLevers(string fileName, IEnumerable<SourceLine> lines, List<LoadIssue> issues)
+    {
+        var levers = new Dictionary<Position, Position>();
+        foreach (var (line, key, value) in SectionedText.KeyValues(fileName, lines, issues))
+        {
+            var lever = CoordinatesPattern.Match(key);
+            var grille = CoordinatesPattern.Match(value);
+            if (!lever.Success || !grille.Success)
+            {
+                issues.Add(new LoadIssue(fileName, line.Number, 0, $"Ligne attendue au format « x,y = x,y » (manette = herse), trouvé « {key} = {value} »."));
+                continue;
+            }
+
+            var from = new Position(int.Parse(lever.Groups["x"].Value), int.Parse(lever.Groups["y"].Value));
+            var to = new Position(int.Parse(grille.Groups["x"].Value), int.Parse(grille.Groups["y"].Value));
+            if (!levers.TryAdd(from, to))
+            {
+                issues.Add(new LoadIssue(fileName, line.Number, 0, $"La manette {from} est déclarée deux fois."));
+            }
+        }
+
+        return levers;
+    }
+
     private static Dictionary<char, Marker> ParseMarkers(string fileName, IReadOnlyList<SourceLine> lines, List<LoadIssue> issues)
     {
         var markers = new Dictionary<char, Marker>();
@@ -273,7 +327,7 @@ public static class LevelFile
             {
                 var parameter = match.Groups["key"].Value;
                 var parameterValue = match.Groups["value"].Value;
-                if (parameter == "poste" && id is ElementIds.BlobVert or ElementIds.BlobRouge)
+                if (parameter == "poste" && ElementIds.Monsters.Contains(id))
                 {
                     var coordinates = CoordinatesPattern.Match(parameterValue);
                     if (!coordinates.Success)
@@ -285,7 +339,7 @@ public static class LevelFile
 
                     post = new Position(int.Parse(coordinates.Groups["x"].Value), int.Parse(coordinates.Groups["y"].Value));
                 }
-                else if (parameter == "ronde" && id is ElementIds.BlobVert or ElementIds.BlobRouge)
+                else if (parameter == "ronde" && ElementIds.Monsters.Contains(id))
                 {
                     var waypoints = new List<Position>();
                     foreach (var token in parameterValue.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))

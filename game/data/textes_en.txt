@@ -189,7 +189,7 @@ Tap a neighbouring door to open it. The number tells how many turns until it shu
 Portcullises
 
 [grille]
-Tap a neighbouring portcullis to raise it. The number tells how many turns until it drops, pushing away whoever stands under it.
+It cannot be raised by hand: pull its lever from a neighbouring square. The number tells how many turns until it drops, pushing away whoever stands under it.
 
 [fiole_titre]
 Potions
