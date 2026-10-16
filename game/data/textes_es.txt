@@ -225,7 +225,7 @@ El brasero
 Un fuego infranqueable que deja pasar la vista y la magia. Los blobs verdes no se acercan a las casillas que lo rodean.
 
 [contenant_titre]
-Cajas y barriles
+Cajas, barriles y jarrones
 
 [contenant]
 No puedes teletransportarte a ellos. Toca uno cuando estés al lado para romperlo: lleva un turno. A veces esconde un frasco.
@@ -235,6 +235,30 @@ La escalera
 
 [escalier]
 La salida del nivel. Camina sobre ella para bajar más hondo en la mazmorra.
+
+[eau_titre]
+El agua
+
+[eau]
+Mob dedicó su vida a la magia y nunca tuvo tiempo de aprender a nadar: no puedes caminar sobre ella ni teletransportarte a ella, pero la vista y la magia pasan por encima. Atrapado sin gemas, sin frasco y sin recipiente a tu alcance, la partida está perdida.
+
+[manette_titre]
+La palanca
+
+[manette]
+Tócala desde una casilla vecina para levantar la reja unida a ella: lleva un turno. Imposible si un murciélago se ha posado en ella.
+
+[alcove_titre]
+La hornacina
+
+[alcove]
+Un nicho con velas apagadas. Enciéndelas desde una casilla vecina: lleva un turno, y su luz hace brillar los recipientes que esconden un frasco.
+
+[chauve_souris_titre]
+El murciélago
+
+[chauve_souris]
+Sobrevuela el agua, los recipientes y las palancas. Una vez que te ha visto, te sigue a todas partes. Su mordisco te roba una gema y luego dormita dos turnos, saciado. Sin gemas, te desmayas.
 
 [geste_titre]
 Pulsación larga

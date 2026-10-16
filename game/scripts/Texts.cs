@@ -168,6 +168,22 @@ public static class Texts
 
     public static string Stairs => Get("escalier");
 
+    public static string WaterTitle => Get("eau_titre");
+
+    public static string Water => Get("eau");
+
+    public static string LeverTitle => Get("manette_titre");
+
+    public static string Lever => Get("manette");
+
+    public static string AlcoveTitle => Get("alcove_titre");
+
+    public static string Alcove => Get("alcove");
+
+    public static string BatTitle => Get("chauve_souris_titre");
+
+    public static string Bat => Get("chauve_souris");
+
     public static string GestureTitle => Get("geste_titre");
 
     public static string Gesture => Get("geste");

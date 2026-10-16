@@ -225,7 +225,7 @@ Die Feuerschale
 Ein unüberwindbares Feuer, das Sicht und Magie durchlässt. Grüne Blobs meiden die Felder rund um sie.
 
 [contenant_titre]
-Kisten und Fässer
+Kisten, Fässer und Vasen
 
 [contenant]
 Du kannst dich nicht hineinteleportieren. Tippe eines an, wenn du daneben stehst, um es zu zerschlagen: Das dauert eine Runde. Manchmal steckt ein Trank darin.
@@ -235,6 +235,30 @@ Die Treppe
 
 [escalier]
 Der Ausgang des Levels. Geh darauf, um tiefer in den Kerker hinabzusteigen.
+
+[eau_titre]
+Das Wasser
+
+[eau]
+Mob hat sein Leben der Magie gewidmet, für Schwimmunterricht blieb nie Zeit: Du kannst weder darauf gehen noch dich dorthin teleportieren, aber Blick und Magie reichen darüber hinweg. Sitzt du ohne Edelstein, ohne Trank und ohne Behälter in Reichweite fest, ist die Partie verloren.
+
+[manette_titre]
+Der Hebel
+
+[manette]
+Tippe ihn von einem Nachbarfeld aus an, um das damit verbundene Gitter hochzuziehen: Das dauert eine Runde. Unmöglich, wenn sich eine Fledermaus darauf niedergelassen hat.
+
+[alcove_titre]
+Die Nische
+
+[alcove]
+Eine Nische voller erloschener Kerzen. Zünde sie von einem Nachbarfeld aus an: Das dauert eine Runde, und ihr Licht lässt die Behälter funkeln, in denen ein Trank steckt.
+
+[chauve_souris_titre]
+Die Fledermaus
+
+[chauve_souris]
+Sie fliegt über Wasser, Behälter und Hebel. Hat sie dich einmal entdeckt, folgt sie dir überallhin. Ihr Biss stiehlt dir einen Edelstein, danach döst sie satt zwei Runden lang. Ohne Edelstein fällst du in Ohnmacht.
 
 [geste_titre]
 Lange drücken

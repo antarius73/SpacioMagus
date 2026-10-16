@@ -27,6 +27,7 @@ it.break      = jeu/exp_shortest_soft_1.wav, 2
 it.break_vase = jeu/vase_brise_1.wav jeu/vase_brise_2.wav, 2
 it.reveal     = jeu/item_1.wav, 12
 it.drink      = jeu/powerup_4.wav, 3
+it.alcove     = jeu/choeur_alcove.wav, -4
 
 mo.mut_on     = jeu/riser_4.wav, 11
 mo.mut_off    = jeu/shutdown_1.wav, -2

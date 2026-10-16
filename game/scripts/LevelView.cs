@@ -88,6 +88,10 @@ public partial class LevelView : Node2D
     private const int CandleFrameStride = 24;
     private const int CandleFrames = 3;
     private const double CandleFrameSeconds = 0.15;
+    private const int AuraSize = 48;
+    private const int AuraOffsetX = -7;
+    private const int AuraOffsetY = -12;
+    private const double AuraGrowSeconds = 0.4;
     private const int SparkleFrames = 4;
     private const double SparkleFrameRate = 6;
     private const int SparkleSize = 32;
@@ -232,7 +236,7 @@ public partial class LevelView : Node2D
     private const int FireFrames = 6;
     private const int FireFrameHeight = 48;
     private const int FireColumn = 39;
-    private const int FireOffsetY = -8;
+    private const int FireOffsetY = -11;
     private static readonly Color CandidateColor = new(0.8f, 0.55f, 1f, 0.22f);
     private static readonly Color ZoneEdgeColor = new(0.55f, 0.85f, 1f);
     private static readonly Color ZoneEdgeEmptyColor = new(0.6f, 0.6f, 0.7f);
@@ -303,6 +307,7 @@ public partial class LevelView : Node2D
     private readonly Dictionary<Cell, (double Start, Rect2 Look)> _breaks = new();
     private readonly HashSet<Cell> _thinDoors = new();
     private readonly Dictionary<Cell, (bool Open, double ChangedAt)> _grilleStates = new();
+    private readonly Dictionary<Cell, double> _alcoveLitAt = new();
     private Texture2D _tileset = null!;
     private Texture2D _doors = null!;
     private Texture2D _fire = null!;
@@ -316,6 +321,8 @@ public partial class LevelView : Node2D
     private Texture2D _reflectionSheet = null!;
     private Texture2D _foamSheet = null!;
     private Texture2D _candleSheet = null!;
+    private Texture2D _unlitCandles = null!;
+    private Texture2D _auraSheet = null!;
     private Texture2D _sparkleSheet = null!;
     private Texture2D _mechanisms = null!;
     private TorchAmbience _ambience = null!;
@@ -399,6 +406,8 @@ public partial class LevelView : Node2D
         _reflectionSheet = LoadTexture("res://assets/sprites/eau_reflets.png");
         _foamSheet = LoadTexture("res://assets/sprites/eau_ecume.png");
         _candleSheet = LoadTexture("res://assets/sprites/bougies.png");
+        _unlitCandles = LoadTexture("res://assets/sprites/bougies_eteintes.png");
+        _auraSheet = LoadTexture("res://assets/sprites/aura_brasero.png");
         _sparkleSheet = LoadTexture("res://assets/sprites/etincelles.png");
         _mechanisms = LoadTexture("res://assets/sprites/donjon_mecanismes.png");
         _ambience = new TorchAmbience { Name = "Torches", Listener = () => MagusFocus };
@@ -416,6 +425,7 @@ public partial class LevelView : Node2D
         BuildTerrain(game.Level);
         GenerateDecor(game.Level, new Random());
         _grilleStates.Clear();
+        _alcoveLitAt.Clear();
         _magusDirection = 0;
         _magusGlide = null;
         _teleport = null;
@@ -967,8 +977,25 @@ public partial class LevelView : Node2D
 
         if (_game is null || !_game.IsActivated(alcove))
         {
+            _alcoveLitAt[alcove] = double.PositiveInfinity;
+            DrawTexture(_unlitCandles, new Vector2(alcove.X * Tile, alcove.Y * Tile));
             return;
         }
+
+        if (!_alcoveLitAt.TryGetValue(alcove, out var litAt) || double.IsPositiveInfinity(litAt))
+        {
+            litAt = _alcoveLitAt.ContainsKey(alcove) ? _time : double.NegativeInfinity;
+            _alcoveLitAt[alcove] = litAt;
+        }
+
+        var growth = Math.Clamp((_time - litAt) / AuraGrowSeconds, 0.0, 1.0);
+        var auraSize = AuraSize * (float)(1.0 - (1.0 - growth) * (1.0 - growth));
+        var auraCenter = new Vector2(alcove.X * Tile + AuraOffsetX + AuraSize / 2f, alcove.Y * Tile + AuraOffsetY + AuraSize / 2f);
+        var auraFrame = (int)(_time * 8) % FireFrames;
+        DrawTextureRectRegion(
+            _auraSheet,
+            new Rect2(auraCenter.X - auraSize / 2f, auraCenter.Y - auraSize / 2f, auraSize, auraSize),
+            new Rect2(auraFrame * AuraSize, 0, AuraSize, AuraSize));
 
         var stride = (int)(_time / CandleFrameSeconds) % CandleFrames * CandleFrameStride;
         for (var index = 0; index < CandleTiles.Length; index++)

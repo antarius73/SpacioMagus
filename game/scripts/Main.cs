@@ -287,12 +287,16 @@ public partial class Main : Node
 
         InfoSubject? subject = _game.MonsterAt(cell) is { Kind: MonsterKind.BlobVert } ? InfoSubject.GreenBlob
             : _game.MonsterAt(cell) is { Kind: MonsterKind.BlobRouge } ? InfoSubject.RedBlob
+            : _game.MonsterAt(cell) is { Kind: MonsterKind.ChauveSouris } ? InfoSubject.Bat
             : _game.GrilleAt(cell) is not null ? (_game.Level.IsDoor(cell) ? InfoSubject.Door : InfoSubject.Grille)
             : _game.Level.Torches.Contains(cell) ? InfoSubject.Torch
+            : _game.Level.Alcoves.Contains(cell) ? InfoSubject.Alcove
             : _game.Level.TerrainAt(cell) == Terrain.Brazier ? InfoSubject.Brazier
+            : _game.Level.TerrainAt(cell) == Terrain.Lever ? InfoSubject.Lever
             : _game.IsContainer(cell) ? InfoSubject.Container
             : _game.Potions.Contains(cell) ? InfoSubject.Potion
             : _game.Level.TerrainAt(cell) == Terrain.Stairs ? InfoSubject.Stairs
+            : _game.Level.TerrainAt(cell) == Terrain.Water ? InfoSubject.Water
             : (InfoSubject?)null;
         if (subject is not { } value)
         {

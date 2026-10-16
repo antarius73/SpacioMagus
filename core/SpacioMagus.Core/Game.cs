@@ -14,7 +14,7 @@ public sealed class Game
     private readonly HashSet<Position> _activated = new();
     private List<GameEvent> _events = new();
 
-    public const int RulesVersion = 7;
+    public const int RulesVersion = 8;
     private const int BatSatedTurns = 2;
 
     public Game(LevelDefinition level, RuleSet? rules = null, IRandomSource? random = null)
@@ -898,10 +898,70 @@ public sealed class Game
             return;
         }
 
-        if ((FlightStep(bat.Position, Magus.Position) ?? ApproachStep(bat)) is { } step)
+        if (FlightStep(bat.Position, Magus.Position) is { } flight)
+        {
+            TryStep(bat, flight);
+            return;
+        }
+
+        if (GatePath(bat.Position, Magus.Position) is { } path)
+        {
+            if (path.Count > 1)
+            {
+                TryStep(bat, path[1]);
+            }
+
+            return;
+        }
+
+        if (ApproachStep(bat) is { } step)
         {
             TryStep(bat, step);
         }
+    }
+
+    private List<Position>? GatePath(Position start, Position goal)
+    {
+        bool IsClosedGate(Position position) => GrilleAt(position) is { IsOpen: false };
+
+        var cameFrom = new Dictionary<Position, Position> { [start] = start };
+        var queue = new Queue<Position>();
+        queue.Enqueue(start);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            foreach (var direction in Position.Directions)
+            {
+                var next = current + direction;
+                if (cameFrom.ContainsKey(next) || !IsPlannableCorner(current, next))
+                {
+                    continue;
+                }
+
+                if (next == goal)
+                {
+                    var path = new List<Position> { current };
+                    while (path[^1] != start)
+                    {
+                        path.Add(cameFrom[path[^1]]);
+                    }
+
+                    path.Reverse();
+                    var gate = path.FindIndex(IsClosedGate);
+                    return gate < 0 ? null : path.GetRange(0, gate);
+                }
+
+                if (!IsClosedGate(next) && (!CanFlyOver(next) || IsOccupied(next)))
+                {
+                    continue;
+                }
+
+                cameFrom[next] = current;
+                queue.Enqueue(next);
+            }
+        }
+
+        return null;
     }
 
     private Position? ApproachStep(MonsterState bat)

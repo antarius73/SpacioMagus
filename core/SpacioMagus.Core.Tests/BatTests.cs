@@ -130,6 +130,96 @@ public class BatTests
         }
     }
 
+    private static readonly Position GatePosition = new(4, 3);
+
+    private static Game BatLockedBehindAGrille()
+    {
+        var map = TestMaps.Parse(
+            "#########",
+            "#.......#",
+            "#...@...#",
+            "####G####",
+            "#.......#",
+            "#.......#",
+            "#.......#",
+            "#.......#",
+            "#.......#",
+            "#.......#",
+            "#.......#",
+            "#.......#",
+            "#>......#",
+            "#########");
+        var level = new LevelDefinition(
+            map.Name, map.Width, map.Height, map.Cells, map.MagusStart,
+            new[] { new MonsterSpawn(MonsterKind.ChauveSouris, new Position(4, 11), new Position(4, 11)) },
+            map.Potions, map.Torches, map.Doors);
+        var game = new Game(level, RuleSet.Default, new FixedRandom());
+
+        Assert.True(game.OpenGrille(GatePosition).Success);
+        Assert.True(Bat(game).IsTracking);
+        foreach (var step in new[] { new Position(5, 1), new Position(6, 1), new Position(7, 1) })
+        {
+            Assert.True(game.Move(step).Success);
+        }
+
+        for (var turn = 0; turn < 10 && game.GrilleAt(GatePosition)!.IsOpen; turn++)
+        {
+            Assert.True(game.Wait().Success);
+        }
+
+        Assert.False(game.GrilleAt(GatePosition)!.IsOpen);
+
+        return game;
+    }
+
+    [Fact]
+    public void BlockedBatHeadsForTheGrilleRatherThanTheWall()
+    {
+        var game = BatLockedBehindAGrille();
+
+        for (var turn = 0; turn < 3; turn++)
+        {
+            Assert.True(game.Wait().Success);
+        }
+
+        Assert.Equal(new Position(4, 4), Bat(game).Position);
+    }
+
+    [Fact]
+    public void BlockedBatWaitsInFrontOfTheClosedGrille()
+    {
+        var game = BatLockedBehindAGrille();
+        for (var turn = 0; turn < 5 && Bat(game).Position != new Position(4, 4); turn++)
+        {
+            Assert.True(game.Wait().Success);
+        }
+
+        for (var turn = 0; turn < 3; turn++)
+        {
+            Assert.True(game.Wait().Success);
+            Assert.Equal(new Position(4, 4), Bat(game).Position);
+        }
+    }
+
+    [Fact]
+    public void BatGoesThroughOnceTheGrilleOpens()
+    {
+        var game = BatLockedBehindAGrille();
+        foreach (var step in new[] { new Position(6, 1), new Position(5, 1), new Position(4, 2) })
+        {
+            Assert.True(game.Move(step).Success);
+        }
+
+        Assert.True(game.OpenGrille(GatePosition).Success);
+        var bitten = false;
+        for (var turn = 0; turn < 3 && !bitten; turn++)
+        {
+            bitten = game.Wait().Events.Any(e => e is MagusBitten);
+        }
+
+        Assert.True(bitten);
+    }
+
     [Fact]
     public void BatNeverLosesTrack()
     {

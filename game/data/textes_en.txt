@@ -225,7 +225,7 @@ The brazier
 A fire you cannot cross, but sight and magic pass through it. Green blobs keep away from the tiles around it.
 
 [contenant_titre]
-Crates and barrels
+Crates, barrels and vases
 
 [contenant]
 You cannot teleport onto them. Tap one when you stand next to it to break it: it takes a turn. Sometimes a potion hides inside.
@@ -235,6 +235,30 @@ The stairs
 
 [escalier]
 The way out of the level. Step on it to go deeper into the dungeon.
+
+[eau_titre]
+Water
+
+[eau]
+Mob devoted his life to magic and never found the time to learn to swim: you can neither walk on it nor teleport onto it, but sight and magic pass over it. Stuck with no gem, no potion and no container within reach, the game is lost.
+
+[manette_titre]
+The lever
+
+[manette]
+Tap it from a neighbouring square to raise the portcullis linked to it: it takes a turn. Impossible if a bat has landed on it.
+
+[alcove_titre]
+The alcove
+
+[alcove]
+A niche lined with unlit candles. Light them from a neighbouring square: it takes a turn, and their glow makes the containers hiding a potion sparkle.
+
+[chauve_souris_titre]
+The bat
+
+[chauve_souris]
+It flies over water, containers and levers. Once it has spotted you, it follows you everywhere. Its bite steals a gem, then it dozes for two turns, sated. With no gem left, you faint.
 
 [geste_titre]
 Long press

@@ -225,7 +225,7 @@ Le brasero
 Un feu infranchissable, qui laisse passer la vue et la magie. Les blobs verts ne s'approchent pas des cases qui l'entourent.
 
 [contenant_titre]
-Caisses et tonneaux
+Caisses, tonneaux et vases
 
 [contenant]
 Impossible de s'y téléporter. Touchez-en un quand vous êtes à côté pour le briser : cela prend un tour. Il cache parfois une fiole.
@@ -235,6 +235,30 @@ L'escalier
 
 [escalier]
 La sortie du niveau. Marchez dessus pour descendre plus profond dans le donjon.
+
+[eau_titre]
+L'eau
+
+[eau]
+Mob a consacré sa vie à la magie, pas le temps d'apprendre à nager : on ne peut ni y marcher ni s'y téléporter, mais la vue et la magie passent au-dessus. Coincé sans gemme, sans fiole et sans contenant à portée, la partie est perdue.
+
+[manette_titre]
+La manette
+
+[manette]
+Touchez-la depuis une case voisine pour lever la grille qui lui est reliée : cela prend un tour. Impossible si une chauve-souris s'y est posée.
+
+[alcove_titre]
+L'alcôve
+
+[alcove]
+Une niche garnie de bougies éteintes. Allumez-les depuis une case voisine : cela prend un tour, et leur lumière fait scintiller les contenants qui cachent une fiole.
+
+[chauve_souris_titre]
+La chauve-souris
+
+[chauve_souris]
+Elle survole l'eau, les contenants et les manettes. Une fois qu'elle vous a repéré, elle vous suit partout. Sa morsure vous vole une gemme, puis elle somnole deux tours, repue. Sans gemme, vous vous évanouissez.
 
 [geste_titre]
 Appui long

@@ -14,6 +14,10 @@ public enum InfoSubject
     Torch,
     Brazier,
     Container,
+    Water,
+    Lever,
+    Alcove,
+    Bat,
 }
 
 public partial class InfoPopup : CanvasLayer
@@ -39,6 +43,10 @@ public partial class InfoPopup : CanvasLayer
             InfoSubject.Torch => (Texts.TorchTitle, Texts.Torch, (Control)new TorchIllustration()),
             InfoSubject.Brazier => (Texts.BrazierTitle, Texts.Brazier, (Control)new BrazierIllustration()),
             InfoSubject.Container => (Texts.ContainerTitle, Texts.Container, (Control)new ContainerIllustration()),
+            InfoSubject.Water => (Texts.WaterTitle, Texts.Water, (Control)new WaterIllustration()),
+            InfoSubject.Lever => (Texts.LeverTitle, Texts.Lever, (Control)new DoorIllustration(DoorIllustration.GrilleColumn, true)),
+            InfoSubject.Alcove => (Texts.AlcoveTitle, Texts.Alcove, (Control)new AlcoveIllustration()),
+            InfoSubject.Bat => (Texts.BatTitle, Texts.Bat, (Control)new BatIllustration()),
             _ => (Texts.GreenBlobTitle, Texts.GreenBlob, (Control)new BlobIllustration(BlobIllustration.GreenRow)),
         };
 
@@ -93,7 +101,13 @@ public partial class InfoPopup : CanvasLayer
         illustration.CustomMinimumSize = new Vector2(ContentWidth, IllustrationHeight);
         box.AddChild(illustration);
 
-        var titleLabel = new Label { Text = title, HorizontalAlignment = HorizontalAlignment.Center };
+        var titleLabel = new Label
+        {
+            Text = title,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            CustomMinimumSize = new Vector2(ContentWidth, 0),
+        };
         titleLabel.AddThemeFontSizeOverride("font_size", GuiAssets.TitleFontSize);
         titleLabel.AddThemeColorOverride("font_color", GuiAssets.TextOnParchment);
         box.AddChild(titleLabel);
@@ -181,12 +195,26 @@ public partial class DoorIllustration : Illustration
     public const int WoodColumn = 32;
     public const int GrilleColumn = 0;
 
+    private static readonly Rect2 LeverRegion = new(0, 0, 16, 12);
+    private const int LeverFrameStride = 16;
+    private static readonly Vector2 LeverPosition = new(72, 50);
+
     private readonly Texture2D _doors = Load("res://assets/sprites/donjon_portes.png");
+    private readonly Texture2D? _mechanisms;
     private readonly int _column;
 
     public DoorIllustration(int column)
+        : this(column, false)
+    {
+    }
+
+    public DoorIllustration(int column, bool withLever)
     {
         _column = column;
+        if (withLever)
+        {
+            _mechanisms = Load("res://assets/sprites/donjon_mecanismes.png");
+        }
     }
 
     public override void _Draw()
@@ -220,6 +248,14 @@ public partial class DoorIllustration : Illustration
         }
 
         DrawTextureRectRegion(_doors, new Rect2(32, 16, 32, 32), new Rect2(_column, 16 + frame * DoorStride, 32, 32));
+        if (_mechanisms is not null)
+        {
+            DrawTextureRectRegion(
+                _mechanisms,
+                new Rect2(LeverPosition, LeverRegion.Size),
+                new Rect2(LeverRegion.Position.X + frame * LeverFrameStride, LeverRegion.Position.Y, LeverRegion.Size.X, LeverRegion.Size.Y));
+        }
+
         if (counter is { } value)
         {
             GuiAssets.DrawNumber(this, value, new Vector2(48, 22));
@@ -305,7 +341,7 @@ public partial class TorchIllustration : Illustration
     private const int FireColumn = 39;
     private const int FireHeight = 48;
     private const int FireFrames = 6;
-    private const int FireOffsetY = -8;
+    private const int FireOffsetY = -11;
     private static readonly Vector2 SceneSize = new(112, 64);
     private static readonly Color FearColor = new(1f, 0.55f, 0.2f, 0.25f);
 
@@ -342,8 +378,10 @@ public partial class ContainerIllustration : Illustration
     private static readonly Vector2 SceneSize = new(112, 64);
     private static readonly Rect2 Barrel = new(112, 80, 16, 24);
     private static readonly Rect2 Crate = new(96, 80, 16, 24);
-    private static readonly Vector2 BarrelCell = new(24, 16);
-    private static readonly Vector2 CrateCell = new(56, 16);
+    private static readonly Rect2 Vase = new(208, 80, 16, 19);
+    private static readonly Vector2 BarrelCell = new(40, 16);
+    private static readonly Vector2 CrateCell = new(8, 16);
+    private static readonly Vector2 VaseCell = new(72, 16);
 
     private readonly Texture2D _objects = Load("res://assets/sprites/donjon_objets.png");
     private readonly Texture2D _potion = Load("res://assets/sprites/fiole_bleue.png");
@@ -360,6 +398,7 @@ public partial class ContainerIllustration : Illustration
         }
 
         DrawObject(Crate, CrateCell);
+        DrawObject(Vase, VaseCell);
         var cycle = IdleDuration + BlinkDuration + SpellFx.SakuraDuration + HoldDuration;
         var t = Time % cycle;
         var broken = t - IdleDuration;
@@ -526,6 +565,215 @@ public partial class GestureIllustration : Illustration
             {
                 DrawRect(new Rect2(65, 20 + line * 7, line == 3 ? 22 : 36, 2), CardBorder);
             }
+        }
+
+        DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+    }
+}
+
+public partial class WaterIllustration : Illustration
+{
+    private const int SubTile = 16;
+    private const int Columns = 7;
+    private const int CoastColumns = 29;
+    private const int ReflectionColumns = 37;
+    private const int ReflectionFrameStride = 481;
+    private const int WaterFrames = 6;
+    private const double FrameSeconds = 0.15;
+    private const int ReflectionShownFrames = 14;
+    private const int ReflectionCycleFrames = 15;
+    private const int WaterTile = 881;
+    private const int BandTile = 875;
+    private const int BankSouthTile = 234;
+    private const int BankNorthTile = 176;
+    private static readonly int[] SlabFrames = { 263, 277, 553, 567, 727, 741 };
+    private static readonly int[] ReflectionTiles = { 254, 255, 256, 257, 258 };
+    private static readonly Vector2 SceneSize = new(Columns * SubTile, 4 * SubTile);
+
+    private readonly Texture2D _coasts = Load("res://assets/sprites/eau_berges.png");
+    private readonly Texture2D _reflections = Load("res://assets/sprites/eau_reflets.png");
+
+    public override void _Draw()
+    {
+        BeginScene(SceneSize, 2f);
+        var frame = (int)(Time / FrameSeconds);
+        for (var x = 0; x < Columns; x++)
+        {
+            var left = x * SubTile;
+            DrawCoast(BankSouthTile, left, 0);
+            DrawCoast(WaterTile, left, SubTile);
+            DrawCoast(BandTile, left, SubTile);
+            DrawCoast(WaterTile, left, 2 * SubTile);
+            DrawCoast(BankNorthTile, left, 3 * SubTile);
+        }
+
+        if (frame % ReflectionCycleFrames < ReflectionShownFrames)
+        {
+            var stride = ReflectionFrameStride * (frame % WaterFrames);
+            for (var index = 0; index < ReflectionTiles.Length; index++)
+            {
+                var id = ReflectionTiles[index] + stride;
+                DrawTextureRectRegion(
+                    _reflections,
+                    new Rect2(SubTile + index * SubTile, 2 * SubTile, SubTile, SubTile),
+                    new Rect2(id % ReflectionColumns * SubTile, id / ReflectionColumns * SubTile, SubTile, SubTile));
+            }
+        }
+
+        var slab = SlabFrames[frame % SlabFrames.Length];
+        for (var x = 0; x < Columns; x++)
+        {
+            DrawCoast(slab, x * SubTile, SubTile);
+        }
+
+        DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+    }
+
+    private void DrawCoast(int tileId, float x, float y) =>
+        DrawTextureRectRegion(
+            _coasts,
+            new Rect2(x, y, SubTile, SubTile),
+            new Rect2(tileId % CoastColumns * SubTile, tileId / CoastColumns * SubTile, SubTile, SubTile));
+}
+
+public partial class AlcoveIllustration : Illustration
+{
+    private const int SubTile = 16;
+    private const int CandleColumns = 6;
+    private const int CandleFrameStride = 24;
+    private const int CandleFrames = 3;
+    private const double CandleFrameSeconds = 0.15;
+    private const int AuraSize = 48;
+    private const int AuraOffsetX = -7;
+    private const int AuraOffsetY = -12;
+    private const int AuraFrames = 6;
+    private const double AuraGrowSeconds = 0.4;
+    private const int SparkleFrames = 4;
+    private const double SparkleFrameRate = 6;
+    private const int SparkleSize = 32;
+    private const double UnlitHold = 1.2;
+    private const double LitHold = 2.4;
+    private const double SparkleDelay = 0.4;
+    private static readonly int[] AlcoveTiles = { 425, 426, 442, 443, 459, 460 };
+    private static readonly int[] CandleTiles = { 12, 13, 18, 19 };
+    private static readonly Rect2 Barrel = new(112, 80, 16, 24);
+    private static readonly Vector2 AlcoveCell = new(16, 16);
+    private static readonly Vector2 BarrelCell = new(64, 32);
+    private static readonly Vector2 SceneSize = new(112, 64);
+
+    private readonly Texture2D _candles = Load("res://assets/sprites/bougies.png");
+    private readonly Texture2D _unlit = Load("res://assets/sprites/bougies_eteintes.png");
+    private readonly Texture2D _aura = Load("res://assets/sprites/aura_brasero.png");
+    private readonly Texture2D _sparkles = Load("res://assets/sprites/etincelles.png");
+    private readonly Texture2D _objects = Load("res://assets/sprites/donjon_objets.png");
+
+    public override void _Draw()
+    {
+        BeginScene(SceneSize, 2f);
+        for (var x = 0; x < SceneSize.X; x += SubTile)
+        {
+            DrawTile(53, x, 0);
+            DrawTile(70, x, SubTile);
+            DrawTile(87, x, 2 * SubTile);
+            DrawTile(138, x, 3 * SubTile);
+        }
+
+        for (var index = 0; index < AlcoveTiles.Length; index++)
+        {
+            DrawTile(AlcoveTiles[index], AlcoveCell.X + index % 2 * SubTile, AlcoveCell.Y - SubTile + index / 2 * SubTile);
+        }
+
+        DrawTextureRectRegion(
+            _objects,
+            new Rect2(BarrelCell.X + (32 - Barrel.Size.X) / 2f, BarrelCell.Y + 32 - Barrel.Size.Y - 2, Barrel.Size.X, Barrel.Size.Y),
+            Barrel);
+
+        var t = Time % (UnlitHold + LitHold);
+        if (t < UnlitHold)
+        {
+            DrawTexture(_unlit, AlcoveCell);
+            DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+            return;
+        }
+
+        var lit = t - UnlitHold;
+        var growth = Math.Clamp(lit / AuraGrowSeconds, 0.0, 1.0);
+        var auraSize = AuraSize * (float)(1.0 - (1.0 - growth) * (1.0 - growth));
+        var auraCenter = new Vector2(AlcoveCell.X + AuraOffsetX + AuraSize / 2f, AlcoveCell.Y + AuraOffsetY + AuraSize / 2f);
+        var auraFrame = (int)(Time * 8) % AuraFrames;
+        DrawTextureRectRegion(
+            _aura,
+            new Rect2(auraCenter.X - auraSize / 2f, auraCenter.Y - auraSize / 2f, auraSize, auraSize),
+            new Rect2(auraFrame * AuraSize, 0, AuraSize, AuraSize));
+
+        var stride = (int)(Time / CandleFrameSeconds) % CandleFrames * CandleFrameStride;
+        for (var index = 0; index < CandleTiles.Length; index++)
+        {
+            var id = CandleTiles[index] + stride;
+            DrawTextureRectRegion(
+                _candles,
+                new Rect2(AlcoveCell.X + index % 2 * SubTile, AlcoveCell.Y + index / 2 * SubTile, SubTile, SubTile),
+                new Rect2(id % CandleColumns * SubTile, id / CandleColumns * SubTile, SubTile, SubTile));
+        }
+
+        if (lit >= SparkleDelay)
+        {
+            var sparkle = new Rect2((int)(Time * SparkleFrameRate) % SparkleFrames * SparkleSize, 0, SparkleSize, SparkleSize);
+            var center = new Vector2(BarrelCell.X + 16, BarrelCell.Y + 32 - 2 - Barrel.Size.Y / 2f);
+            DrawTextureRectRegion(_sparkles, new Rect2(center.X - SparkleSize / 2f, center.Y - SparkleSize / 2f, SparkleSize, SparkleSize), sparkle);
+        }
+
+        DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+    }
+}
+
+public partial class BatIllustration : Illustration
+{
+    private const int Cell = 32;
+    private const int BatRow = 9;
+    private const int BatFrames = 3;
+    private const double BatFrameRate = 8;
+    private const int BatRestingFrame = 2;
+    private const float BatHover = 1.5f;
+    private const float BatHoverSpeed = 4f;
+    private const int GemCount = 4;
+    private const int GemStep = 14;
+    private const double FlyHold = 1.2;
+    private const double SatedTurn = 0.8;
+    private const int SatedTurns = 2;
+    private static readonly Color StunnedColor = new(0.6f, 0.6f, 0.75f);
+    private static readonly Vector2 BatCell = new(4, 12);
+    private static readonly Vector2 SceneSize = new(112, 48);
+
+    private readonly Texture2D _animations = Load("res://assets/sprites/animations.png");
+
+    public override void _Draw()
+    {
+        BeginScene(SceneSize, 2f);
+        var t = Time % (FlyHold + SatedTurn * SatedTurns);
+        var sated = t >= FlyHold;
+        var position = BatCell;
+        var frame = BatRestingFrame;
+        var color = StunnedColor;
+        if (!sated)
+        {
+            frame = (int)(Time * BatFrameRate) % BatFrames;
+            color = Colors.White;
+            position.Y += Mathf.Round(Mathf.Sin((float)Time * BatHoverSpeed) * BatHover);
+        }
+
+        DrawTextureRectRegion(_animations, new Rect2(position, Cell, Cell), new Rect2(frame * Cell, BatRow * Cell, Cell, Cell), color);
+        if (sated)
+        {
+            var turns = SatedTurns - (int)((t - FlyHold) / SatedTurn);
+            SpellFx.DrawStun(this, BatCell, turns, Time);
+        }
+
+        var full = sated ? GemCount - 1 : GemCount;
+        for (var index = 0; index < GemCount; index++)
+        {
+            var source = new Rect2(index < full ? 0 : GuiAssets.GemSize, 0, GuiAssets.GemSize, GuiAssets.GemSize);
+            DrawTextureRectRegion(GuiAssets.Gems, new Rect2(48 + index * GemStep, 17, GuiAssets.GemSize, GuiAssets.GemSize), source);
         }
 
         DrawSetTransform(Vector2.Zero, 0f, Vector2.One);

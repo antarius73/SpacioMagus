@@ -1,6 +1,6 @@
 [niveau]
 nom = Les bains de Zorgus
-etoiles = 30, 40
+etoiles = 24, 30
 sans_monstres = non
 script = bains_de_zorgus
 
@@ -40,22 +40,22 @@ script = bains_de_zorgus
 7,19 = 4,15
 
 [decor]
+ t   t
+
+
+  t
+
+
+   t t
 
 
 
 
+    t
 
 
 
-
-
-
-
-
-
-
-
-
+   t t
 
 
 

@@ -225,7 +225,7 @@ O braseiro
 Um fogo intransponível, que deixa passar a visão e a magia. Os blobs verdes não se aproximam das casas ao redor dele.
 
 [contenant_titre]
-Caixas e barris
+Caixas, barris e vasos
 
 [contenant]
 Não dá para se teletransportar para eles. Toque em um quando estiver ao lado para quebrá-lo: isso leva um turno. Às vezes ele esconde um frasco.
@@ -235,6 +235,30 @@ A escada
 
 [escalier]
 A saída da fase. Ande sobre ela para descer mais fundo na masmorra.
+
+[eau_titre]
+A água
+
+[eau]
+Mob dedicou a vida à magia e nunca teve tempo de aprender a nadar: não dá para andar sobre ela nem se teletransportar para ela, mas a visão e a magia passam por cima. Preso sem gema, sem frasco e sem recipiente ao alcance, a partida está perdida.
+
+[manette_titre]
+A alavanca
+
+[manette]
+Toque nela de uma casa vizinha para erguer a grade ligada a ela: isso leva um turno. Impossível se um morcego tiver pousado nela.
+
+[alcove_titre]
+O nicho
+
+[alcove]
+Um nicho cheio de velas apagadas. Acenda-as de uma casa vizinha: isso leva um turno, e a luz delas faz brilhar os recipientes que escondem um frasco.
+
+[chauve_souris_titre]
+O morcego
+
+[chauve_souris]
+Ele sobrevoa a água, os recipientes e as alavancas. Depois de ver você, ele te segue para todo lado. A mordida dele rouba uma gema e depois ele cochila por dois turnos, saciado. Sem gemas, você desmaia.
 
 [geste_titre]
 Toque longo
