@@ -5,6 +5,7 @@ using Godot;
 using SpacioMagus.Core;
 using SpacioMagus.Core.Loading;
 using SpacioMagus.Core.Progress;
+using SpacioMagus.Core.Remote;
 using SpacioMagus.Core.Saving;
 using Cell = SpacioMagus.Core.Position;
 
@@ -29,6 +30,8 @@ public partial class Main : Node
     private Hud _hud = null!;
     private Sounds _sounds = null!;
     private CanvasLayer? _screen;
+    private RemoteScreen _screenKind = RemoteScreen.Other;
+    private readonly Dictionary<string, string> _levelNames = new();
     private Cell? _firstCreature;
     private const float ChoiceWidth = 120f;
     private const float ChoiceHeight = 28f;
@@ -83,6 +86,7 @@ public partial class Main : Node
         }
 
         ShowTitle();
+        RemoteControl.AttachIfRequested(this);
     }
 
     private SaveGame? ResumableSave() =>
@@ -105,7 +109,8 @@ public partial class Main : Node
             ContinueGame,
             () => ShowLevelSelect(0),
             () => ShowSettings(ShowTitle),
-            () => ShowCredits(ShowTitle)));
+            () => ShowCredits(ShowTitle)),
+            RemoteScreen.Title);
     }
 
     private void RequestNewGame()
@@ -125,7 +130,7 @@ public partial class Main : Node
 
     private void ShowLevelSelect(int page)
     {
-        ShowScreen(() => LevelSelectScreen.Create(LevelEntries(), page, ChooseLevel, ShowLevelSelect, ShowTitle));
+        ShowScreen(() => LevelSelectScreen.Create(LevelEntries(), page, ChooseLevel, ShowLevelSelect, ShowTitle), RemoteScreen.LevelSelect);
     }
 
     private List<LevelEntry> LevelEntries()
@@ -134,7 +139,7 @@ public partial class Main : Node
         for (var index = 0; index < _levels.Count; index++)
         {
             var record = _records.Get(_levels[index]);
-            var unlocked = index == 0 || _records.IsCompleted(_levels[index - 1]);
+            var unlocked = IsUnlocked(index);
             var state = record is not null ? DoorState.Completed : unlocked ? DoorState.Next : DoorState.Locked;
             entries.Add(new LevelEntry(state, record?.MostStars ?? 0));
         }
@@ -347,7 +352,7 @@ public partial class Main : Node
         GD.Print($"Textes rechargés ({Texts.Language}).");
         if (_screenBuilder is { } build)
         {
-            ShowScreen(build);
+            ShowScreen(build, _screenKind);
         }
 
         if (_infoPopup is { } popup && _infoSubject is { } subject)
@@ -365,7 +370,8 @@ public partial class Main : Node
             Texts.Story,
             new StoryIllustration(),
             (Texts.NextButton, () => ShowSpacioMagus(() => ShowGesture(() => StartLevel(0)))),
-            (Texts.SkipButton, () => StartLevel(0))));
+            (Texts.SkipButton, () => StartLevel(0))),
+            RemoteScreen.Story);
     }
 
     private void ShowSpacioMagus(Action done)
@@ -375,7 +381,8 @@ public partial class Main : Node
             Texts.SpacioMagus,
             new SpacioMagusIllustration(),
             (Texts.NextButton, () => ShowSpacioCreatura(done)),
-            (Texts.SkipButton, done)));
+            (Texts.SkipButton, done)),
+            RemoteScreen.Story);
     }
 
     private void ShowGesture(Action done)
@@ -384,7 +391,8 @@ public partial class Main : Node
             Texts.GestureTitle,
             Texts.Gesture,
             new GestureIllustration(),
-            (Texts.NextButton, done)));
+            (Texts.NextButton, done)),
+            RemoteScreen.Story);
     }
 
     private void ShowSpacioCreatura(Action done)
@@ -393,7 +401,8 @@ public partial class Main : Node
             Texts.SpacioCreaturaTitle,
             Texts.SpacioCreatura,
             new SpacioCreaturaIllustration(),
-            (Texts.NextButton, done)));
+            (Texts.NextButton, done)),
+            RemoteScreen.Story);
     }
 
     private void ShowVictory()
@@ -417,7 +426,7 @@ public partial class Main : Node
             buttons.Add((Texts.PlayAgainButton, () => StartLevel(index)));
             buttons.Add((Texts.MainMenuButton, ShowTitle));
             return VictoryScreen.Create(victory.Stars, victory.Turns, victory.Record, victory.NewRecord, buttons.ToArray());
-        });
+        }, RemoteScreen.Victory);
     }
 
     private void RecordVictory(string levelFile)
@@ -459,7 +468,8 @@ public partial class Main : Node
             },
             new[] { GuiAssets.Cross },
             (Texts.PlayAgainButton, () => StartLevel(index)),
-            (Texts.MainMenuButton, ShowTitle)));
+            (Texts.MainMenuButton, ShowTitle)),
+            RemoteScreen.Defeat);
     }
 
     private void ShowPause()
@@ -482,7 +492,8 @@ public partial class Main : Node
             (Texts.RestartButton, () => StartLevel(index)),
             (Texts.SettingsButton, () => ShowSettings(ShowPauseMenu)),
             (Texts.CreditsButton, () => ShowCredits(ShowPauseMenu)),
-            (Texts.MainMenuButton, ShowTitle)));
+            (Texts.MainMenuButton, ShowTitle)),
+            RemoteScreen.Paused);
     }
 
     private void ShowSettings(Action back)
@@ -662,10 +673,11 @@ public partial class Main : Node
         ShowScreen(() => MenuScreen.Create(Texts.ErrorTitle, message));
     }
 
-    private void ShowScreen(Func<CanvasLayer> build)
+    private void ShowScreen(Func<CanvasLayer> build, RemoteScreen kind = RemoteScreen.Other)
     {
         CloseScreen();
         _hud.Visible = false;
+        _screenKind = kind;
         _screenBuilder = build;
         _screen = build();
         AddChild(_screen);
@@ -984,5 +996,154 @@ public partial class Main : Node
         {
             _view.ClearHighlights();
         }
+    }
+
+    internal Game? CurrentGame => _game;
+
+    internal bool IsAnimating => _view.IsBusy || _pendingConclusion;
+
+    internal RemoteScreen CurrentScreen =>
+        _screen is not null ? _screenKind
+        : _infoPopup is not null ? RemoteScreen.Other
+        : _game is not null ? RemoteScreen.Playing
+        : RemoteScreen.Other;
+
+    internal Node? RemoteUiRoot => (Node?)_infoPopup ?? (Node?)_screen ?? (_game is not null ? _hud : null);
+
+    internal IReadOnlyList<string> RemoteNotes()
+    {
+        if (CurrentScreen != RemoteScreen.Victory)
+        {
+            return Array.Empty<string>();
+        }
+
+        var (stars, turns, record, newRecord) = _lastVictory;
+        var best = record is { } fewest ? $", record {fewest} tours{(newRecord ? " (nouveau record)" : string.Empty)}" : string.Empty;
+        return new[] { $"Victoire : {stars}/3 étoiles en {turns} tours{best}." };
+    }
+
+    internal IReadOnlyList<RemoteLevel> RemoteLevels()
+    {
+        var levels = new List<RemoteLevel>();
+        for (var index = 0; index < _levels.Count; index++)
+        {
+            var file = _levels[index];
+            var record = _records.Get(file);
+            levels.Add(new RemoteLevel(file, LevelName(file), IsUnlocked(index), record?.MostStars, record?.FewestTurns));
+        }
+
+        return levels;
+    }
+
+    internal (string Error, string Message)? RemoteStart(string levelFile)
+    {
+        var index = _levels.ToList().IndexOf(levelFile);
+        if (index < 0)
+        {
+            return (RemoteErrors.UnknownLevel, $"Niveau « {levelFile} » inconnu. Niveaux : {string.Join(", ", _levels)}.");
+        }
+
+        if (!IsUnlocked(index))
+        {
+            return (RemoteErrors.LockedLevel, $"Le niveau « {levelFile} » est verrouillé : terminez d'abord « {_levels[index - 1]} ».");
+        }
+
+        CloseInfoPopup();
+        CancelPress();
+        return StartLevel(index) ? null : (RemoteErrors.Internal, $"Le niveau « {levelFile} » n'a pas pu être chargé.");
+    }
+
+    internal (string Error, string Message)? RemoteResume()
+    {
+        if (_game is not null && _screen is not null && _screenKind is RemoteScreen.Paused or RemoteScreen.Story)
+        {
+            Resume();
+            return null;
+        }
+
+        if (_game is null && ResumableSave() is not null)
+        {
+            ContinueGame();
+            return _game is null ? (RemoteErrors.Internal, "La sauvegarde n'a pas pu être reprise.") : null;
+        }
+
+        return (RemoteErrors.NothingToResume, "Aucune pause à quitter ni sauvegarde à reprendre.");
+    }
+
+    internal ActionResult RemotePlay(GameAction action)
+    {
+        if (_game is null)
+        {
+            throw new InvalidOperationException("Aucune partie en cours.");
+        }
+
+        CancelPress();
+        _firstCreature = null;
+        if (_game.IsStranded)
+        {
+            action = new WaitAction();
+        }
+
+        var (cell, kind) = action switch
+        {
+            WaitAction => (_game.Magus.Position, TapKind.Wait),
+            SpacioMagusAction teleport => (teleport.Target, TapKind.Teleport),
+            SpacioCreaturaAction swap => (swap.Second, TapKind.Creature),
+            MoveAction move => (move.Target, TapKind.Move),
+            OpenGrilleAction grille => (grille.Target, TapKind.Move),
+            BreakAction breaking => (breaking.Target, TapKind.Move),
+            LeverAction lever => (lever.Target, TapKind.Move),
+            ActivateAction activate => (activate.Target, TapKind.Move),
+            _ => throw new ArgumentException($"Action inconnue : {action.GetType().Name}.", nameof(action)),
+        };
+
+        var result = Play(action);
+        if (result.Success && action is SpacioCreaturaAction creatures)
+        {
+            _view.Flash(creatures.First, TapKind.Creature);
+        }
+
+        Apply(result, cell, kind);
+        return result;
+    }
+
+    private bool IsUnlocked(int index) => index == 0 || _records.IsCompleted(_levels[index - 1]);
+
+    private string LevelName(string levelFile)
+    {
+        if (_levelNames.TryGetValue(levelFile, out var name))
+        {
+            return name;
+        }
+
+        if (_legend is null)
+        {
+            return levelFile;
+        }
+
+        try
+        {
+            name = GameData.LoadLevel(levelFile, GameData.ReadLevel(levelFile), _legend, _settings.Rules).Definition.Name;
+        }
+        catch (Exception exception) when (exception is LevelLoadException or System.IO.IOException)
+        {
+            GD.PushWarning($"Nom du niveau « {levelFile} » illisible : {exception.Message}");
+            return levelFile;
+        }
+
+        _levelNames[levelFile] = name;
+        return name;
+    }
+
+    private void CloseInfoPopup()
+    {
+        if (_infoPopup is not { } popup)
+        {
+            return;
+        }
+
+        _infoPopup = null;
+        _infoSubject = null;
+        popup.QueueFree();
     }
 }

@@ -87,6 +87,14 @@ public partial class VolumeBar : Control
         }
     }
 
+    internal void SetByUser(int value)
+    {
+        if (Apply(value))
+        {
+            Released?.Invoke();
+        }
+    }
+
     private void Step(int direction)
     {
         if (Apply(_value + direction * MaxValue / Steps))

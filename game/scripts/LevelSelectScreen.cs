@@ -188,16 +188,41 @@ public partial class LevelGrid : Control
             }
 
             AcceptEvent();
-            if (_levels[index].State == DoorState.Locked)
-            {
-                Sounds.Play("ui.locked");
-                return;
-            }
-
-            Sounds.Play("ui.confirm");
-            _choose(index);
+            Choose(index);
             return;
         }
+    }
+
+    internal IEnumerable<(int Index, LevelEntry Level)> VisibleDoors()
+    {
+        for (var slot = 0; slot < PerPage; slot++)
+        {
+            var index = _page * PerPage + slot;
+            if (index >= _levels.Count)
+            {
+                yield break;
+            }
+
+            yield return (index, _levels[index]);
+        }
+    }
+
+    internal bool Choose(int index)
+    {
+        if (index < 0 || index >= _levels.Count)
+        {
+            return false;
+        }
+
+        if (_levels[index].State == DoorState.Locked)
+        {
+            Sounds.Play("ui.locked");
+            return false;
+        }
+
+        Sounds.Play("ui.confirm");
+        _choose(index);
+        return true;
     }
 
     private void DrawTop(float sourceX, float sourceWidth, float destinationX)

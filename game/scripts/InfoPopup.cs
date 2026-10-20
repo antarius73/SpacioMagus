@@ -128,7 +128,7 @@ public partial class InfoPopup : CanvasLayer
         return popup;
     }
 
-    private void Close()
+    internal void Close()
     {
         if (IsQueuedForDeletion())
         {

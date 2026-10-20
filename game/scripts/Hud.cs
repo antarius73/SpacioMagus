@@ -69,6 +69,7 @@ public partial class Hud : CanvasLayer
         top.AddChild(icons);
 
         var pause = IconButton(0);
+        pause.Name = "Pause";
         pause.Pressed += () =>
         {
             Sounds.Play("ui.tap");

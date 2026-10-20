@@ -107,7 +107,7 @@ public static class SaveCodec
         }
     }
 
-    private static void WriteAction(Utf8JsonWriter writer, GameAction action)
+    internal static void WriteAction(Utf8JsonWriter writer, GameAction action)
     {
         writer.WriteStartObject();
         switch (action)
@@ -151,7 +151,7 @@ public static class SaveCodec
         writer.WriteEndObject();
     }
 
-    private static GameAction ReadAction(JsonElement element, string fileName, int index)
+    internal static GameAction ReadAction(JsonElement element, string fileName, int index)
     {
         if (element.ValueKind != JsonValueKind.Object)
         {
