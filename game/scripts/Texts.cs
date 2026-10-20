@@ -34,6 +34,12 @@ public static class Texts
 
     public static string LevelStart(string levelName) => string.Format(Get("debut_niveau"), levelName);
 
+    public static string LevelName(string levelFile, string defaultName)
+    {
+        var key = System.IO.Path.GetFileNameWithoutExtension(levelFile) + "_nom";
+        return _current.TryGetValue(key, out var name) || _fallback.TryGetValue(key, out name) ? name : defaultName;
+    }
+
     public static string TurnCounter(int turn) => string.Format(Get("tour_compteur"), turn);
 
     public static string TurnsResult(int turns) => string.Format(Get("tours_resultat"), turns);
@@ -75,6 +81,14 @@ public static class Texts
     public static string StrandedTitle => Get("echoue_titre");
 
     public static string Stranded => Get("echoue");
+
+    public static string StrandedByChestsTitle => Get("echoue_coffres_titre");
+
+    public static string StrandedByChests => Get("echoue_coffres");
+
+    public static string StuckTitle => Get("echoue_coince_titre");
+
+    public static string Stuck => Get("echoue_coince");
 
     public static string FaintedTitle => Get("evanoui_titre");
 
@@ -183,6 +197,44 @@ public static class Texts
     public static string BatTitle => Get("chauve_souris_titre");
 
     public static string Bat => Get("chauve_souris");
+
+    public static string ImpaledTitle => Get("empale_titre");
+
+    public static string Impaled => Get("empale");
+
+    public static string ScrollTakenTitle => Get("parchemin_pris_titre");
+
+    public static string ScrollTaken => Get("parchemin_pris");
+
+    public static string DemoEndTitle => Get("fin_demo_titre");
+
+    public static string DemoEnd => Get("fin_demo");
+
+    public static string RestartDemoButton => Get("bouton_recommencer_demo");
+
+    public static string ChestTitle => Get("coffre_titre");
+
+    public static string Chest => Get("coffre");
+
+    public static string KeyTitle => Get("cle_titre");
+
+    public static string Key => Get("cle");
+
+    public static string LockedDoorTitle => Get("porte_verrouillee_titre");
+
+    public static string LockedDoor => Get("porte_verrouillee");
+
+    public static string SpikesTitle => Get("piege_titre");
+
+    public static string Spikes => Get("piege");
+
+    public static string ScrollTitle => Get("parchemin_titre");
+
+    public static string Scroll => Get("parchemin");
+
+    public static string EmptyAltarTitle => Get("autel_vide_titre");
+
+    public static string EmptyAltar => Get("autel_vide");
 
     public static string GestureTitle => Get("geste_titre");
 

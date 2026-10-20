@@ -18,6 +18,12 @@ public enum InfoSubject
     Lever,
     Alcove,
     Bat,
+    Chest,
+    Key,
+    LockedDoor,
+    Spikes,
+    Scroll,
+    EmptyAltar,
 }
 
 public partial class InfoPopup : CanvasLayer
@@ -47,6 +53,12 @@ public partial class InfoPopup : CanvasLayer
             InfoSubject.Lever => (Texts.LeverTitle, Texts.Lever, (Control)new DoorIllustration(DoorIllustration.GrilleColumn, true)),
             InfoSubject.Alcove => (Texts.AlcoveTitle, Texts.Alcove, (Control)new AlcoveIllustration()),
             InfoSubject.Bat => (Texts.BatTitle, Texts.Bat, (Control)new BatIllustration()),
+            InfoSubject.Chest => (Texts.ChestTitle, Texts.Chest, (Control)new ChestIllustration()),
+            InfoSubject.Key => (Texts.KeyTitle, Texts.Key, (Control)new KeyIllustration()),
+            InfoSubject.LockedDoor => (Texts.LockedDoorTitle, Texts.LockedDoor, (Control)new DoorIllustration(DoorIllustration.WoodColumn, false, true)),
+            InfoSubject.Spikes => (Texts.SpikesTitle, Texts.Spikes, (Control)new SpikesIllustration()),
+            InfoSubject.Scroll => (Texts.ScrollTitle, Texts.Scroll, (Control)new ScrollIllustration()),
+            InfoSubject.EmptyAltar => (Texts.EmptyAltarTitle, Texts.EmptyAltar, (Control)new ScrollIllustration(false)),
             _ => (Texts.GreenBlobTitle, Texts.GreenBlob, (Control)new BlobIllustration(BlobIllustration.GreenRow)),
         };
 
@@ -201,6 +213,7 @@ public partial class DoorIllustration : Illustration
 
     private readonly Texture2D _doors = Load("res://assets/sprites/donjon_portes.png");
     private readonly Texture2D? _mechanisms;
+    private readonly Texture2D? _treasures;
     private readonly int _column;
 
     public DoorIllustration(int column)
@@ -208,12 +221,17 @@ public partial class DoorIllustration : Illustration
     {
     }
 
-    public DoorIllustration(int column, bool withLever)
+    public DoorIllustration(int column, bool withLever, bool withKey = false)
     {
         _column = column;
         if (withLever)
         {
             _mechanisms = Load("res://assets/sprites/donjon_mecanismes.png");
+        }
+
+        if (withKey)
+        {
+            _treasures = Load("res://assets/sprites/tresors.png");
         }
     }
 
@@ -248,6 +266,12 @@ public partial class DoorIllustration : Illustration
         }
 
         DrawTextureRectRegion(_doors, new Rect2(32, 16, 32, 32), new Rect2(_column, 16 + frame * DoorStride, 32, 32));
+        if (_treasures is not null && frame == 0)
+        {
+            var bob = Mathf.Round(Mathf.Sin((float)Time * 3f));
+            DrawTextureRectRegion(_treasures, new Rect2(64, 52 + bob, 14, 9), new Rect2(0, 0, 14, 9));
+        }
+
         if (_mechanisms is not null)
         {
             DrawTextureRectRegion(
@@ -776,6 +800,150 @@ public partial class BatIllustration : Illustration
             DrawTextureRectRegion(GuiAssets.Gems, new Rect2(48 + index * GemStep, 17, GuiAssets.GemSize, GuiAssets.GemSize), source);
         }
 
+        DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+    }
+}
+
+public partial class ChestIllustration : Illustration
+{
+    private const int Cell = 32;
+    private const int Frames = 5;
+    private const double Hold = 0.9;
+    private const double Swing = 0.3;
+    private static readonly Vector2 SceneSize = new(96, 48);
+
+    private readonly Texture2D _chest = Load("res://assets/sprites/coffre.png");
+    private readonly Texture2D _treasures = Load("res://assets/sprites/tresors.png");
+
+    public override void _Draw()
+    {
+        BeginScene(SceneSize, 2f);
+        for (var y = 0; y < SceneSize.Y; y += 16)
+        {
+            for (var x = 0; x < SceneSize.X; x += 16)
+            {
+                DrawTile(138, x, y);
+            }
+        }
+
+        var cycle = Hold * 2 + Swing * 2;
+        var t = Time % cycle;
+        double openness = t < Hold ? 0 : t < Hold + Swing ? (t - Hold) / Swing : t < Hold * 2 + Swing ? 1 : 1 - (t - Hold * 2 - Swing) / Swing;
+        var frame = (int)Math.Round(openness * (Frames - 1));
+        DrawTextureRectRegion(_chest, new Rect2(16, 8, Cell, Cell), new Rect2(frame * Cell, 0, Cell, Cell));
+        DrawTextureRectRegion(_treasures, new Rect2(58, 22, 21, 19), new Rect2(24, 0, 21, 19));
+        DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+    }
+}
+
+public partial class KeyIllustration : Illustration
+{
+    private static readonly Vector2 SceneSize = new(48, 32);
+
+    private readonly Texture2D _treasures = Load("res://assets/sprites/tresors.png");
+
+    public override void _Draw()
+    {
+        BeginScene(SceneSize, 3f);
+        for (var y = 0; y < SceneSize.Y; y += 16)
+        {
+            for (var x = 0; x < SceneSize.X; x += 16)
+            {
+                DrawTile(138, x, y);
+            }
+        }
+
+        var bob = Mathf.Round(Mathf.Sin((float)Time * 3f));
+        DrawTextureRectRegion(_treasures, new Rect2(17, 11 + bob, 14, 9), new Rect2(0, 0, 14, 9));
+        DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+    }
+}
+
+public partial class SpikesIllustration : Illustration
+{
+    private const int Cell = 32;
+    private const int Frames = 5;
+    private const double TurnDuration = 0.6;
+    private const double RiseDuration = 0.15;
+    private const int LoweredTurns = 3;
+    private static readonly Vector2 SceneSize = new(96, 32);
+
+    private readonly Texture2D _spikes = Load("res://assets/sprites/piege.png");
+
+    public override void _Draw()
+    {
+        BeginScene(SceneSize, 2f);
+        for (var y = 0; y < SceneSize.Y; y += 16)
+        {
+            for (var x = 0; x < SceneSize.X; x += 16)
+            {
+                DrawTile(138, x, y);
+            }
+        }
+
+        var t = Time % (TurnDuration * (LoweredTurns + 1));
+        var raisedAt = TurnDuration * LoweredTurns;
+        double height = t < raisedAt ? 0 : Math.Min(1, (t - raisedAt) / RiseDuration);
+        if (t > TurnDuration * (LoweredTurns + 1) - RiseDuration)
+        {
+            height = Math.Max(0, (TurnDuration * (LoweredTurns + 1) - t) / RiseDuration);
+        }
+
+        var frame = (int)Math.Round(height * (Frames - 1));
+        for (var index = 0; index < 3; index++)
+        {
+            DrawTextureRectRegion(_spikes, new Rect2(index * Cell, 0, Cell, Cell), new Rect2(frame * Cell, 0, Cell, Cell));
+        }
+
+        DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+    }
+}
+
+public partial class ScrollIllustration : Illustration
+{
+    private const int SparkleFrames = 4;
+    private const double SparkleFrameRate = 6;
+    private const int SparkleSize = 32;
+    private static readonly Rect2 Altar = new(39, 129, 50, 30);
+    private static readonly Vector2 SceneSize = new(96, 48);
+
+    private readonly Texture2D _items = Load("res://assets/sprites/items.png");
+    private readonly Texture2D _scroll = Load("res://assets/sprites/parchemin.png");
+    private readonly Texture2D _sparkles = Load("res://assets/sprites/etincelles.png");
+    private readonly bool _withScroll;
+
+    public ScrollIllustration()
+        : this(true)
+    {
+    }
+
+    public ScrollIllustration(bool withScroll)
+    {
+        _withScroll = withScroll;
+    }
+
+    public override void _Draw()
+    {
+        BeginScene(SceneSize, 2f);
+        for (var y = 0; y < SceneSize.Y; y += 16)
+        {
+            for (var x = 0; x < SceneSize.X; x += 16)
+            {
+                DrawTile(138, x, y);
+            }
+        }
+
+        DrawTextureRectRegion(_items, new Rect2(23, 14, Altar.Size.X, Altar.Size.Y), Altar);
+        if (!_withScroll)
+        {
+            DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+            return;
+        }
+
+        var center = new Vector2(48, 23);
+        DrawTexture(_scroll, new Vector2(Mathf.Round(center.X - _scroll.GetWidth() / 2f), Mathf.Round(center.Y - _scroll.GetHeight() / 2f)));
+        var sparkle = new Rect2((int)(Time * SparkleFrameRate) % SparkleFrames * SparkleSize, 0, SparkleSize, SparkleSize);
+        DrawTextureRectRegion(_sparkles, new Rect2(center.X - SparkleSize / 2f, center.Y - SparkleSize / 2f, SparkleSize, SparkleSize), sparkle);
         DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
     }
 }

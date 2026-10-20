@@ -26,6 +26,12 @@ public static class ElementIds
     public const string Alcove = "alcove";
     public const string StairsUp = "escalier_montant";
     public const string Arch = "arche";
+    public const string Chest = "coffre";
+    public const string Key = "cle";
+    public const string LockedDoor = "porte_verrouillee";
+    public const string Spikes = "piege";
+    public const string Altar = "autel";
+    public const string Coins = "pieces";
     public const string RedHanging = "tenture_rouge";
     public const string RedBoneHanging = "tenture_rouge_os";
     public const string RedTornHanging = "tenture_rouge_dechiree";
@@ -41,7 +47,7 @@ public static class ElementIds
     public static readonly IReadOnlySet<string> MapElements = new HashSet<string>
     {
         Wall, Floor, Void, Grille, Door, Stairs, Start, BlobVert, BlobRouge, Potion, Brazier, Water, Barrel, BarrelPotion, Crate, CratePotion,
-        Vase, VasePotion, Lever, Bat, StairsUp, Arch,
+        Vase, VasePotion, Lever, Bat, StairsUp, Arch, Chest, Key, LockedDoor, Spikes, Altar,
     };
 
     public static readonly IReadOnlySet<string> Monsters = new HashSet<string>

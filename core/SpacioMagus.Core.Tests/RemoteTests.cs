@@ -108,6 +108,7 @@ public class RemoteTests
         new BreakAction(new Position(7, 8)),
         new LeverAction(new Position(9, 10)),
         new ActivateAction(new Position(11, 12)),
+        new ChestAction(new Position(13, 14)),
     };
 
     [Theory]

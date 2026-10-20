@@ -52,6 +52,18 @@ Mob cannot swim
 [echoue]
 Not a drop of magic left, and the exit is on the other side. Mob devoted his life to magic: he never found the time to learn how to swim.
 
+[echoue_coffres_titre]
+Mob is walled in
+
+[echoue_coffres]
+Not a drop of magic left, and these heavy chests block the way. Mob devoted his life to magic: he never lifted anything heavier than a spellbook.
+
+[echoue_coince_titre]
+Mob is stuck
+
+[echoue_coince]
+Not a drop of magic left, and the exit is out of reach. All Mob can do now is wait for Zorgus to return.
+
 [evanoui_titre]
 Mob passed out
 
@@ -192,7 +204,7 @@ Tap a neighbouring door to open it. The number tells how many turns until it shu
 Portcullises
 
 [grille]
-It cannot be raised by hand: pull its lever from a neighbouring square. The number tells how many turns until it drops, pushing away whoever stands under it.
+It cannot be raised by hand: pull its lever from a neighbouring square. The number tells how many turns until it drops, pushing away whoever stands under it. Some portcullises have two levers: each stays pulled until the other one is, and both spring back when the portcullis drops.
 
 [fiole_titre]
 Potions
@@ -246,7 +258,7 @@ Mob devoted his life to magic and never found the time to learn to swim: you can
 The lever
 
 [manette]
-Tap it from a neighbouring square to raise the portcullis linked to it: it takes a turn. Impossible if a bat has landed on it.
+Tap it from a neighbouring square to raise the portcullis linked to it: it takes a turn. Impossible if a bat has landed on it. Some portcullises have two levers: each stays pulled until the other one is, and both spring back when the portcullis drops.
 
 [alcove_titre]
 The alcove
@@ -260,6 +272,67 @@ The bat
 [chauve_souris]
 It flies over water, containers and levers. Once it has spotted you, it follows you everywhere. Its bite steals a gem, then it dozes for two turns, sated. With no gem left, you faint.
 
+[empale_titre]
+Mob was impaled
+
+[empale]
+The spikes shot up under his feet. Mob will wait for Zorgus to return… without being able to sit down.
+
+[parchemin_pris_titre]
+Improved Spacio Creatura
+
+[parchemin_pris]
+The scroll holds an improved version of Spacio Creatura: the spell now also swaps big objects (barrels, crates, vases and chests), in any mix with creatures.
+
+This power only lasts for this level.
+
+[fin_demo_titre]
+End of the demo
+
+[fin_demo]
+Well done, Mob made it through the three rooms of this demo!
+
+If the demo finds its audience, a full version with ten levels will be made. Thank you for playing.
+
+[bouton_recommencer_demo]
+Restart the demo
+
+[coffre_titre]
+Chests
+
+[coffre]
+They overflow with gold, but gold is useless to a magus. Tap one from a neighbouring square to open or close it: it takes a turn. They cannot be broken or teleported onto.
+
+[cle_titre]
+The key
+
+[cle]
+Walk onto it to pick it up. It opens the locked door, once only: after that, the door stays unlocked.
+
+[porte_verrouillee_titre]
+The locked door
+
+[porte_verrouillee]
+It only opens with the key. Once unlocked, it behaves like a normal door.
+
+[piege_titre]
+Spike traps
+
+[piege]
+The spikes stay down for three turns, then come up for one turn. When they are up, you can neither walk nor teleport onto them, and if they come up under the magus, it is over. They stun blobs; bats do not care.
+
+[parchemin_titre]
+The altar and the scroll
+
+[parchemin]
+The altar cannot be crossed. Tap the scroll from a neighbouring square to take it: it takes a turn, and it improves Spacio Creatura for this level.
+
+[autel_vide_titre]
+The empty altar
+
+[autel_vide]
+The altar cannot be crossed. The scroll has already been taken.
+
 [geste_titre]
 Long press
 
@@ -270,3 +343,12 @@ On a computer, just right-click.
 
 [fermer_indication]
 Tap to close
+
+[niveau_01_nom]
+Zorgus's Dungeon Hall
+
+[niveau_02_nom]
+The Baths of Zorgus
+
+[niveau_03_nom]
+The Treasure Room

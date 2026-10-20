@@ -8,10 +8,12 @@ public sealed record LegalActionsView(
     IReadOnlyList<Position> Lever,
     IReadOnlyList<Position> Activate,
     IReadOnlyList<Position> SpacioMagus,
-    IReadOnlyList<Position> SpacioCreatura)
+    IReadOnlyList<Position> SpacioCreatura,
+    IReadOnlyList<Position>? Chest = null)
 {
     public static LegalActionsView None { get; } = new(
         false,
+        Array.Empty<Position>(),
         Array.Empty<Position>(),
         Array.Empty<Position>(),
         Array.Empty<Position>(),
@@ -40,12 +42,17 @@ public static class LegalActions
         var open = new List<Position>();
         var breaks = new List<Position>();
         var levers = new List<Position>();
+        var chests = new List<Position>();
         var magus = game.Magus.Position;
         foreach (var target in Neighbours(magus))
         {
             if (game.IsContainer(target))
             {
                 AddIfAccepted(game, new BreakAction(target), target, breaks);
+            }
+            else if (game.IsChest(target))
+            {
+                AddIfAccepted(game, new ChestAction(target), target, chests);
             }
             else if (game.Level.TerrainAt(target) == Terrain.Lever)
             {
@@ -70,7 +77,7 @@ public static class LegalActions
         var canCast = game.Magus.Magic >= game.Rules.SpellCost;
         var teleports = canCast ? Sorted(game.TeleportTargets()) : Array.Empty<Position>();
         var swaps = canCast
-            ? game.SwapCandidates().Select(monster => monster.Position).ToArray()
+            ? game.SwapTargets().ToArray()
             : Array.Empty<Position>();
 
         return new LegalActionsView(
@@ -81,7 +88,8 @@ public static class LegalActions
             levers,
             activate,
             teleports,
-            swaps.Length >= 2 ? Sorted(swaps) : Array.Empty<Position>());
+            swaps.Length >= 2 ? Sorted(swaps) : Array.Empty<Position>(),
+            chests);
     }
 
     public static bool IsAccepted(Game game, GameAction action)

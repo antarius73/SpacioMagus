@@ -25,6 +25,11 @@ public static class RulesText
         ("torche_titre", "torche"),
         ("brasero_titre", "brasero"),
         ("eau_titre", "eau"),
+        ("coffre_titre", "coffre"),
+        ("cle_titre", "cle"),
+        ("porte_verrouillee_titre", "porte_verrouillee"),
+        ("piege_titre", "piege"),
+        ("parchemin_titre", "parchemin"),
     };
 
     public static string Build(string projectPath)

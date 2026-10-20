@@ -41,6 +41,7 @@ public partial class Main : Node
     private const double DefeatJingleDelay = 0.6;
     private const double FinalFanfareDelay = 1.3;
     private bool _pendingConclusion;
+    private bool _announceScroll;
     private const float PressSlop = 10f;
     private InfoPopup? _infoPopup;
     private InfoSubject? _infoSubject;
@@ -293,7 +294,11 @@ public partial class Main : Node
         InfoSubject? subject = _game.MonsterAt(cell) is { Kind: MonsterKind.BlobVert } ? InfoSubject.GreenBlob
             : _game.MonsterAt(cell) is { Kind: MonsterKind.BlobRouge } ? InfoSubject.RedBlob
             : _game.MonsterAt(cell) is { Kind: MonsterKind.ChauveSouris } ? InfoSubject.Bat
-            : _game.GrilleAt(cell) is not null ? (_game.Level.IsDoor(cell) ? InfoSubject.Door : InfoSubject.Grille)
+            : _game.GrilleAt(cell) is not null ? (_game.IsLocked(cell) ? InfoSubject.LockedDoor : _game.Level.IsDoor(cell) ? InfoSubject.Door : InfoSubject.Grille)
+            : _game.IsChest(cell) ? InfoSubject.Chest
+            : _game.Keys.Contains(cell) ? InfoSubject.Key
+            : _game.Level.TerrainAt(cell) == Terrain.Spikes ? InfoSubject.Spikes
+            : _game.Level.TerrainAt(cell) == Terrain.Altar ? (_game.CanSwapObjects ? InfoSubject.EmptyAltar : InfoSubject.Scroll)
             : _game.Level.Torches.Contains(cell) ? InfoSubject.Torch
             : _game.Level.Alcoves.Contains(cell) ? InfoSubject.Alcove
             : _game.Level.TerrainAt(cell) == Terrain.Brazier ? InfoSubject.Brazier
@@ -395,6 +400,26 @@ public partial class Main : Node
             RemoteScreen.Story);
     }
 
+    private void ShowScroll()
+    {
+        ShowScreen(() => MenuScreen.CreateIllustrated(
+            Texts.ScrollTakenTitle,
+            Texts.ScrollTaken,
+            new SpacioCreaturaIllustration(),
+            (Texts.ResumeButton, Resume)),
+            RemoteScreen.Story);
+    }
+
+    private void ShowDemoEnd()
+    {
+        ShowScreen(() => MenuScreen.Create(
+            Texts.DemoEndTitle,
+            Texts.DemoEnd,
+            (Texts.RestartDemoButton, () => StartLevel(0)),
+            (Texts.MainMenuButton, ShowTitle)),
+            RemoteScreen.Victory);
+    }
+
     private void ShowSpacioCreatura(Action done)
     {
         ShowScreen(() => MenuScreen.CreateIllustrated(
@@ -421,6 +446,10 @@ public partial class Main : Node
             if (next < _levels.Count)
             {
                 buttons.Add((Texts.NextLevelButton, () => StartLevel(next)));
+            }
+            else
+            {
+                buttons.Add((Texts.NextButton, ShowDemoEnd));
             }
 
             buttons.Add((Texts.PlayAgainButton, () => StartLevel(index)));
@@ -452,18 +481,24 @@ public partial class Main : Node
     {
         var index = _levelIndex;
         var reason = _game?.LossReason ?? LossReason.Captured;
+        var hasWater = _game?.Level.Cells.Contains(Terrain.Water) ?? false;
+        var hasChests = _game?.Chests.Count > 0;
+        var strandedTitle = hasWater ? Texts.StrandedTitle : hasChests ? Texts.StrandedByChestsTitle : Texts.StuckTitle;
+        var strandedText = hasWater ? Texts.Stranded : hasChests ? Texts.StrandedByChests : Texts.Stuck;
         Sounds.Play("end.lose", DefeatJingleDelay);
         ShowScreen(() => MenuScreen.Create(
             reason switch
             {
-                LossReason.Stranded => Texts.StrandedTitle,
+                LossReason.Stranded => strandedTitle,
                 LossReason.Fainted => Texts.FaintedTitle,
+                LossReason.Impaled => Texts.ImpaledTitle,
                 _ => Texts.DefeatTitle,
             },
             reason switch
             {
-                LossReason.Stranded => Texts.Stranded,
+                LossReason.Stranded => strandedText,
                 LossReason.Fainted => Texts.Fainted,
+                LossReason.Impaled => Texts.Impaled,
                 _ => Texts.Defeat,
             },
             new[] { GuiAssets.Cross },
@@ -746,7 +781,7 @@ public partial class Main : Node
         _hud.Visible = true;
         _firstCreature = null;
         _pendingConclusion = false;
-        _hud.ShowMessage(Texts.LevelStart(loaded.Definition.Name));
+        _hud.ShowMessage(Texts.LevelStart(Texts.LevelName(levelFile, loaded.Definition.Name)));
         SaveProgress();
         Refresh();
         _camera.ResetSmoothing();
@@ -779,11 +814,17 @@ public partial class Main : Node
             return;
         }
 
-        if (game.IsContainer(cell))
+        if (game.IsBigObject(cell))
         {
             if (game.Magus.Position.IsAdjacentTo(cell))
             {
-                Apply(Play(new BreakAction(cell)), cell, TapKind.Move);
+                Apply(Play(game.IsChest(cell) ? new ChestAction(cell) : new BreakAction(cell)), cell, TapKind.Move);
+                return;
+            }
+
+            if (game.CanSwapObjects)
+            {
+                TapFirstCreature(game, cell);
                 return;
             }
 
@@ -791,9 +832,9 @@ public partial class Main : Node
             return;
         }
 
-        if (game.Script is not null && game.Level.Alcoves.Contains(cell))
+        if (game.Script is not null && (game.Level.Alcoves.Contains(cell) || game.Level.TerrainAt(cell) == Terrain.Altar))
         {
-            if (game.Magus.Position.IsAdjacentTo(cell) && !game.IsActivated(cell))
+            if (game.Activables().Contains(cell))
             {
                 Apply(Play(new ActivateAction(cell)), cell, TapKind.Move);
                 return;
@@ -834,7 +875,7 @@ public partial class Main : Node
 
     private void TapFirstCreature(Game game, Cell cell)
     {
-        var candidates = game.SwapCandidates().Select(monster => monster.Position).ToList();
+        var candidates = game.SwapTargets().ToList();
         if (!candidates.Contains(cell) || candidates.Count < 2)
         {
             Reject(cell);
@@ -863,7 +904,7 @@ public partial class Main : Node
             return;
         }
 
-        var candidates = game.SwapCandidates().Select(monster => monster.Position).ToList();
+        var candidates = game.SwapTargets().ToList();
         if (!candidates.Contains(cell))
         {
             Reject(cell);
@@ -895,7 +936,7 @@ public partial class Main : Node
 
         if (!result.Success)
         {
-            if (result.Error == ActionError.GrilleNeedsLever)
+            if (result.Error is ActionError.GrilleNeedsLever or ActionError.DoorLocked)
             {
                 _view.Flash(cell, TapKind.Invalid);
                 Sounds.Play("gr.locked");
@@ -916,6 +957,11 @@ public partial class Main : Node
 
         _view.Flash(cell, kind);
         _firstCreature = null;
+        if (result.Events.Any(gameEvent => gameEvent is ScrollTaken))
+        {
+            _announceScroll = true;
+        }
+
         SaveProgress();
         _view.PlayEvents(result.Events);
         if (_view.IsBusy)
@@ -962,6 +1008,13 @@ public partial class Main : Node
 
         Refresh();
 
+        if (_announceScroll && _game.Status == GameStatus.Playing)
+        {
+            _announceScroll = false;
+            ShowScroll();
+            return;
+        }
+
         if (_game.Status == GameStatus.Won)
         {
             ShowVictory();
@@ -984,8 +1037,8 @@ public partial class Main : Node
         _hud.Refresh(magus.Magic, _game.Rules.MagicMax, _game.Turn);
         _camera.Position = _view.MagusFocus;
 
-        var candidates = _game.SwapCandidates().Select(monster => monster.Position).ToList();
-        var zone = _game.TeleportTargets().Concat(candidates).Append(magus.Position);
+        var candidates = _game.SwapTargets().ToList();
+        var zone = _game.SightZone().Concat(candidates).Append(magus.Position);
         _view.SetMagicZone(zone, canCast);
 
         if (_firstCreature is { } first)
@@ -1107,13 +1160,13 @@ public partial class Main : Node
         return result;
     }
 
-    private bool IsUnlocked(int index) => index == 0 || _records.IsCompleted(_levels[index - 1]);
+    private bool IsUnlocked(int index) => index == 0 || OS.IsDebugBuild() || _records.IsCompleted(_levels[index - 1]);
 
     private string LevelName(string levelFile)
     {
         if (_levelNames.TryGetValue(levelFile, out var name))
         {
-            return name;
+            return Texts.LevelName(levelFile, name);
         }
 
         if (_legend is null)
@@ -1132,7 +1185,7 @@ public partial class Main : Node
         }
 
         _levelNames[levelFile] = name;
-        return name;
+        return Texts.LevelName(levelFile, name);
     }
 
     private void CloseInfoPopup()

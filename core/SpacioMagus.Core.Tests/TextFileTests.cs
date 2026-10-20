@@ -85,6 +85,19 @@ public class TextFileTests
         Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
     }
 
+    [Fact]
+    public void EveryListedLevelHasATranslatedName()
+    {
+        var reference = LoadAll()[ReferenceLanguage];
+        var levels = LevelList.Parse("niveaux.txt", File.ReadAllText(Path.Combine(GameDirectory(), "data", "niveaux.txt")));
+        var missing = levels
+            .Select(file => Path.GetFileNameWithoutExtension(file) + "_nom")
+            .Where(key => !reference.ContainsKey(key))
+            .ToList();
+
+        Assert.True(missing.Count == 0, $"textes_{ReferenceLanguage}.txt : clés absentes {string.Join(", ", missing)}.");
+    }
+
     private static Dictionary<string, IReadOnlyDictionary<string, string>> LoadAll()
     {
         var directory = Path.Combine(GameDirectory(), "data");

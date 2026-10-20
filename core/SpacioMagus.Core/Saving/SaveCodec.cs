@@ -24,6 +24,7 @@ public static class SaveCodec
     private const string BreakType = "briser";
     private const string LeverType = "manette";
     private const string ActivateType = "activer";
+    private const string ChestType = "coffre";
 
     public static string Serialize(SaveGame save)
     {
@@ -144,6 +145,10 @@ public static class SaveCodec
                 writer.WriteString(TypeKey, ActivateType);
                 WritePosition(writer, activate.Target, "x", "y");
                 break;
+            case ChestAction chest:
+                writer.WriteString(TypeKey, ChestType);
+                WritePosition(writer, chest.Target, "x", "y");
+                break;
             default:
                 throw new ArgumentException($"Action non sauvegardable : {action.GetType().Name}.", nameof(action));
         }
@@ -172,6 +177,7 @@ public static class SaveCodec
             BreakType => new BreakAction(ReadPosition(element, "x", "y", context)),
             LeverType => new LeverAction(ReadPosition(element, "x", "y", context)),
             ActivateType => new ActivateAction(ReadPosition(element, "x", "y", context)),
+            ChestType => new ChestAction(ReadPosition(element, "x", "y", context)),
             _ => throw Fail(fileName, $"Action {index} : type inconnu « {type} »."),
         };
     }

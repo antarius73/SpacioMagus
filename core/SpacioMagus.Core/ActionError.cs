@@ -23,4 +23,7 @@ public enum ActionError
     SwapBlocked,
     NotActivable,
     AlreadyActive,
+    NotAChest,
+    DoorLocked,
+    LeverAlreadyPulled,
 }

@@ -28,6 +28,13 @@ it.break_vase = jeu/vase_brise_1.wav jeu/vase_brise_2.wav, 2
 it.reveal     = jeu/item_1.wav, 12
 it.drink      = jeu/powerup_4.wav, 3
 it.alcove     = jeu/choeur_alcove.wav, -4
+it.chest_open = jeu/coffre_clac.wav, -2
+it.chest_close= jeu/coffre_clac.wav, -2
+it.key        = jeu/cle.wav, 8
+it.scroll     = jeu/parchemin.wav, 12
+dr.unlock     = jeu/serrure.wav, 1
+tr.spikes     = jeu/pointes.wav, -3
+end.impaled   = jeu/empale.wav, 6
 
 mo.mut_on     = jeu/riser_4.wav, 11
 mo.mut_off    = jeu/shutdown_1.wav, -2

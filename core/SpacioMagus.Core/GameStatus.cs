@@ -13,4 +13,5 @@ public enum LossReason
     Captured,
     Stranded,
     Fainted,
+    Impaled,
 }

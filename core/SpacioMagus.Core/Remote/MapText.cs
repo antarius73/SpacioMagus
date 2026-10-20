@@ -7,9 +7,10 @@ public static class MapText
     public const string Legend =
         "@ magus, b blob vert, r blob rouge, c chauve-souris, ! fiole, " +
         "# mur, (espace) vide, . sol, > escalier de sortie, < escalier montant (décor), " +
-        "P porte fermée, H herse fermée (manette), / porte ou herse ouverte, m manette, a arche, " +
+        "P porte fermée, H herse fermée (manette), / porte ou herse ouverte, m manette, M manette tirée en attente de sa jumelle, a arche, " +
         "* brasero, ~ eau, u tonneau, k caisse, j vase (U K J : contenant avec fiole révélée), " +
-        "A alcôve éteinte, L alcôve allumée. Coordonnées (x, y) : origine en haut à gauche, y vers le bas.";
+        "A alcôve éteinte, L alcôve allumée, C coffre, Q clé, V porte verrouillée, ^ piège (pointes rentrées), X piège (pointes sorties), " +
+        "T autel, S autel portant le parchemin. Coordonnées (x, y) : origine en haut à gauche, y vers le bas.";
 
     public static IReadOnlyList<string> Rows(Game game)
     {
@@ -95,6 +96,11 @@ public static class MapText
             return game.IsActivated(position) ? 'L' : 'A';
         }
 
+        if (game.Keys.Contains(position))
+        {
+            return 'Q';
+        }
+
         var terrain = game.Level.TerrainAt(position);
         if (terrain == Terrain.Grille)
         {
@@ -103,15 +109,37 @@ public static class MapText
                 return '/';
             }
 
-            return game.Level.IsDoor(position) ? 'P' : 'H';
+            return game.IsLocked(position) ? 'V' : game.Level.IsDoor(position) ? 'P' : 'H';
         }
 
-        if (LevelDefinition.IsContainer(terrain) && !game.IsContainer(position))
+        var revealed = game.PotionsAreRevealed && game.ContainerHasPotion(position);
+        switch (game.ObjectKind(position))
+        {
+            case Terrain.Barrel:
+                return revealed ? 'U' : 'u';
+            case Terrain.Crate:
+                return revealed ? 'K' : 'k';
+            case Terrain.Vase:
+                return revealed ? 'J' : 'j';
+            case Terrain.Chest:
+                return 'C';
+        }
+
+        if (LevelDefinition.IsContainer(terrain) || terrain == Terrain.Chest)
         {
             return '.';
         }
 
-        var revealed = game.PotionsAreRevealed && game.ContainerHasPotion(position);
+        if (terrain == Terrain.Spikes)
+        {
+            return game.SpikesRaised(position) ? 'X' : '^';
+        }
+
+        if (terrain == Terrain.Altar)
+        {
+            return game.Script is not null && !game.CanSwapObjects && !game.IsActivated(position) ? 'S' : 'T';
+        }
+
         return terrain switch
         {
             Terrain.Void => ' ',
@@ -124,7 +152,7 @@ public static class MapText
             Terrain.Barrel => revealed ? 'U' : 'u',
             Terrain.Crate => revealed ? 'K' : 'k',
             Terrain.Vase => revealed ? 'J' : 'j',
-            Terrain.Lever => 'm',
+            Terrain.Lever => game.IsLeverPulled(position) ? 'M' : 'm',
             Terrain.Arch => 'a',
             _ => '?',
         };

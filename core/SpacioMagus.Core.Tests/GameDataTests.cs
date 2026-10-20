@@ -109,6 +109,34 @@ public class GameDataTests
         Assert.Equal(GameStatus.Lost, game.Status);
     }
 
+    [Fact]
+    public void Level03FinalSpikesCanBeCrossedOnFoot()
+    {
+        var level = LevelFile.Parse(
+            "niveau_03.txt",
+            File.ReadAllText(Path.Combine(GameDirectory.Value, "niveaux", "niveau_03.txt")),
+            LoadLegend(),
+            LoadSettings().Rules);
+        var game = new Game(level.Definition, level.Rules, new FixedRandom());
+        var outer = new Position(4, 4);
+        var inner = new Position(4, 3);
+        var period = LevelDefinition.SpikePeriod;
+        var outerUp = new bool[period * 2];
+        var innerUp = new bool[period * 2];
+        for (var turn = 0; turn < period * 2; turn++)
+        {
+            outerUp[turn] = game.SpikesRaised(outer);
+            innerUp[turn] = game.SpikesRaised(inner);
+            game.Wait();
+            Assert.Equal(GameStatus.Playing, game.Status);
+        }
+
+        var crossable = Enumerable.Range(0, period).Any(start =>
+            !outerUp[start] && !outerUp[start + 1] && !innerUp[start + 1] && !innerUp[start + 2] && !innerUp[start + 3]);
+
+        Assert.True(crossable, "Les pièges de la porte finale ne laissent pas le temps d'entrer, d'ouvrir la porte et de sortir à pied.");
+    }
+
     private static Game NewLevel01()
     {
         var level = LoadLevel01();

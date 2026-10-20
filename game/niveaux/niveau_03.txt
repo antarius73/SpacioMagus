@@ -1,0 +1,65 @@
+[niveau]
+nom = La salle des coffres
+etoiles = 40, 50
+script = parchemin_creatura
+
+[reperes]
+1 = chauve_souris, ronde = 1,19 2,19 3,19 3,18 3,17 3,18 3,19 2,19
+
+[carte]
+#########
+#.C#>#.Q#
+#p.#L#..#
+#C.#^#bC#
+#C.#^#.C#
+#CCCC..b#
+#p....C.#
+#.C.C.C.#
+#.b....C#
+#pC.CbCp#
+#CC.C.C.#
+#b....CC#
+#C.CCC.p#
+#C.C.CbC#
+#..C.C..#
+#......p#
+###G#####
+#m^...^m#
+###.#####
+#1..#TT.#
+###.#...#
+###.##P##
+#e@.....#
+#########
+
+[manettes]
+1,17 = 3,16
+7,17 = 3,16
+
+[pieges]
+4,4 = 0
+4,3 = 2
+
+[decor]
+ t  t
+
+
+
+   t t
+
+   g
+
+     g
+
+     g
+
+
+
+ g  g  g
+
+  t t
+
+       t
+
+
+     t t

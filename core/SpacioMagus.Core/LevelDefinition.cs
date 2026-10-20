@@ -4,6 +4,7 @@ public sealed class LevelDefinition
 {
     private readonly Terrain[] _cells;
     private readonly HashSet<Position> _doors;
+    private readonly HashSet<Position> _lockedDoors;
 
     public LevelDefinition(
         string name,
@@ -17,7 +18,10 @@ public sealed class LevelDefinition
         IReadOnlyList<Position>? doors = null,
         IReadOnlyList<Position>? alcoves = null,
         IReadOnlyDictionary<Position, Position>? levers = null,
-        string? script = null)
+        string? script = null,
+        IReadOnlyList<Position>? keys = null,
+        IReadOnlyList<Position>? lockedDoors = null,
+        IReadOnlyDictionary<Position, int>? spikeOffsets = null)
     {
         ArgumentNullException.ThrowIfNull(cells);
         ArgumentNullException.ThrowIfNull(monsters);
@@ -46,6 +50,10 @@ public sealed class LevelDefinition
         Alcoves = (alcoves ?? Array.Empty<Position>()).ToArray();
         Levers = new Dictionary<Position, Position>(levers ?? new Dictionary<Position, Position>());
         Script = string.IsNullOrWhiteSpace(script) ? null : script;
+        Keys = (keys ?? Array.Empty<Position>()).ToArray();
+        LockedDoors = (lockedDoors ?? Array.Empty<Position>()).ToArray();
+        _lockedDoors = new HashSet<Position>(LockedDoors);
+        SpikeOffsets = new Dictionary<Position, int>(spikeOffsets ?? new Dictionary<Position, int>());
         Validate();
     }
 
@@ -73,22 +81,41 @@ public sealed class LevelDefinition
 
     public IReadOnlyDictionary<Position, Position> Levers { get; }
 
+    public IReadOnlyList<Position> Keys { get; }
+
+    public IReadOnlyList<Position> LockedDoors { get; }
+
+    public IReadOnlyDictionary<Position, int> SpikeOffsets { get; }
+
+    public const int SpikePeriod = 4;
+
+    public int SpikeOffset(Position spikes) => SpikeOffsets.TryGetValue(spikes, out var offset) ? offset : 0;
+
+    public bool IsLockedDoor(Position position) => _lockedDoors.Contains(position);
+
+    public IReadOnlyList<Position> LeversOf(Position grille) =>
+        Levers.Where(entry => entry.Value == grille).Select(entry => entry.Key).OrderBy(lever => lever.Y).ThenBy(lever => lever.X).ToArray();
+
     public Position? LeverTarget(Position lever) => Levers.TryGetValue(lever, out var grille) ? grille : null;
 
     public bool IsDoor(Position position) => _doors.Contains(position);
 
-    public static bool IsObstacle(Terrain terrain) => terrain is Terrain.Brazier or Terrain.Water or Terrain.Lever or Terrain.StairsUp;
+    public static bool IsObstacle(Terrain terrain) => terrain is Terrain.Brazier or Terrain.Water or Terrain.Lever or Terrain.StairsUp or Terrain.Altar;
 
     public static bool IsContainer(Terrain terrain) => terrain is Terrain.Barrel or Terrain.Crate or Terrain.Vase;
 
+    public static bool IsObjectGround(Terrain terrain) =>
+        terrain is Terrain.Floor or Terrain.Spikes or Terrain.Chest || IsContainer(terrain);
+
     public static bool IsGround(Terrain terrain) =>
-        terrain is Terrain.Floor or Terrain.Stairs || IsObstacle(terrain) || IsContainer(terrain);
+        terrain is Terrain.Floor or Terrain.Stairs or Terrain.Spikes or Terrain.Chest || IsObstacle(terrain) || IsContainer(terrain);
 
     public static bool IsSolid(Terrain terrain) => terrain is Terrain.Wall or Terrain.Void;
 
     public static bool IsFlyable(Terrain terrain) =>
         terrain is Terrain.Floor or Terrain.Stairs or Terrain.Arch or Terrain.Water
-            or Terrain.Barrel or Terrain.Crate or Terrain.Vase or Terrain.Lever;
+            or Terrain.Barrel or Terrain.Crate or Terrain.Vase or Terrain.Lever
+            or Terrain.Chest or Terrain.Spikes or Terrain.Altar;
 
     private static bool CanStart(MonsterKind kind, Terrain terrain) =>
         kind == MonsterKind.ChauveSouris ? IsFlyable(terrain) : IsOpenGround(terrain);
@@ -146,7 +173,7 @@ public sealed class LevelDefinition
         throw new LevelDefinitionException($"{label} en {cell} doit être entre deux murs, avec un passage de chaque côté.");
     }
 
-    private static bool IsOpenGround(Terrain terrain) => terrain is Terrain.Floor or Terrain.Stairs or Terrain.Arch;
+    private static bool IsOpenGround(Terrain terrain) => terrain is Terrain.Floor or Terrain.Stairs or Terrain.Arch or Terrain.Spikes;
 
     private void ValidateRoute(MonsterSpawn spawn)
     {
@@ -181,6 +208,38 @@ public sealed class LevelDefinition
         foreach (var door in Doors.Where(door => TerrainAt(door) != Terrain.Grille))
         {
             throw new LevelDefinitionException($"La porte en {door} doit être sur une case de grille.");
+        }
+
+        foreach (var door in LockedDoors.Where(door => !IsDoor(door)))
+        {
+            throw new LevelDefinitionException($"La porte verrouillée en {door} doit aussi être déclarée comme porte.");
+        }
+
+        var keys = new HashSet<Position>();
+        foreach (var key in Keys)
+        {
+            if (TerrainAt(key) != Terrain.Floor)
+            {
+                throw new LevelDefinitionException($"La clé en {key} doit être sur une case de sol.");
+            }
+
+            if (!keys.Add(key))
+            {
+                throw new LevelDefinitionException($"Deux clés sur la même case {key}.");
+            }
+        }
+
+        foreach (var (spikes, offset) in SpikeOffsets)
+        {
+            if (TerrainAt(spikes) != Terrain.Spikes)
+            {
+                throw new LevelDefinitionException($"Le décalage déclaré en {spikes} ne porte pas sur un piège.");
+            }
+
+            if (offset < 0 || offset >= SpikePeriod)
+            {
+                throw new LevelDefinitionException($"Le décalage du piège en {spikes} doit être entre 0 et {SpikePeriod - 1} : {offset}.");
+            }
         }
 
         if (TerrainAt(MagusStart) != Terrain.Floor)

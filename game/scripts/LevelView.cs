@@ -223,6 +223,20 @@ public partial class LevelView : Node2D
     private const double CrackChance = 0.4;
     private const double WebChance = 0.5;
     private const double GrilleAnimationDuration = 0.35;
+    private const int ChestFrames = 5;
+    private const double ChestAnimationDuration = 0.3;
+    private const int SpikeFrames = 5;
+    private const double SpikeAnimationDuration = 0.15;
+    private const float KeyBob = 1f;
+    private const int BloodFrameSize = 96;
+    private const int BloodColumns = 5;
+    private const int BloodFrames = 7;
+    private const double BloodFrameDuration = 0.08;
+    private const double ImpaleHold = 0.6;
+    private const float ScrollLift = 21f;
+    private static readonly Rect2 KeyRegion = new(0, 0, 14, 9);
+    private static readonly Rect2[] CoinRegions = { new(24, 0, 21, 19), new(48, 0, 17, 15), new(72, 0, 12, 9) };
+    private static readonly Rect2 AltarRegion = new(39, 129, 50, 30);
     private const int GrilleFrames = 5;
     private const int DoorFrameStride = 48;
     private const int ThickDoorColumn = 32;
@@ -296,6 +310,10 @@ public partial class LevelView : Node2D
     private readonly HashSet<(int X, int Y)> _reflectionArea = new();
     private readonly List<(int TileId, Vector2 Position)>[] _reflections = { new(), new() };
     private readonly List<Cell> _levers = new();
+    private readonly Dictionary<Cell, (bool Open, double ChangedAt)> _chestStates = new();
+    private readonly Dictionary<Cell, (bool Raised, double ChangedAt)> _spikeStates = new();
+    private readonly List<(Rect2 Source, Vector2 Position)> _coins = new();
+    private readonly List<(Cell First, int Width)> _altars = new();
     private readonly List<Cell> _alcoves = new();
     private readonly List<Cell> _stairsUp = new();
     private readonly List<Cell> _arches = new();
@@ -324,6 +342,12 @@ public partial class LevelView : Node2D
     private Texture2D _unlitCandles = null!;
     private Texture2D _auraSheet = null!;
     private Texture2D _sparkleSheet = null!;
+    private Texture2D _chestSheet = null!;
+    private Texture2D _spikeSheet = null!;
+    private Texture2D _treasures = null!;
+    private Texture2D _scroll = null!;
+    private Texture2D _blood = null!;
+    private (Cell Cell, double Start)? _impale;
     private Texture2D _mechanisms = null!;
     private TorchAmbience _ambience = null!;
     private TorchAmbience _waterAmbience = null!;
@@ -349,6 +373,7 @@ public partial class LevelView : Node2D
 
     public bool IsBusy =>
         (_teleport is { } teleport && _time - teleport.Start < SpellFx.TeleportDuration)
+        || (_impale is { } impale && _time - impale.Start < ImpaleDuration)
         || (_swap is { } swap && _time - swap.Start < SpellFx.SwapDuration);
 
     public Vector2 MagusFocus
@@ -409,6 +434,11 @@ public partial class LevelView : Node2D
         _unlitCandles = LoadTexture("res://assets/sprites/bougies_eteintes.png");
         _auraSheet = LoadTexture("res://assets/sprites/aura_brasero.png");
         _sparkleSheet = LoadTexture("res://assets/sprites/etincelles.png");
+        _chestSheet = LoadTexture("res://assets/sprites/coffre.png");
+        _spikeSheet = LoadTexture("res://assets/sprites/piege.png");
+        _treasures = LoadTexture("res://assets/sprites/tresors.png");
+        _scroll = LoadTexture("res://assets/sprites/parchemin.png");
+        _blood = LoadTexture("res://assets/fx/sang.png");
         _mechanisms = LoadTexture("res://assets/sprites/donjon_mecanismes.png");
         _ambience = new TorchAmbience { Name = "Torches", Listener = () => MagusFocus };
         AddChild(_ambience);
@@ -426,6 +456,9 @@ public partial class LevelView : Node2D
         GenerateDecor(game.Level, new Random());
         _grilleStates.Clear();
         _alcoveLitAt.Clear();
+        _chestStates.Clear();
+        _spikeStates.Clear();
+        _impale = null;
         _magusDirection = 0;
         _magusGlide = null;
         _teleport = null;
@@ -516,6 +549,11 @@ public partial class LevelView : Node2D
     public void PlayEvents(IReadOnlyList<GameEvent> events)
     {
         var monstersStart = _time;
+        MoveObjectLooks(events.OfType<ObjectMoved>().ToList());
+        if (events.OfType<MagusImpaled>().FirstOrDefault() is { } impaled)
+        {
+            _impale = (impaled.Position, _time + LevelView.MoveDuration);
+        }
         foreach (var gameEvent in events)
         {
             if (gameEvent is ContainerBroken broken && _containerLooks.TryGetValue(broken.Position, out var look))
@@ -570,7 +608,33 @@ public partial class LevelView : Node2D
         }
 
         UpdateFacings(events, monstersStart);
-        TurnSounds.Play(events, monstersStart - _time, _game?.Level);
+        TurnSounds.Play(events, monstersStart - _time, _game?.Level, _game?.Magus.Position);
+    }
+
+    private void MoveObjectLooks(IReadOnlyList<ObjectMoved> moves)
+    {
+        if (moves.Count == 0)
+        {
+            return;
+        }
+
+        var looks = moves.Where(move => _containerLooks.ContainsKey(move.From)).Select(move => (move.To, Look: _containerLooks[move.From])).ToList();
+        var chests = moves.Where(move => _chestStates.ContainsKey(move.From)).Select(move => (move.To, State: _chestStates[move.From])).ToList();
+        foreach (var move in moves)
+        {
+            _containerLooks.Remove(move.From);
+            _chestStates.Remove(move.From);
+        }
+
+        foreach (var (to, look) in looks)
+        {
+            _containerLooks[to] = look;
+        }
+
+        foreach (var (to, state) in chests)
+        {
+            _chestStates[to] = (state.Open, double.NegativeInfinity);
+        }
     }
 
     private void UpdateFacings(IReadOnlyList<GameEvent> events, double since)
@@ -709,6 +773,18 @@ public partial class LevelView : Node2D
             DrawParoiTile(tile);
         }
 
+        foreach (var spikes in _game.SpikeCells)
+        {
+            var spikeFrame = SpikeFrame(spikes);
+            var spikeTarget = CellRect(spikes);
+            if (AboveThinWall(spikes))
+            {
+                spikeTarget.Position -= new Vector2(0, SubTile / 2f);
+            }
+
+            DrawTextureRectRegion(_spikeSheet, spikeTarget, new Rect2(spikeFrame * Tile, 0, Tile, Tile));
+        }
+
         foreach (var stairs in _stairs)
         {
             DrawTextureRectRegion(_objects, CellRect(stairs), StairsRegion);
@@ -716,10 +792,18 @@ public partial class LevelView : Node2D
 
         foreach (var stairs in _stairsUp)
         {
-            DrawTextureRectRegion(
-                _objects,
-                new Rect2(stairs.X * Tile + Tile - StairsUpRegion.Size.X, stairs.Y * Tile - StairsUpRiseY, StairsUpRegion.Size.X, StairsUpRegion.Size.Y),
-                StairsUpRegion);
+            var target = new Rect2(stairs.X * Tile + Tile - StairsUpRegion.Size.X, stairs.Y * Tile - StairsUpRiseY, StairsUpRegion.Size.X, StairsUpRegion.Size.Y);
+            if (DescendsEast(_game.Level, stairs))
+            {
+                var left = stairs.X * Tile;
+                DrawSetTransform(new Vector2(left * 2 + Tile, 0), 0f, new Vector2(-1f, 1f));
+                DrawTextureRectRegion(_objects, new Rect2(left + Tile - StairsUpRegion.Size.X, target.Position.Y, target.Size.X, target.Size.Y), StairsUpRegion);
+                DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+            }
+            else
+            {
+                DrawTextureRectRegion(_objects, target, StairsUpRegion);
+            }
         }
 
         foreach (var (source, position) in _banners)
@@ -741,6 +825,20 @@ public partial class LevelView : Node2D
         foreach (var (position, flipX) in _webs)
         {
             DrawWeb(position, flipX);
+        }
+
+        foreach (var (source, position) in _coins)
+        {
+            DrawTextureRectRegion(_treasures, new Rect2(position, source.Size), source);
+        }
+
+        foreach (var key in _game.Keys)
+        {
+            var bob = Mathf.Round(Mathf.Sin((float)_time * 3f) * KeyBob);
+            DrawTextureRectRegion(
+                _treasures,
+                new Rect2(key.X * Tile + (Tile - KeyRegion.Size.X) / 2f, key.Y * Tile + (Tile - KeyRegion.Size.Y) / 2f + bob, KeyRegion.Size.X, KeyRegion.Size.Y),
+                KeyRegion);
         }
 
         if (_game.Monsters.Any(monster => monster.Kind is MonsterKind.BlobVert or MonsterKind.BlobRouge))
@@ -787,6 +885,25 @@ public partial class LevelView : Node2D
             }
         }
 
+        foreach (var chest in _game.Chests.Keys)
+        {
+            var chestFrame = ChestFrame(chest);
+            DrawTextureRectRegion(_chestSheet, new Rect2(chest.X * Tile, chest.Y * Tile - ContainerBottomMargin, Tile, Tile), new Rect2(chestFrame * Tile, 0, Tile, Tile));
+        }
+
+        foreach (var (first, width) in _altars)
+        {
+            var altar = AltarRect(first, width);
+            DrawTextureRectRegion(_items, altar, AltarRegion);
+            if (!_game.CanSwapObjects && _game.Script is not null)
+            {
+                var center = new Vector2(altar.Position.X + altar.Size.X / 2f, altar.Position.Y + altar.Size.Y - ScrollLift);
+                DrawTexture(_scroll, new Vector2(Mathf.Round(center.X - _scroll.GetWidth() / 2f), Mathf.Round(center.Y - _scroll.GetHeight() / 2f)));
+                var sparkle = new Rect2((int)(_time * SparkleFrameRate) % SparkleFrames * SparkleSize, 0, SparkleSize, SparkleSize);
+                DrawTextureRectRegion(_sparkleSheet, new Rect2(center.X - SparkleSize / 2f, center.Y - SparkleSize / 2f, SparkleSize, SparkleSize), sparkle);
+            }
+        }
+
         if (_game.PotionsAreRevealed)
         {
             var sparkle = new Rect2((int)(_time * SparkleFrameRate) % SparkleFrames * SparkleSize, 0, SparkleSize, SparkleSize);
@@ -822,15 +939,7 @@ public partial class LevelView : Node2D
 
         foreach (var lever in _levers)
         {
-            var leverFrame = _game.Level.LeverTarget(lever) is { } target && _game.GrilleAt(target) is { } herse ? GrilleFrame(herse) : 0;
-            DrawTextureRectRegion(
-                _mechanisms,
-                new Rect2(
-                    lever.X * Tile + (Tile - LeverRegion.Size.X) / 2f,
-                    lever.Y * Tile + Tile - LeverRegion.Size.Y - LeverBottomMargin,
-                    LeverRegion.Size.X,
-                    LeverRegion.Size.Y),
-                new Rect2(LeverRegion.Position.X + leverFrame * LeverFrameStride, LeverRegion.Position.Y, LeverRegion.Size.X, LeverRegion.Size.Y));
+            DrawLever(lever);
         }
 
         var brazierSource = new Rect2(BrazierColumn, (int)(_time * 8) % FireFrames * FireFrameHeight, BrazierSize, BrazierSize);
@@ -889,6 +998,7 @@ public partial class LevelView : Node2D
         DrawAura(SpellFx.AuraBack);
         DrawMagus(_game.Magus.Position);
         DrawAura(SpellFx.AuraFront);
+        DrawBlood();
 
         foreach (var (tileId, position) in _ledges)
         {
@@ -1040,11 +1150,11 @@ public partial class LevelView : Node2D
 
     private static bool IsWalkGround(Terrain terrain) =>
         terrain is Terrain.Floor or Terrain.Stairs or Terrain.Brazier or Terrain.Water or Terrain.Barrel or Terrain.Crate
-            or Terrain.Vase or Terrain.Lever or Terrain.StairsUp;
+            or Terrain.Vase or Terrain.Lever or Terrain.StairsUp or Terrain.Chest or Terrain.Spikes or Terrain.Altar;
 
     private static bool IsOpenGround(Terrain terrain) =>
         terrain is Terrain.Floor or Terrain.Stairs or Terrain.Grille or Terrain.Arch or Terrain.Brazier or Terrain.Water or Terrain.Barrel
-            or Terrain.Crate or Terrain.Vase or Terrain.Lever or Terrain.StairsUp;
+            or Terrain.Crate or Terrain.Vase or Terrain.Lever or Terrain.StairsUp or Terrain.Chest or Terrain.Spikes or Terrain.Altar;
 
     private static int Pick(bool left, bool right, int firstTile) =>
         left && right ? firstTile + 1 : !left ? firstTile : firstTile + 2;
@@ -1057,8 +1167,9 @@ public partial class LevelView : Node2D
         }
 
         var terrain = level.TerrainAt(cell);
-        if (terrain is Terrain.Floor or Terrain.Stairs
-            || (LevelDefinition.IsContainer(terrain) && _game is not null && !_game.IsContainer(cell)))
+        var holdsObject = _game is not null && _game.IsBigObject(cell);
+        if (!holdsObject
+            && (terrain is Terrain.Floor or Terrain.Stairs or Terrain.Chest || LevelDefinition.IsContainer(terrain)))
         {
             return false;
         }
@@ -1351,6 +1462,93 @@ public partial class LevelView : Node2D
             DrawTextureRectRegion(_doors, new Rect2(x, y, Tile, Tile), new Rect2(ThickGrilleColumn, ThickDoorTop + frameTop, Tile, Tile));
         }
     }
+
+    private void DrawLever(Cell lever)
+    {
+        if (_game is null)
+        {
+            return;
+        }
+
+        var leverFrame = _game.IsLeverPulled(lever)
+            ? GrilleFrames - 1
+            : _game.Level.LeverTarget(lever) is { } target && _game.GrilleAt(target) is { } herse ? GrilleFrame(herse) : 0;
+        DrawTextureRectRegion(
+            _mechanisms,
+            new Rect2(
+                lever.X * Tile + (Tile - LeverRegion.Size.X) / 2f,
+                AboveThinWall(lever)
+                    ? lever.Y * Tile + SubTile - LeverRegion.Size.Y - 1
+                    : lever.Y * Tile + Tile - LeverRegion.Size.Y - LeverBottomMargin,
+                LeverRegion.Size.X,
+                LeverRegion.Size.Y),
+            new Rect2(LeverRegion.Position.X + leverFrame * LeverFrameStride, LeverRegion.Position.Y, LeverRegion.Size.X, LeverRegion.Size.Y));
+    }
+
+    private static double ImpaleDuration => SpikeAnimationDuration + BloodFrames * BloodFrameDuration + ImpaleHold;
+
+    private void DrawBlood()
+    {
+        if (_impale is not { } impale)
+        {
+            return;
+        }
+
+        var elapsed = _time - impale.Start - SpikeAnimationDuration;
+        if (elapsed < 0)
+        {
+            return;
+        }
+
+        var frame = Math.Min(BloodFrames - 1, (int)(elapsed / BloodFrameDuration));
+        var center = CellCenter(impale.Cell);
+        DrawTextureRectRegion(
+            _blood,
+            new Rect2(center.X - BloodFrameSize / 2f, center.Y - BloodFrameSize / 2f, BloodFrameSize, BloodFrameSize),
+            new Rect2(frame % BloodColumns * BloodFrameSize, frame / BloodColumns * BloodFrameSize, BloodFrameSize, BloodFrameSize));
+    }
+
+    private bool AboveThinWall(Cell cell) => _parois.TryGetValue(new Cell(cell.X, cell.Y + 1), out var horizontal) && horizontal;
+
+    private static bool DescendsEast(LevelDefinition level, Cell stairs) =>
+        IsWalkGround(level.TerrainAt(new Cell(stairs.X + 1, stairs.Y))) && !IsWalkGround(level.TerrainAt(new Cell(stairs.X - 1, stairs.Y)));
+
+    private int ChestFrame(Cell chest)
+    {
+        var open = _game?.IsChestOpen(chest) ?? false;
+        var known = _chestStates.TryGetValue(chest, out var state);
+        if (!known || state.Open != open)
+        {
+            state = (open, known ? _time : double.NegativeInfinity);
+            _chestStates[chest] = state;
+        }
+
+        var progress = Math.Clamp((_time - state.ChangedAt) / ChestAnimationDuration, 0.0, 1.0);
+        var openness = state.Open ? progress : 1.0 - progress;
+        return (int)Math.Round(openness * (ChestFrames - 1));
+    }
+
+    private int SpikeFrame(Cell spikes)
+    {
+        var raised = _game?.SpikesRaised(spikes) ?? false;
+        var known = _spikeStates.TryGetValue(spikes, out var state);
+        if (!known || state.Raised != raised)
+        {
+            state = (raised, known ? _time : double.NegativeInfinity);
+            _spikeStates[spikes] = state;
+        }
+
+        var progress = Math.Clamp((_time - state.ChangedAt) / SpikeAnimationDuration, 0.0, 1.0);
+        var height = state.Raised ? progress : 1.0 - progress;
+        return (int)Math.Round(height * (SpikeFrames - 1));
+    }
+
+    private static Rect2 AltarRect(Cell first, int width) =>
+        new(
+            first.X * Tile + (width * Tile - AltarRegion.Size.X) / 2f,
+            first.Y * Tile + Tile - AltarRegion.Size.Y - ContainerBottomMargin,
+            AltarRegion.Size.X,
+            AltarRegion.Size.Y);
 
     private int GrilleFrame(GrilleState grille)
     {
@@ -1730,9 +1928,40 @@ public partial class LevelView : Node2D
             }
         }
 
+        _coins.Clear();
+        _altars.Clear();
+        for (var y = 0; y < level.Height; y++)
+        {
+            for (var x = 0; x < level.Width; x++)
+            {
+                var cell = new Cell(x, y);
+                if (level.TerrainAt(cell) != Terrain.Altar || level.TerrainAt(new Cell(x - 1, y)) == Terrain.Altar)
+                {
+                    continue;
+                }
+
+                var width = 1;
+                while (level.TerrainAt(new Cell(x + width, y)) == Terrain.Altar)
+                {
+                    width++;
+                }
+
+                _altars.Add((cell, width));
+            }
+        }
+
         foreach (var item in _decor)
         {
             var origin = new Vector2(item.Position.X * Tile, item.Position.Y * Tile);
+            if (item.Id == ElementIds.Coins)
+            {
+                var coin = CoinRegions[random.Next(CoinRegions.Length)];
+                _coins.Add((coin, new Vector2(
+                    Mathf.Round(origin.X + (Tile - coin.Size.X) / 2f + random.Next(-4, 5)),
+                    Mathf.Round(origin.Y + Tile - coin.Size.Y - 4 + random.Next(-3, 2)))));
+                continue;
+            }
+
             if (HangingRegions.TryGetValue(item.Id, out var hanging))
             {
                 _banners.Add((hanging, new Vector2(origin.X, origin.Y + BannerOffsetY)));

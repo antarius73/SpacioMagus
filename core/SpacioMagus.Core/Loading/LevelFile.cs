@@ -14,8 +14,9 @@ public static class LevelFile
     private const string DecorSection = "decor";
     private const string MarkersSection = "reperes";
     private const string LeversSection = "manettes";
+    private const string SpikesSection = "pieges";
 
-    private static readonly string[] Sections = { LevelSection, MapSection, DecorSection, MarkersSection, LeversSection };
+    private static readonly string[] Sections = { LevelSection, MapSection, DecorSection, MarkersSection, LeversSection, SpikesSection };
 
     private static readonly Regex ParameterPattern = new(
         @"(?<key>[a-z_]+)\s*=\s*(?<value>[^=]+?)\s*(?=,\s*[a-z_]+\s*=|$)",
@@ -89,6 +90,8 @@ public static class LevelFile
         var monsters = new List<MonsterSpawn>();
         var potions = new List<Position>();
         var doors = new List<Position>();
+        var lockedDoors = new List<Position>();
+        var keys = new List<Position>();
         var usedMarkers = new HashSet<char>();
 
         for (var y = 0; y < height; y++)
@@ -134,7 +137,7 @@ public static class LevelFile
                 {
                     ElementIds.Wall => Terrain.Wall,
                     ElementIds.Void => Terrain.Void,
-                    ElementIds.Grille or ElementIds.Door => Terrain.Grille,
+                    ElementIds.Grille or ElementIds.Door or ElementIds.LockedDoor => Terrain.Grille,
                     ElementIds.Stairs => Terrain.Stairs,
                     ElementIds.Brazier => Terrain.Brazier,
                     ElementIds.Water => Terrain.Water,
@@ -144,6 +147,9 @@ public static class LevelFile
                     ElementIds.Lever => Terrain.Lever,
                     ElementIds.StairsUp => Terrain.StairsUp,
                     ElementIds.Arch => Terrain.Arch,
+                    ElementIds.Chest => Terrain.Chest,
+                    ElementIds.Spikes => Terrain.Spikes,
+                    ElementIds.Altar => Terrain.Altar,
                     _ => Terrain.Floor,
                 };
 
@@ -166,6 +172,13 @@ public static class LevelFile
                         break;
                     case ElementIds.Door:
                         doors.Add(position);
+                        break;
+                    case ElementIds.LockedDoor:
+                        doors.Add(position);
+                        lockedDoors.Add(position);
+                        break;
+                    case ElementIds.Key:
+                        keys.Add(position);
                         break;
                 }
             }
@@ -209,6 +222,7 @@ public static class LevelFile
         }
 
         var levers = ParseLevers(fileName, document.Lines(LeversSection), issues);
+        var spikeOffsets = ParseSpikeOffsets(fileName, document.Lines(SpikesSection), issues);
 
         if (issues.Count > 0)
         {
@@ -217,7 +231,7 @@ public static class LevelFile
 
         try
         {
-            var definition = new LevelDefinition(name, width, height, cells, starts[0].Position, withoutMonsters ? Array.Empty<MonsterSpawn>() : monsters, potions, torches, doors, alcoves, levers, script);
+            var definition = new LevelDefinition(name, width, height, cells, starts[0].Position, withoutMonsters ? Array.Empty<MonsterSpawn>() : monsters, potions, torches, doors, alcoves, levers, script, keys, lockedDoors, spikeOffsets);
             var scriptIssues = Scripting.LevelScripts.Find(script)?.Validate(definition).ToList() ?? new List<string>();
             if (scriptIssues.Count > 0)
             {
@@ -313,6 +327,28 @@ public static class LevelFile
         }
 
         return levers;
+    }
+
+    private static Dictionary<Position, int> ParseSpikeOffsets(string fileName, IEnumerable<SourceLine> lines, List<LoadIssue> issues)
+    {
+        var offsets = new Dictionary<Position, int>();
+        foreach (var (line, key, value) in SectionedText.KeyValues(fileName, lines, issues))
+        {
+            var spikes = CoordinatesPattern.Match(key);
+            if (!spikes.Success || !int.TryParse(value.Trim(), out var offset))
+            {
+                issues.Add(new LoadIssue(fileName, line.Number, 0, $"Ligne attendue au format « x,y = décalage » (piège = 0, 1 ou 2), trouvé « {key} = {value} »."));
+                continue;
+            }
+
+            var position = new Position(int.Parse(spikes.Groups["x"].Value), int.Parse(spikes.Groups["y"].Value));
+            if (!offsets.TryAdd(position, offset))
+            {
+                issues.Add(new LoadIssue(fileName, line.Number, 0, $"Le piège {position} est déclaré deux fois."));
+            }
+        }
+
+        return offsets;
     }
 
     private static Dictionary<char, Marker> ParseMarkers(string fileName, IReadOnlyList<SourceLine> lines, List<LoadIssue> issues)

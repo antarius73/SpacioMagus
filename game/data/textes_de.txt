@@ -52,6 +52,18 @@ Mob kann nicht schwimmen
 [echoue]
 Kein Tropfen Magie mehr, und der Ausgang liegt auf der anderen Seite. Mob hat sein Leben der Magie gewidmet: Für Schwimmunterricht blieb nie Zeit.
 
+[echoue_coffres_titre]
+Mob ist eingemauert
+
+[echoue_coffres]
+Kein Tropfen Magie mehr, und diese schweren Truhen versperren den Weg. Mob hat sein Leben der Magie gewidmet: Er hat nie etwas Schwereres als ein Zauberbuch gehoben.
+
+[echoue_coince_titre]
+Mob sitzt fest
+
+[echoue_coince]
+Kein Tropfen Magie mehr, und der Ausgang ist unerreichbar. Mob bleibt nur, auf Zorgus' Rückkehr zu warten.
+
 [evanoui_titre]
 Mob ist ohnmächtig
 
@@ -192,7 +204,7 @@ Tippe eine benachbarte Tür an, um sie zu öffnen. Die Zahl zeigt, in wie vielen
 Die Gitter
 
 [grille]
-Es lässt sich nicht von Hand hochziehen: Betätige seinen Hebel von einem Nachbarfeld aus. Die Zahl zeigt, in wie vielen Runden es wieder herunterfällt und dabei jeden wegschiebt, der darunter steht.
+Es lässt sich nicht von Hand hochziehen: Betätige seinen Hebel von einem Nachbarfeld aus. Die Zahl zeigt, in wie vielen Runden es wieder herunterfällt und dabei jeden wegschiebt, der darunter steht. Manche Gitter haben zwei Hebel: Jeder bleibt gezogen, bis auch der andere gezogen ist, und beide springen zurück, wenn das Gitter herunterfällt.
 
 [fiole_titre]
 Die Tränke
@@ -246,7 +258,7 @@ Mob hat sein Leben der Magie gewidmet, für Schwimmunterricht blieb nie Zeit: Du
 Der Hebel
 
 [manette]
-Tippe ihn von einem Nachbarfeld aus an, um das damit verbundene Gitter hochzuziehen: Das dauert eine Runde. Unmöglich, wenn sich eine Fledermaus darauf niedergelassen hat.
+Tippe ihn von einem Nachbarfeld aus an, um das damit verbundene Gitter hochzuziehen: Das dauert eine Runde. Unmöglich, wenn sich eine Fledermaus darauf niedergelassen hat. Manche Gitter haben zwei Hebel: Jeder bleibt gezogen, bis auch der andere gezogen ist, und beide springen zurück, wenn das Gitter herunterfällt.
 
 [alcove_titre]
 Die Nische
@@ -260,6 +272,67 @@ Die Fledermaus
 [chauve_souris]
 Sie fliegt über Wasser, Behälter und Hebel. Hat sie dich einmal entdeckt, folgt sie dir überallhin. Ihr Biss stiehlt dir einen Edelstein, danach döst sie satt zwei Runden lang. Ohne Edelstein fällst du in Ohnmacht.
 
+[empale_titre]
+Mob wurde aufgespießt
+
+[empale]
+Die Spitzen schossen unter seinen Füßen hervor. Mob wartet auf Zorgus' Rückkehr… ohne sich setzen zu können.
+
+[parchemin_pris_titre]
+Verbesserter Spacio Creatura
+
+[parchemin_pris]
+Die Schriftrolle enthält eine verbesserte Fassung von Spacio Creatura: Der Zauber tauscht jetzt auch große Gegenstände (Fässer, Kisten, Vasen und Truhen), in jeder Mischung mit Kreaturen.
+
+Diese Kraft gilt nur in diesem Level.
+
+[fin_demo_titre]
+Ende der Demo
+
+[fin_demo]
+Bravo, Mob hat die drei Säle dieser Demo durchquert!
+
+Wenn die Demo ihr Publikum findet, entsteht eine Vollversion mit zehn Levels. Danke fürs Spielen.
+
+[bouton_recommencer_demo]
+Demo neu starten
+
+[coffre_titre]
+Die Truhen
+
+[coffre]
+Sie quellen über vor Gold, doch Gold nützt einem Magus nichts. Tippe eine von einem Nachbarfeld aus an, um sie zu öffnen oder zu schließen: Das dauert eine Runde. Man kann sie weder zerschlagen noch sich auf sie teleportieren.
+
+[cle_titre]
+Der Schlüssel
+
+[cle]
+Geh darauf, um ihn aufzuheben. Er öffnet die verschlossene Tür, nur ein einziges Mal: Danach bleibt die Tür unverschlossen.
+
+[porte_verrouillee_titre]
+Die verschlossene Tür
+
+[porte_verrouillee]
+Sie öffnet sich nur mit dem Schlüssel. Einmal aufgeschlossen, verhält sie sich wie eine normale Tür.
+
+[piege_titre]
+Die Stachelfallen
+
+[piege]
+Die Stacheln bleiben drei Runden versenkt und fahren dann eine Runde lang aus. Ausgefahren kannst du weder darauf gehen noch dich dorthin teleportieren, und fahren sie unter dem Magus aus, ist es vorbei. Sie betäuben Blobs; Fledermäuse kümmert das nicht.
+
+[parchemin_titre]
+Der Altar und die Schriftrolle
+
+[parchemin]
+Der Altar ist unpassierbar. Tippe die Schriftrolle von einem Nachbarfeld aus an, um sie zu nehmen: Das dauert eine Runde und verbessert Spacio Creatura für dieses Level.
+
+[autel_vide_titre]
+Der leere Altar
+
+[autel_vide]
+Der Altar ist unpassierbar. Die Schriftrolle wurde bereits genommen.
+
 [geste_titre]
 Lange drücken
 
@@ -270,3 +343,12 @@ Am Computer genügt ein Rechtsklick.
 
 [fermer_indication]
 Tippen zum Schließen
+
+[niveau_01_nom]
+Die Kerkerhalle des Zorgus
+
+[niveau_02_nom]
+Die Bäder des Zorgus
+
+[niveau_03_nom]
+Die Schatzkammer

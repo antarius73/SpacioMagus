@@ -17,3 +17,5 @@ public sealed record BreakAction(Position Target) : GameAction;
 public sealed record LeverAction(Position Target) : GameAction;
 
 public sealed record ActivateAction(Position Target) : GameAction;
+
+public sealed record ChestAction(Position Target) : GameAction;

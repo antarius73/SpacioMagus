@@ -15,4 +15,7 @@ public enum Terrain
     Lever,
     StairsUp,
     Arch,
+    Chest,
+    Spikes,
+    Altar,
 }

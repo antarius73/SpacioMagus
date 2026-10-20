@@ -32,9 +32,15 @@ public static class ActionGenerator
                 continue;
             }
 
+            if (game.IsChest(target))
+            {
+                yield return new ChestAction(target);
+                continue;
+            }
+
             if (game.Level.LeverTarget(target) is { } herse)
             {
-                if (game.GrilleAt(herse) is { IsOpen: false })
+                if (game.GrilleAt(herse) is { IsOpen: false } && !game.IsLeverPulled(target))
                 {
                     yield return new LeverAction(target);
                 }
@@ -42,7 +48,7 @@ public static class ActionGenerator
                 continue;
             }
 
-            if (game.GrilleAt(target) is { IsOpen: false } && game.Level.IsDoor(target))
+            if (game.GrilleAt(target) is { IsOpen: false } && game.Level.IsDoor(target) && (!game.IsLocked(target) || game.KeysHeld > 0))
             {
                 yield return new OpenGrilleAction(target);
                 continue;
@@ -69,12 +75,12 @@ public static class ActionGenerator
 
         if (filter.AllowSwap)
         {
-            var candidates = game.SwapCandidates();
+            var candidates = game.SwapTargets();
             for (var first = 0; first < candidates.Count; first++)
             {
                 for (var second = first + 1; second < candidates.Count; second++)
                 {
-                    yield return new SpacioCreaturaAction(candidates[first].Position, candidates[second].Position);
+                    yield return new SpacioCreaturaAction(candidates[first], candidates[second]);
                 }
             }
         }
@@ -88,6 +94,7 @@ public static class ActionGenerator
         BreakAction breaking => $"briser {breaking.Target}",
         LeverAction lever => $"manette {lever.Target}",
         ActivateAction activate => $"activer {activate.Target}",
+        ChestAction chest => $"coffre {chest.Target}",
         SpacioMagusAction teleport => $"Spacio Magus {teleport.Target}",
         SpacioCreaturaAction swap => $"Spacio Creatura {swap.First} ↔ {swap.Second}",
         _ => action.ToString() ?? "?",

@@ -57,11 +57,11 @@ public sealed class GameTools
     [McpServerTool(Name = "jouer"), Description(
         "Joue une action du magus pendant la partie (un tour). Le coup part après un délai « humain » et la réponse arrive après les animations, " +
         "avec les événements du tour et le nouvel état. Actions : attendre ; deplacer (x,y voisine ou direction N/NE/E/SE/S/SO/O/NO) ; " +
-        "ouvrir_porte (x,y voisine) ; briser (contenant voisin) ; manette (manette voisine) ; activer (alcôve voisine) ; " +
+        "ouvrir_porte (x,y voisine) ; briser (contenant voisin) ; manette (manette voisine) ; activer (alcôve ou autel voisin) ; coffre (ouvrir ou fermer un coffre voisin) ; " +
         "spacio_magus (téléportation en x,y) ; spacio_creatura (échange des créatures en x,y et x2,y2). " +
         "Le coup est refusé (tour_perime) si la partie a avancé depuis votre dernier état lu, par exemple si l'humain a joué.")]
     public async Task<CallToolResult> Play(
-        [Description("attendre, deplacer, ouvrir_porte, briser, manette, activer, spacio_magus ou spacio_creatura.")] string action,
+        [Description("attendre, deplacer, ouvrir_porte, briser, manette, activer, coffre, spacio_magus ou spacio_creatura.")] string action,
         [Description("Colonne de la case visée.")] int? x = null,
         [Description("Ligne de la case visée.")] int? y = null,
         [Description("Colonne de la seconde créature (spacio_creatura).")] int? x2 = null,
@@ -154,6 +154,8 @@ public sealed class GameTools
                 return new LeverAction(Target());
             case "activer":
                 return new ActivateAction(Target());
+            case "coffre":
+                return new ChestAction(Target());
             case "spacio_magus":
                 return new SpacioMagusAction(Target());
             case "spacio_creatura":
@@ -165,7 +167,7 @@ public sealed class GameTools
                 return new SpacioCreaturaAction(Target(), new Position(secondColumn, secondRow));
             default:
                 throw new McpException(
-                    $"Action « {action} » inconnue : attendre, deplacer, ouvrir_porte, briser, manette, activer, spacio_magus ou spacio_creatura.");
+                    $"Action « {action} » inconnue : attendre, deplacer, ouvrir_porte, briser, manette, activer, coffre, spacio_magus ou spacio_creatura.");
         }
     }
 

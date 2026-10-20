@@ -18,7 +18,14 @@ public sealed record PlayerView(
     IReadOnlyList<AlcoveView> Alcoves,
     IReadOnlyList<Position> Exits,
     FearView Fear,
-    LegalActionsView Legal)
+    LegalActionsView Legal,
+    IReadOnlyList<ChestView>? Chests = null,
+    IReadOnlyList<Position>? Keys = null,
+    int KeysHeld = 0,
+    IReadOnlyList<GrilleLockView>? LockedDoors = null,
+    IReadOnlyList<SpikesView>? Spikes = null,
+    IReadOnlyList<Position>? Scroll = null,
+    bool ObjectSwap = false)
 {
     public static PlayerView Capture(Game game)
     {
@@ -61,7 +68,7 @@ public sealed record PlayerView(
             Sorted(game.Containers)
                 .Select(container => new ContainerView(
                     container,
-                    level.TerrainAt(container),
+                    game.ObjectKind(container) ?? level.TerrainAt(container),
                     game.PotionsAreRevealed ? game.ContainerHasPotion(container) : null))
                 .ToArray(),
             Sorted(level.CellsOf(Terrain.Lever)),
@@ -70,7 +77,14 @@ public sealed record PlayerView(
             new FearView(
                 hasBlobs ? Sorted(game.FearZone(MonsterKind.BlobVert)) : Array.Empty<Position>(),
                 hasBlobs ? Sorted(game.FearZone(MonsterKind.BlobRouge)) : Array.Empty<Position>()),
-            LegalActions.Compute(game));
+            LegalActions.Compute(game),
+            game.Chests.OrderBy(entry => entry.Key.Y).ThenBy(entry => entry.Key.X).Select(entry => new ChestView(entry.Key, entry.Value)).ToArray(),
+            Sorted(game.Keys),
+            game.KeysHeld,
+            level.LockedDoors.OrderBy(door => door.Y).ThenBy(door => door.X).Select(door => new GrilleLockView(door, game.IsLocked(door))).ToArray(),
+            game.SpikeCells.OrderBy(cell => cell.Y).ThenBy(cell => cell.X).Select(cell => new SpikesView(cell, game.SpikesRaised(cell))).ToArray(),
+            game.Script is not null && !game.CanSwapObjects ? Sorted(level.CellsOf(Terrain.Altar)) : Array.Empty<Position>(),
+            game.CanSwapObjects);
     }
 
     private static IReadOnlyList<Position> Sorted(IEnumerable<Position> positions) =>
@@ -92,5 +106,11 @@ public sealed record GrilleView(Position Position, GrilleKind Kind, bool Open, i
 public sealed record ContainerView(Position Position, Terrain Kind, bool? Potion);
 
 public sealed record AlcoveView(Position Position, bool Lit);
+
+public sealed record ChestView(Position Position, bool Open);
+
+public sealed record GrilleLockView(Position Position, bool Locked);
+
+public sealed record SpikesView(Position Position, bool Raised);
 
 public sealed record FearView(IReadOnlyList<Position> GreenBlobAvoids, IReadOnlyList<Position> RedBlobAvoids);

@@ -323,7 +323,10 @@ public partial class Sounds : Node
 
 public static class TurnSounds
 {
-    public static void Play(IReadOnlyList<GameEvent> events, double monstersDelay, LevelDefinition? level)
+    private static bool Near(Position position, Position? listener) =>
+        listener is { } magus && Math.Abs(position.X - magus.X) <= 1 && Math.Abs(position.Y - magus.Y) <= 1;
+
+    public static void Play(IReadOnlyList<GameEvent> events, double monstersDelay, LevelDefinition? level, Position? listener = null)
     {
         string Gate(Position position, string suffix) => (level?.IsDoor(position) ?? false ? "dr." : "gr.") + suffix;
 
@@ -370,6 +373,27 @@ public static class TurnSounds
                     break;
                 case AlcoveLit:
                     cues.Add(("it.alcove", 0));
+                    break;
+                case ChestToggled chest:
+                    cues.Add((chest.Open ? "it.chest_open" : "it.chest_close", 0));
+                    break;
+                case KeyPicked:
+                    cues.Add(("it.key", magusArrival));
+                    break;
+                case DoorUnlocked:
+                    cues.Add(("dr.unlock", 0));
+                    break;
+                case ScrollTaken:
+                    cues.Add(("it.scroll", 0));
+                    break;
+                case SpikesRaised raised when Near(raised.Position, listener):
+                    cues.Add(("tr.spikes", settled));
+                    break;
+                case MagusImpaled:
+                    cues.Add(("end.impaled", settled));
+                    break;
+                case ObjectsSwapped:
+                    cues.Add(("sp.creatura", 0));
                     break;
                 case GrilleOpened opened:
                     cues.Add((Gate(opened.Position, "open"), 0));

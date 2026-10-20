@@ -5,6 +5,7 @@ public static class LevelScripts
     private static readonly Dictionary<string, ILevelScript> Scripts = new ILevelScript[]
     {
         new BainsDeZorgusScript(),
+        new ParcheminCreaturaScript(),
     }.ToDictionary(script => script.Id);
 
     public static IEnumerable<string> Ids => Scripts.Keys;

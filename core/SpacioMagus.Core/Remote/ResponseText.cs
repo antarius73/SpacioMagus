@@ -146,6 +146,34 @@ public static class ResponseText
         }
 
         AppendCells(text, "Manettes", state.Levers);
+        if (state.Chests is { Count: > 0 } chests)
+        {
+            text.Append("Coffres (or seulement, ne se brisent pas) : ").AppendLine(string.Join(", ", chests.Select(chest => Cell(chest.Position) + (chest.Open ? " (ouvert)" : " (fermé)"))));
+        }
+
+        AppendCells(text, "Clés au sol", state.Keys ?? Array.Empty<Position>());
+        if (state.KeysHeld > 0)
+        {
+            text.Append("Clés en poche : ").AppendLine(state.KeysHeld.ToString());
+        }
+
+        if (state.LockedDoors is { Count: > 0 } locked)
+        {
+            text.Append("Portes à serrure : ").AppendLine(string.Join(", ", locked.Select(door => Cell(door.Position) + (door.Locked ? " (verrouillée, il faut une clé)" : " (déverrouillée)"))));
+        }
+
+        if (state.Spikes is { Count: > 0 } spikes)
+        {
+            text.Append("Pièges à pointes (3 tours rentrées, 1 tour sorties ; sorties : infranchissables, mortelles si elles sortent sous le magus) : ")
+                .AppendLine(string.Join(", ", spikes.Select(trap => Cell(trap.Position) + (trap.Raised ? " (sorties)" : " (rentrées)"))));
+        }
+
+        AppendCells(text, "Parchemin sur l'autel (activer depuis une case voisine)", state.Scroll ?? Array.Empty<Position>());
+        if (state.ObjectSwap)
+        {
+            text.AppendLine("Spacio Creatura amélioré : il échange aussi les gros objets (tonneaux, caisses, vases, coffres).");
+        }
+
         if (state.Alcoves.Count > 0)
         {
             text.Append("Alcôves : ").AppendLine(string.Join(", ", state.Alcoves.Select(alcove => Cell(alcove.Position) + (alcove.Lit ? " (allumée)" : " (éteinte)"))));
@@ -172,10 +200,11 @@ public static class ResponseText
         AppendActions(text, "briser", legal.Break);
         AppendActions(text, "manette", legal.Lever);
         AppendActions(text, "activer", legal.Activate);
+        AppendActions(text, "coffre", legal.Chest ?? Array.Empty<Position>());
         AppendActions(text, "spacio_magus", legal.SpacioMagus);
         if (legal.SpacioCreatura.Count >= 2)
         {
-            text.Append("- spacio_creatura : échange de deux créatures parmi ").AppendLine(string.Join(" ", legal.SpacioCreatura.Select(Cell)));
+            text.Append(state.ObjectSwap ? "- spacio_creatura : échange de deux créatures ou gros objets parmi " : "- spacio_creatura : échange de deux créatures parmi ").AppendLine(string.Join(" ", legal.SpacioCreatura.Select(Cell)));
         }
     }
 
@@ -238,6 +267,7 @@ public static class ResponseText
             LossReason.Captured => "PERDU (capturé)",
             LossReason.Stranded => "PERDU (coincé)",
             LossReason.Fainted => "PERDU (évanoui)",
+            LossReason.Impaled => "PERDU (empalé)",
             _ => "PERDU",
         },
         _ => state.Status.ToString(),

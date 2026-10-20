@@ -24,6 +24,8 @@ public sealed record GrilleOpened(Position Position, int TurnsRemaining) : GameE
 
 public sealed record LeverPulled(Position Lever, Position Grille) : GameEvent;
 
+public sealed record LeverReset(Position Lever) : GameEvent;
+
 public sealed record GrilleCountdown(Position Position, int TurnsRemaining) : GameEvent;
 
 public sealed record GrilleClosed(Position Position) : GameEvent;
@@ -49,5 +51,23 @@ public sealed record MagusFainted(int MonsterId) : GameEvent;
 public sealed record AlcoveLit(Position Position) : GameEvent;
 
 public sealed record PotionsRevealed : GameEvent;
+
+public sealed record ChestToggled(Position Position, bool Open) : GameEvent;
+
+public sealed record KeyPicked(Position Position) : GameEvent;
+
+public sealed record DoorUnlocked(Position Position) : GameEvent;
+
+public sealed record SpikesRaised(Position Position) : GameEvent;
+
+public sealed record SpikesLowered(Position Position) : GameEvent;
+
+public sealed record MagusImpaled(Position Position) : GameEvent;
+
+public sealed record ObjectMoved(Position From, Position To) : GameEvent;
+
+public sealed record ObjectsSwapped(Position First, Position Second) : GameEvent;
+
+public sealed record ScrollTaken(Position Position) : GameEvent;
 
 public sealed record LevelCompleted : GameEvent;

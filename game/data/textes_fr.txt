@@ -52,6 +52,18 @@ Mob ne sait pas nager
 [echoue]
 Plus une goutte de magie, et la sortie est de l'autre côté. Mob a consacré sa vie à la magie : il n'a jamais eu le temps d'apprendre à nager.
 
+[echoue_coffres_titre]
+Mob est emmuré
+
+[echoue_coffres]
+Plus une goutte de magie, et ces lourds coffres lui barrent la route. Mob a consacré sa vie à la magie : il n'a jamais soulevé autre chose qu'un grimoire.
+
+[echoue_coince_titre]
+Mob est coincé
+
+[echoue_coince]
+Plus une goutte de magie, et la sortie est hors d'atteinte. Mob n'a plus qu'à attendre le retour de Zorgus.
+
 [evanoui_titre]
 Mob s'est évanoui
 
@@ -192,7 +204,7 @@ Touchez une porte voisine pour l'ouvrir. Le chiffre indique dans combien de tour
 Les grilles
 
 [grille]
-Elle ne se lève pas à la main : actionnez sa manette depuis une case voisine. Le chiffre indique dans combien de tours elle retombe, en repoussant qui se tient dessous.
+Elle ne se lève pas à la main : actionnez sa manette depuis une case voisine. Le chiffre indique dans combien de tours elle retombe, en repoussant qui se tient dessous. Certaines herses ont deux manettes : chacune reste tirée jusqu'à ce que l'autre le soit, et toutes deux se relèvent quand la herse retombe.
 
 [fiole_titre]
 Les fioles
@@ -246,7 +258,7 @@ Mob a consacré sa vie à la magie, pas le temps d'apprendre à nager : on ne pe
 La manette
 
 [manette]
-Touchez-la depuis une case voisine pour lever la grille qui lui est reliée : cela prend un tour. Impossible si une chauve-souris s'y est posée.
+Touchez-la depuis une case voisine pour lever la grille qui lui est reliée : cela prend un tour. Impossible si une chauve-souris s'y est posée. Certaines herses ont deux manettes : chacune reste tirée jusqu'à ce que l'autre le soit, et toutes deux se relèvent quand la herse retombe.
 
 [alcove_titre]
 L'alcôve
@@ -260,6 +272,67 @@ La chauve-souris
 [chauve_souris]
 Elle survole l'eau, les contenants et les manettes. Une fois qu'elle vous a repéré, elle vous suit partout. Sa morsure vous vole une gemme, puis elle somnole deux tours, repue. Sans gemme, vous vous évanouissez.
 
+[empale_titre]
+Mob a été empalé
+
+[empale]
+Les pointes sont sorties sous ses pieds. Mob attendra le retour de Zorgus… sans pouvoir s'asseoir.
+
+[parchemin_pris_titre]
+Spacio Creatura amélioré
+
+[parchemin_pris]
+Le parchemin contient une version améliorée de Spacio Creatura : le sort échange désormais aussi les gros objets (tonneaux, caisses, vases et coffres), dans n'importe quel mélange avec les créatures.
+
+Ce pouvoir ne vaut que dans ce niveau.
+
+[fin_demo_titre]
+Fin de la démo
+
+[fin_demo]
+Bravo, Mob a traversé les trois salles de cette démo !
+
+Si la démo trouve son public, une version complète de dix niveaux sera produite. Merci d'avoir joué.
+
+[bouton_recommencer_demo]
+Recommencer la démo
+
+[coffre_titre]
+Les coffres
+
+[coffre]
+Ils regorgent d'or, mais l'or ne sert à rien à un magus. Touchez-en un depuis une case voisine pour l'ouvrir ou le fermer : cela prend un tour. Impossible de les briser ou de s'y téléporter.
+
+[cle_titre]
+La clé
+
+[cle]
+Marchez dessus pour la ramasser. Elle ouvre la porte verrouillée, une seule fois : ensuite, la porte reste déverrouillée.
+
+[porte_verrouillee_titre]
+La porte verrouillée
+
+[porte_verrouillee]
+Elle ne s'ouvre qu'avec la clé. Une fois déverrouillée, elle se comporte comme une porte normale.
+
+[piege_titre]
+Les pièges à pointes
+
+[piege]
+Les pointes restent rentrées trois tours, puis sortent pendant un tour. Sorties, on ne peut ni y marcher ni s'y téléporter, et si elles sortent sous le magus, c'est la fin. Elles étourdissent les blobs ; les chauves-souris s'en moquent.
+
+[parchemin_titre]
+L'autel et le parchemin
+
+[parchemin]
+L'autel est infranchissable. Touchez le parchemin depuis une case voisine pour le prendre : cela prend un tour, et il améliore Spacio Creatura pour ce niveau.
+
+[autel_vide_titre]
+L'autel vide
+
+[autel_vide]
+L'autel est infranchissable. Le parchemin a déjà été pris.
+
 [geste_titre]
 Appui long
 
@@ -270,3 +343,12 @@ Sur ordinateur, un clic droit suffit.
 
 [fermer_indication]
 Touchez pour fermer
+
+[niveau_01_nom]
+Hall du donjon de Zorgus
+
+[niveau_02_nom]
+Les bains de Zorgus
+
+[niveau_03_nom]
+La salle des coffres

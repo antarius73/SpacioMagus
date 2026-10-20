@@ -52,6 +52,18 @@ Mob não sabe nadar
 [echoue]
 Nem uma gota de magia, e a saída está do outro lado. Mob dedicou a vida à magia: nunca teve tempo de aprender a nadar.
 
+[echoue_coffres_titre]
+Mob está emparedado
+
+[echoue_coffres]
+Nem uma gota de magia, e esses baús pesados bloqueiam o caminho. Mob dedicou a vida à magia: nunca levantou nada mais pesado que um grimório.
+
+[echoue_coince_titre]
+Mob está preso
+
+[echoue_coince]
+Nem uma gota de magia, e a saída está fora de alcance. Só resta a Mob esperar Zorgus voltar.
+
 [evanoui_titre]
 Mob desmaiou
 
@@ -192,7 +204,7 @@ Toque em uma porta vizinha para abri-la. O número indica em quantos turnos ela 
 As grades
 
 [grille]
-Ela não se levanta com a mão: acione a alavanca dela de uma casa vizinha. O número indica em quantos turnos ela desce de novo, empurrando quem estiver embaixo.
+Ela não se levanta com a mão: acione a alavanca dela de uma casa vizinha. O número indica em quantos turnos ela desce de novo, empurrando quem estiver embaixo. Algumas grades têm duas alavancas: cada uma fica acionada até a outra ser acionada, e as duas voltam ao lugar quando a grade desce.
 
 [fiole_titre]
 Os frascos
@@ -246,7 +258,7 @@ Mob dedicou a vida à magia e nunca teve tempo de aprender a nadar: não dá par
 A alavanca
 
 [manette]
-Toque nela de uma casa vizinha para erguer a grade ligada a ela: isso leva um turno. Impossível se um morcego tiver pousado nela.
+Toque nela de uma casa vizinha para erguer a grade ligada a ela: isso leva um turno. Impossível se um morcego tiver pousado nela. Algumas grades têm duas alavancas: cada uma fica acionada até a outra ser acionada, e as duas voltam ao lugar quando a grade desce.
 
 [alcove_titre]
 O nicho
@@ -260,6 +272,67 @@ O morcego
 [chauve_souris]
 Ele sobrevoa a água, os recipientes e as alavancas. Depois de ver você, ele te segue para todo lado. A mordida dele rouba uma gema e depois ele cochila por dois turnos, saciado. Sem gemas, você desmaia.
 
+[empale_titre]
+Mob foi empalado
+
+[empale]
+As pontas saíram debaixo dos pés dele. Mob vai esperar Zorgus voltar… sem poder se sentar.
+
+[parchemin_pris_titre]
+Spacio Creatura aprimorado
+
+[parchemin_pris]
+O pergaminho contém uma versão aprimorada de Spacio Creatura: o feitiço agora também troca os objetos grandes (barris, caixas, vasos e baús), em qualquer combinação com as criaturas.
+
+Esse poder só vale nesta fase.
+
+[fin_demo_titre]
+Fim da demo
+
+[fin_demo]
+Parabéns, Mob atravessou as três salas desta demo!
+
+Se a demo encontrar seu público, uma versão completa com dez fases será produzida. Obrigado por jogar.
+
+[bouton_recommencer_demo]
+Recomeçar a demo
+
+[coffre_titre]
+Os baús
+
+[coffre]
+Estão cheios de ouro, mas ouro não serve para nada a um magus. Toque em um a partir de uma casa vizinha para abri-lo ou fechá-lo: isso leva um turno. Não dá para quebrá-los nem se teletransportar para eles.
+
+[cle_titre]
+A chave
+
+[cle]
+Ande sobre ela para pegá-la. Ela abre a porta trancada, uma única vez: depois, a porta fica destrancada.
+
+[porte_verrouillee_titre]
+A porta trancada
+
+[porte_verrouillee]
+Ela só abre com a chave. Depois de destrancada, funciona como uma porta normal.
+
+[piege_titre]
+As armadilhas de pontas
+
+[piege]
+As pontas ficam recolhidas por três turnos e depois saem durante um turno. Quando estão para fora, não dá para andar nem se teletransportar sobre elas, e se saírem debaixo do magus, é o fim. Elas atordoam os blobs; os morcegos nem ligam.
+
+[parchemin_titre]
+O altar e o pergaminho
+
+[parchemin]
+O altar é intransponível. Toque no pergaminho a partir de uma casa vizinha para pegá-lo: isso leva um turno e aprimora Spacio Creatura nesta fase.
+
+[autel_vide_titre]
+O altar vazio
+
+[autel_vide]
+O altar é intransponível. O pergaminho já foi pego.
+
 [geste_titre]
 Toque longo
 
@@ -270,3 +343,12 @@ No computador, basta clicar com o botão direito.
 
 [fermer_indication]
 Toque para fechar
+
+[niveau_01_nom]
+O salão da masmorra de Zorgus
+
+[niveau_02_nom]
+Os banhos de Zorgus
+
+[niveau_03_nom]
+A sala dos baús

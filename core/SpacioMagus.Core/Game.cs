@@ -12,10 +12,17 @@ public sealed class Game
     private readonly HashSet<Position> _fireZone;
     private readonly HashSet<Position> _waterZone;
     private readonly HashSet<Position> _activated = new();
+    private readonly Dictionary<Position, bool> _chests;
+    private readonly Dictionary<Position, Terrain> _objectKinds;
+    private readonly HashSet<Position> _keys;
+    private readonly HashSet<Position> _unlocked;
+    private readonly HashSet<Position> _pulled;
+    private readonly Position[] _spikes;
     private List<GameEvent> _events = new();
 
-    public const int RulesVersion = 8;
+    public const int RulesVersion = 9;
     private const int BatSatedTurns = 2;
+    private const int SpikeStunTurns = 2;
 
     public Game(LevelDefinition level, RuleSet? rules = null, IRandomSource? random = null)
     {
@@ -54,6 +61,17 @@ public sealed class Game
             }
         }
 
+        _chests = new Dictionary<Position, bool>();
+        foreach (var chest in level.CellsOf(Terrain.Chest))
+        {
+            _chests[chest] = _random.Next(2) == 1;
+        }
+
+        _objectKinds = _containers.Keys.Concat(_chests.Keys).ToDictionary(position => position, level.TerrainAt);
+        _keys = new HashSet<Position>(level.Keys);
+        _unlocked = new HashSet<Position>();
+        _pulled = new HashSet<Position>();
+        _spikes = level.CellsOf(Terrain.Spikes).ToArray();
         _fireZone = BuildFireZone(level);
         _waterZone = BuildWaterZone(level);
         Script = LevelScripts.Find(level.Script);
@@ -89,6 +107,14 @@ public sealed class Game
         _fireZone = source._fireZone;
         _waterZone = source._waterZone;
         _activated = new HashSet<Position>(source._activated);
+        _chests = new Dictionary<Position, bool>(source._chests);
+        _objectKinds = new Dictionary<Position, Terrain>(source._objectKinds);
+        _keys = new HashSet<Position>(source._keys);
+        _unlocked = new HashSet<Position>(source._unlocked);
+        _pulled = new HashSet<Position>(source._pulled);
+        _spikes = source._spikes;
+        KeysHeld = source.KeysHeld;
+        CanSwapObjects = source.CanSwapObjects;
         PotionsAreRevealed = source.PotionsAreRevealed;
         Script = source.Script;
     }
@@ -96,6 +122,43 @@ public sealed class Game
     public LevelDefinition Level { get; }
 
     public int PatrolPeriod => PatrolRoute.Period(_monsters.Select(monster => monster.Route.Count));
+
+    public int CyclePeriod => _spikes.Length == 0 ? PatrolPeriod : PatrolRoute.Period(new[] { PatrolPeriod, LevelDefinition.SpikePeriod });
+
+    public IReadOnlyDictionary<Position, bool> Chests => _chests;
+
+    public bool IsChest(Position position) => _chests.ContainsKey(position);
+
+    public bool IsChestOpen(Position position) => _chests.TryGetValue(position, out var open) && open;
+
+    public bool IsBigObject(Position position) => _containers.ContainsKey(position) || _chests.ContainsKey(position);
+
+    public Terrain? ObjectKind(Position position) => _objectKinds.TryGetValue(position, out var kind) ? kind : null;
+
+    public IReadOnlyCollection<Position> Keys => _keys;
+
+    public int KeysHeld { get; private set; }
+
+    public bool IsUnlocked(Position door) => _unlocked.Contains(door);
+
+    public IReadOnlyCollection<Position> UnlockedDoors => _unlocked;
+
+    public bool IsLocked(Position door) => Level.IsLockedDoor(door) && !_unlocked.Contains(door);
+
+    public bool CanSwapObjects { get; private set; }
+
+    public bool IsLeverPulled(Position lever) => _pulled.Contains(lever);
+
+    public IReadOnlyCollection<Position> PulledLevers => _pulled;
+
+    public IReadOnlyList<Position> SpikeCells => _spikes;
+
+    public bool SpikesRaised(Position position) => Level.TerrainAt(position) == Terrain.Spikes && SpikesRaisedAt(position, Turn);
+
+    private bool SpikesRaisedAt(Position position, int turn) =>
+        Modulo(turn + Level.SpikeOffset(position), LevelDefinition.SpikePeriod) == LevelDefinition.SpikePeriod - 1;
+
+    internal void EnableObjectSwap() => CanSwapObjects = true;
 
     public Game Clone(IRandomSource random) => new(this, random ?? throw new ArgumentNullException(nameof(random)));
 
@@ -176,10 +239,10 @@ public sealed class Game
     };
 
     public bool IsWalkable(Position position) =>
-        !BlocksSight(position) && !IsObstacleAt(position);
+        !BlocksSight(position) && !IsObstacleAt(position) && !SpikesRaised(position);
 
     private bool IsObstacleAt(Position position) =>
-        LevelDefinition.IsObstacle(Level.TerrainAt(position)) || _containers.ContainsKey(position);
+        LevelDefinition.IsObstacle(Level.TerrainAt(position)) || _containers.ContainsKey(position) || _chests.ContainsKey(position);
 
     public IReadOnlyCollection<Position> FearZone(MonsterKind kind) => kind switch
     {
@@ -206,9 +269,15 @@ public sealed class Game
         return !BlocksSight(new Position(to.X, from.Y)) && !BlocksSight(new Position(from.X, to.Y));
     }
 
-    public bool HasLineOfSight(Position from, Position to) => ClearLine(from, to);
+    public bool HasLineOfSight(Position from, Position to) => ClearLine(from, to, false);
 
-    public IReadOnlyList<Position> TeleportTargets()
+    public bool HasSpellLine(Position from, Position to) => ClearLine(from, to, true);
+
+    public IReadOnlyList<Position> TeleportTargets() => TeleportCells(true);
+
+    public IReadOnlyList<Position> SightZone() => TeleportCells(false);
+
+    private IReadOnlyList<Position> TeleportCells(bool chestsBlock)
     {
         var targets = new List<Position>();
         if (Status != GameStatus.Playing)
@@ -223,7 +292,8 @@ public sealed class Game
             for (var x = origin.X - range; x <= origin.X + range; x++)
             {
                 var cell = new Position(x, y);
-                if (CheckTeleport(cell) == ActionError.None)
+                var error = CheckTeleport(cell, chestsBlock);
+                if (error == ActionError.None || (!chestsBlock && error == ActionError.Blocked && IsSeenRaisedSpikes(cell)))
                 {
                     targets.Add(cell);
                 }
@@ -233,6 +303,12 @@ public sealed class Game
         return targets;
     }
 
+    private bool IsSeenRaisedSpikes(Position cell) =>
+        SpikesRaised(cell)
+        && !IsObstacleAt(cell)
+        && MonsterAt(cell) is null
+        && ClearLine(Magus.Position, cell, false);
+
     public IReadOnlyList<MonsterState> SwapCandidates()
     {
         if (Status != GameStatus.Playing)
@@ -241,6 +317,25 @@ public sealed class Game
         }
 
         return _monsters.Where(monster => CheckSwapTarget(monster) == ActionError.None).ToList();
+    }
+
+    public IReadOnlyList<Position> SwapTargets()
+    {
+        if (Status != GameStatus.Playing)
+        {
+            return Array.Empty<Position>();
+        }
+
+        var targets = SwapCandidates().Select(monster => monster.Position).ToList();
+        if (CanSwapObjects)
+        {
+            targets.AddRange(_containers.Keys.Concat(_chests.Keys)
+                .Where(position => MonsterAt(position) is null && CheckSwapPosition(position) == ActionError.None)
+                .OrderBy(position => position.Y)
+                .ThenBy(position => position.X));
+        }
+
+        return targets;
     }
 
     public ActionResult Apply(GameAction action)
@@ -259,6 +354,7 @@ public sealed class Game
         BreakAction breaking => Break(breaking.Target),
         LeverAction lever => PullLever(lever.Target),
         ActivateAction activate => Activate(activate.Target),
+        ChestAction chest => ToggleChest(chest.Target),
         _ => throw new ArgumentException($"Action inconnue : {action.GetType().Name}.", nameof(action)),
     };
 
@@ -333,8 +429,49 @@ public sealed class Game
             return ActionResult.Fail(ActionError.GrilleAlreadyOpen);
         }
 
+        var unlocking = IsLocked(target);
+        if (unlocking && KeysHeld == 0)
+        {
+            return ActionResult.Fail(ActionError.DoorLocked);
+        }
+
         BeginTurn();
+        if (unlocking)
+        {
+            KeysHeld--;
+            _unlocked.Add(target);
+            _events.Add(new DoorUnlocked(target));
+        }
+
         OpenGate(grille);
+        return EndTurn();
+    }
+
+    public ActionResult ToggleChest(Position target)
+    {
+        if (Status != GameStatus.Playing)
+        {
+            return ActionResult.Fail(ActionError.GameOver);
+        }
+
+        if (!_chests.TryGetValue(target, out var open))
+        {
+            return ActionResult.Fail(ActionError.NotAChest);
+        }
+
+        if (!Magus.Position.IsAdjacentTo(target))
+        {
+            return ActionResult.Fail(ActionError.NotAdjacent);
+        }
+
+        if (MonsterAt(target) is not null)
+        {
+            return ActionResult.Fail(ActionError.OccupiedByMonster);
+        }
+
+        BeginTurn();
+        _chests[target] = !open;
+        _events.Add(new ChestToggled(target, !open));
         return EndTurn();
     }
 
@@ -365,8 +502,23 @@ public sealed class Game
             return ActionResult.Fail(ActionError.GrilleAlreadyOpen);
         }
 
+        if (_pulled.Contains(target))
+        {
+            return ActionResult.Fail(ActionError.LeverAlreadyPulled);
+        }
+
         BeginTurn();
         _events.Add(new LeverPulled(target, linked));
+        var partners = Level.LeversOf(linked);
+        if (partners.Count > 1)
+        {
+            _pulled.Add(target);
+            if (!partners.All(_pulled.Contains))
+            {
+                return EndTurn();
+            }
+        }
+
         OpenGate(grille);
         foreach (var other in LeverGrilles(target).Where(position => position != linked))
         {
@@ -438,6 +590,7 @@ public sealed class Game
 
         BeginTurn();
         _containers.Remove(target);
+        _objectKinds.Remove(target);
         if (hasPotion)
         {
             _potions.Add(target);
@@ -491,7 +644,7 @@ public sealed class Game
             return ActionResult.Fail(ActionError.NotEnoughMagic);
         }
 
-        if (SwapCandidates().Count < 2)
+        if (SwapTargets().Count < 2)
         {
             return ActionResult.Fail(ActionError.NotEnoughCreatures);
         }
@@ -503,36 +656,82 @@ public sealed class Game
 
         var a = MonsterAt(first);
         var b = MonsterAt(second);
-        if (a is null || b is null)
+        var objectA = a is null && CanSwapObjects && IsBigObject(first);
+        var objectB = b is null && CanSwapObjects && IsBigObject(second);
+        if ((a is null && !objectA) || (b is null && !objectB))
         {
             return ActionResult.Fail(ActionError.NotAMonster);
         }
 
-        var errorA = CheckSwapTarget(a);
+        var errorA = CheckSwapPosition(first);
         if (errorA != ActionError.None)
         {
             return ActionResult.Fail(errorA);
         }
 
-        var errorB = CheckSwapTarget(b);
+        var errorB = CheckSwapPosition(second);
         if (errorB != ActionError.None)
         {
             return ActionResult.Fail(errorB);
         }
 
-        if (!CanStand(a.Kind, second) || !CanStand(b.Kind, first))
+        var takenA = objectA ? TakeObject(first) : null;
+        var takenB = objectB ? TakeObject(second) : null;
+        var fits = (a is null || CanStand(a.Kind, second))
+            && (b is null || CanStand(b.Kind, first))
+            && (takenA is null || CanHoldObject(second))
+            && (takenB is null || CanHoldObject(first));
+        if (!fits)
         {
+            if (takenA is { } restoreA)
+            {
+                PutObject(first, restoreA);
+            }
+
+            if (takenB is { } restoreB)
+            {
+                PutObject(second, restoreB);
+            }
+
             return ActionResult.Fail(ActionError.SwapBlocked);
         }
 
         BeginTurn();
         ChangeMagic(Magus.Magic - Rules.SpellCost);
-        a.Position = second;
-        b.Position = first;
-        _events.Add(new MonsterMoved(a.Id, first, second, MoveCause.Swap));
-        _events.Add(new MonsterMoved(b.Id, second, first, MoveCause.Swap));
-        _events.Add(new CreaturesSwapped(a.Id, b.Id));
-        foreach (var monster in new[] { a, b })
+        if (takenA is { } movedA)
+        {
+            PutObject(second, movedA);
+            _events.Add(new ObjectMoved(first, second));
+        }
+
+        if (takenB is { } movedB)
+        {
+            PutObject(first, movedB);
+            _events.Add(new ObjectMoved(second, first));
+        }
+
+        if (a is not null)
+        {
+            a.Position = second;
+            _events.Add(new MonsterMoved(a.Id, first, second, MoveCause.Swap));
+        }
+
+        if (b is not null)
+        {
+            b.Position = first;
+            _events.Add(new MonsterMoved(b.Id, second, first, MoveCause.Swap));
+        }
+
+        if (a is not null && b is not null)
+        {
+            _events.Add(new CreaturesSwapped(a.Id, b.Id));
+        }
+        else
+        {
+            _events.Add(new ObjectsSwapped(first, second));
+        }
+
+        foreach (var monster in new[] { a, b }.OfType<MonsterState>())
         {
             monster.StunTurns = Rules.StunDuration;
             monster.FearTurns = 0;
@@ -543,7 +742,43 @@ public sealed class Game
         return EndTurn();
     }
 
-    private ActionError CheckTeleport(Position target)
+    private BigObject? TakeObject(Position position)
+    {
+        if (!_objectKinds.Remove(position, out var kind))
+        {
+            return null;
+        }
+
+        if (_containers.Remove(position, out var potion))
+        {
+            return new BigObject(kind, false, potion);
+        }
+
+        return _chests.Remove(position, out var open) ? new BigObject(kind, true, open) : null;
+    }
+
+    private void PutObject(Position position, BigObject item)
+    {
+        _objectKinds[position] = item.Kind;
+        if (item.IsChest)
+        {
+            _chests[position] = item.Flag;
+        }
+        else
+        {
+            _containers[position] = item.Flag;
+        }
+    }
+
+    private bool CanHoldObject(Position position) =>
+        Level.InBounds(position)
+        && LevelDefinition.IsObjectGround(Level.TerrainAt(position))
+        && position != Magus.Position
+        && !IsBigObject(position);
+
+    private readonly record struct BigObject(Terrain Kind, bool IsChest, bool Flag);
+
+    private ActionError CheckTeleport(Position target, bool chestsBlock = true)
     {
         if (target == Magus.Position)
         {
@@ -565,21 +800,25 @@ public sealed class Game
             return ActionError.NotFree;
         }
 
-        return HasLineOfSight(Magus.Position, target) ? ActionError.None : ActionError.NotVisible;
+        return ClearLine(Magus.Position, target, chestsBlock) ? ActionError.None : ActionError.NotVisible;
     }
 
-    private ActionError CheckSwapTarget(MonsterState monster)
+    private ActionError CheckSwapTarget(MonsterState monster) => CheckSwapPosition(monster.Position);
+
+    private ActionError CheckSwapPosition(Position position)
     {
-        if (Magus.Position.ChebyshevTo(monster.Position) > Rules.SpellRange)
+        if (Magus.Position.ChebyshevTo(position) > Rules.SpellRange)
         {
             return ActionError.OutOfRange;
         }
 
-        return HasLineOfSight(Magus.Position, monster.Position) ? ActionError.None : ActionError.NotVisible;
+        return HasSpellLine(Magus.Position, position) ? ActionError.None : ActionError.NotVisible;
     }
 
-    private bool ClearLine(Position from, Position to)
+    private bool ClearLine(Position from, Position to, bool chestsBlock)
     {
+        bool Blocks(Position cell) => BlocksSight(cell) || (chestsBlock && _chests.ContainsKey(cell));
+
         var nx = Math.Abs(to.X - from.X);
         var ny = Math.Abs(to.Y - from.Y);
         var sx = Math.Sign(to.X - from.X);
@@ -593,7 +832,7 @@ public sealed class Game
             var decision = (1 + 2 * ix) * ny - (1 + 2 * iy) * nx;
             if (decision == 0)
             {
-                if (BlocksSight(new Position(x + sx, y)) && BlocksSight(new Position(x, y + sy)))
+                if (Blocks(new Position(x + sx, y)) && Blocks(new Position(x, y + sy)))
                 {
                     return false;
                 }
@@ -615,7 +854,7 @@ public sealed class Game
             }
 
             var cell = new Position(x, y);
-            if (cell != to && BlocksSight(cell))
+            if (cell != to && Blocks(cell))
             {
                 return false;
             }
@@ -678,15 +917,27 @@ public sealed class Game
 
     private HashSet<Position> ReachableZone()
     {
-        var openable = new HashSet<Position>(_grilles.Values.Where(grille => grille.IsOpen || Level.IsDoor(grille.Position)).Select(grille => grille.Position));
+        var openable = new HashSet<Position>(_grilles.Values
+            .Where(grille => grille.IsOpen || (Level.IsDoor(grille.Position) && (!IsLocked(grille.Position) || KeysHeld > 0)))
+            .Select(grille => grille.Position));
         while (true)
         {
             var zone = FloodFrom(Magus.Position, openable);
             var grown = false;
+            if (_keys.Any(zone.Contains))
+            {
+                foreach (var door in Level.LockedDoors.Where(door => !openable.Contains(door)))
+                {
+                    openable.Add(door);
+                    grown = true;
+                }
+            }
+
+            bool Reachable(Position lever) => _pulled.Contains(lever) || zone.Any(position => position.IsAdjacentTo(lever));
             foreach (var lever in Level.Levers.Keys)
             {
                 var grilles = LeverGrilles(lever).Where(grille => !openable.Contains(grille)).ToList();
-                if (grilles.Count > 0 && zone.Any(position => position.IsAdjacentTo(lever)))
+                if (grilles.Count > 0 && Reachable(lever) && Level.LeversOf(Level.Levers[lever]).All(Reachable))
                 {
                     openable.UnionWith(grilles);
                     grown = true;
@@ -763,6 +1014,12 @@ public sealed class Game
         var from = Magus.Position;
         Magus.Position = to;
         _events.Add(new MagusMoved(from, to, cause));
+        if (_keys.Remove(to))
+        {
+            KeysHeld++;
+            _events.Add(new KeyPicked(to));
+        }
+
         if (_potions.Contains(to) && Magus.Magic < Rules.MagicMax)
         {
             _potions.Remove(to);
@@ -1431,12 +1688,52 @@ public sealed class Game
             if (TryClearGrille(grille))
             {
                 _events.Add(new GrilleClosed(grille.Position));
+                foreach (var lever in Level.LeversOf(grille.Position).Where(_pulled.Contains))
+                {
+                    _pulled.Remove(lever);
+                    _events.Add(new LeverReset(lever));
+                }
             }
             else
             {
                 grille.TurnsRemaining = 1;
                 _events.Add(new GrilleCloseDelayed(grille.Position));
             }
+        }
+
+        RunSpikes();
+    }
+
+    private void RunSpikes()
+    {
+        foreach (var spikes in _spikes)
+        {
+            var raised = SpikesRaisedAt(spikes, Turn);
+            if (raised == SpikesRaisedAt(spikes, Turn - 1))
+            {
+                continue;
+            }
+
+            if (!raised)
+            {
+                _events.Add(new SpikesLowered(spikes));
+                continue;
+            }
+
+            _events.Add(new SpikesRaised(spikes));
+            if (MonsterAt(spikes) is { } monster && monster.Kind != MonsterKind.ChauveSouris)
+            {
+                monster.StunTurns = Math.Max(monster.StunTurns, SpikeStunTurns);
+                monster.FearTurns = 0;
+                _events.Add(new MonsterStunned(monster.Id, monster.StunTurns));
+            }
+        }
+
+        if (SpikesRaised(Magus.Position) && Status == GameStatus.Playing)
+        {
+            _events.Add(new MagusImpaled(Magus.Position));
+            Status = GameStatus.Lost;
+            LossReason = LossReason.Impaled;
         }
     }
 

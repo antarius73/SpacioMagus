@@ -38,6 +38,28 @@ public static class GameDigest
         }
 
         text.Append(CultureInfo.InvariantCulture, $"fioles_revelees {game.PotionsAreRevealed}\n");
+        foreach (var (chest, open) in game.Chests.OrderBy(entry => entry.Key.Y).ThenBy(entry => entry.Key.X))
+        {
+            text.Append(CultureInfo.InvariantCulture, $"coffre {chest.X} {chest.Y} {open}\n");
+        }
+
+        foreach (var key in game.Keys.OrderBy(key => key.Y).ThenBy(key => key.X))
+        {
+            text.Append(CultureInfo.InvariantCulture, $"cle {key.X} {key.Y}\n");
+        }
+
+        foreach (var door in game.UnlockedDoors.OrderBy(door => door.Y).ThenBy(door => door.X))
+        {
+            text.Append(CultureInfo.InvariantCulture, $"deverrouillee {door.X} {door.Y}\n");
+        }
+
+        foreach (var lever in game.PulledLevers.OrderBy(lever => lever.Y).ThenBy(lever => lever.X))
+        {
+            text.Append(CultureInfo.InvariantCulture, $"manette_tiree {lever.X} {lever.Y}\n");
+        }
+
+        text.Append(CultureInfo.InvariantCulture, $"cles_tenues {game.KeysHeld}\n");
+        text.Append(CultureInfo.InvariantCulture, $"objets_deplacables {game.CanSwapObjects}\n");
         return Hash(text.ToString());
     }
 
