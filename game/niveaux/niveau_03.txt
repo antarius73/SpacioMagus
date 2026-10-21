@@ -1,6 +1,6 @@
 [niveau]
 nom = La salle des coffres
-etoiles = 40, 50
+etoiles = 46, 58
 script = parchemin_creatura
 
 [reperes]

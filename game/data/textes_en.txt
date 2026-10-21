@@ -47,10 +47,10 @@ Caught…
 Engulfed! You will wait for Zorgus inside a blob. He will not be pleased.
 
 [echoue_titre]
-Mob cannot swim
+Mob cannot swim!
 
 [echoue]
-Not a drop of magic left, and the exit is on the other side. Mob devoted his life to magic: he never found the time to learn how to swim.
+Not a drop of magic left, and the exit is on the other side. Mob devoted his life to magic: he cannot swim!
 
 [echoue_coffres_titre]
 Mob is walled in
@@ -198,13 +198,13 @@ Effects
 Doors
 
 [porte]
-Tap a neighbouring door to open it. The number tells how many turns until it shuts, pushing away whoever stands in it.
+Tap a neighbouring door to open it. The number tells how many turns until it shuts.
 
 [grille_titre]
 Portcullises
 
 [grille]
-It cannot be raised by hand: pull its lever from a neighbouring square. The number tells how many turns until it drops, pushing away whoever stands under it. Some portcullises have two levers: each stays pulled until the other one is, and both spring back when the portcullis drops.
+It cannot be raised by hand: pull its lever or levers. The number tells how many turns until it drops.
 
 [fiole_titre]
 Potions
@@ -216,73 +216,73 @@ One sip and all your gems are full. Walk onto it to drink it. If you are already
 The green blob
 
 [blob_vert]
-Zorgus's favourite guard: soft, sticky and stubborn. If it touches you, it engulfs you and you will wait inside it for the master. Once it has seen you, it never lets go.
+Zorgus's favourite guard: soft, sticky and stubborn. If it touches you, it engulfs you and you will wait inside it for the master. It fears fire.
 
 [blob_rouge_titre]
 The red blob
 
 [blob_rouge]
-A green blob that got too scared of fire. Fire no longer stops it, but water terrifies it. Cornered by its fear, it turns green again.
+A green blob that got too scared of fire. Fire no longer stops it, but water terrifies it.
 
 [torche_titre]
 The torch
 
 [torche]
-Green blobs fear fire: they never enter the three tiles below a torch, nor attack there. Blocked for too long, a green blob turns red.
+It lights the dungeon, and some creatures are afraid of fire.
 
 [brasero_titre]
 The brazier
 
 [brasero]
-A fire you cannot cross, but sight and magic pass through it. Green blobs keep away from the tiles around it.
+A fire you cannot cross, which lights up the area.
 
 [contenant_titre]
 Crates, barrels and vases
 
 [contenant]
-You cannot teleport onto them. Tap one when you stand next to it to break it: it takes a turn. Sometimes a potion hides inside.
+Tap one when you stand next to it to break it. Sometimes something useful hides inside.
 
 [escalier_titre]
 The stairs
 
 [escalier]
-The way out of the level. Step on it to go deeper into the dungeon.
+The way out of the level: go deeper into the dungeon.
 
 [eau_titre]
 Water
 
 [eau]
-Mob devoted his life to magic and never found the time to learn to swim: you can neither walk on it nor teleport onto it, but sight and magic pass over it. Stuck with no gem, no potion and no container within reach, the game is lost.
+You can neither walk on it nor teleport onto it, and Mob cannot swim!
 
 [manette_titre]
 The lever
 
 [manette]
-Tap it from a neighbouring square to raise the portcullis linked to it: it takes a turn. Impossible if a bat has landed on it. Some portcullises have two levers: each stays pulled until the other one is, and both spring back when the portcullis drops.
+Tap it from a neighbouring square to raise the portcullis linked to it. Some portcullises have two levers.
 
 [alcove_titre]
 The alcove
 
 [alcove]
-A niche lined with unlit candles. Light them from a neighbouring square: it takes a turn, and their glow makes the containers hiding a potion sparkle.
+A niche honouring the god of magic. Pray there, it might help you!
 
 [chauve_souris_titre]
 The bat
 
 [chauve_souris]
-It flies over water, containers and levers. Once it has spotted you, it follows you everywhere. Its bite steals a gem, then it dozes for two turns, sated. With no gem left, you faint.
+Once it has spotted you, it follows you everywhere. Its bite steals a gem, then it dozes, sated. With no gem left, you faint.
 
 [empale_titre]
 Mob was impaled
 
 [empale]
-The spikes shot up under his feet. Mob will wait for Zorgus to return… without being able to sit down.
+The spikes shot up under his feet: Mob is wounded. He will wait for Zorgus to return… without being able to sit down.
 
 [parchemin_pris_titre]
 Improved Spacio Creatura
 
 [parchemin_pris]
-The scroll holds an improved version of Spacio Creatura: the spell now also swaps big objects (barrels, crates, vases and chests), in any mix with creatures.
+The scroll holds an improved version of Spacio Creatura: the spell now also swaps chests.
 
 This power only lasts for this level.
 
@@ -301,37 +301,37 @@ Restart the demo
 Chests
 
 [coffre]
-They overflow with gold, but gold is useless to a magus. Tap one from a neighbouring square to open or close it: it takes a turn. They cannot be broken or teleported onto.
+They overflow with gold, which is of no use to Mob! They are far too sturdy to be broken.
 
 [cle_titre]
 The key
 
 [cle]
-Walk onto it to pick it up. It opens the locked door, once only: after that, the door stays unlocked.
+It opens a locked door, somewhere.
 
 [porte_verrouillee_titre]
 The locked door
 
 [porte_verrouillee]
-It only opens with the key. Once unlocked, it behaves like a normal door.
+It only opens with the right key.
 
 [piege_titre]
 Spike traps
 
 [piege]
-The spikes stay down for three turns, then come up for one turn. When they are up, you can neither walk nor teleport onto them, and if they come up under the magus, it is over. They stun blobs; bats do not care.
+If they pierce your feet, it is over.
 
 [parchemin_titre]
 The altar and the scroll
 
 [parchemin]
-The altar cannot be crossed. Tap the scroll from a neighbouring square to take it: it takes a turn, and it improves Spacio Creatura for this level.
+A magic scroll, a source of unknown knowledge!
 
 [autel_vide_titre]
 The empty altar
 
 [autel_vide]
-The altar cannot be crossed. The scroll has already been taken.
+An altar dedicated to the god of magic.
 
 [geste_titre]
 Long press

@@ -47,10 +47,10 @@ Gefangen…
 Verschluckt! Du wartest im Bauch eines Blobs auf die Rückkehr von Zorgus. Er wird nicht begeistert sein.
 
 [echoue_titre]
-Mob kann nicht schwimmen
+Mob kann nicht schwimmen!
 
 [echoue]
-Kein Tropfen Magie mehr, und der Ausgang liegt auf der anderen Seite. Mob hat sein Leben der Magie gewidmet: Für Schwimmunterricht blieb nie Zeit.
+Kein Tropfen Magie mehr, und der Ausgang liegt auf der anderen Seite. Mob hat sein Leben der Magie gewidmet: Er kann nicht schwimmen!
 
 [echoue_coffres_titre]
 Mob ist eingemauert
@@ -198,13 +198,13 @@ Effekte
 Die Türen
 
 [porte]
-Tippe eine benachbarte Tür an, um sie zu öffnen. Die Zahl zeigt, in wie vielen Runden sie wieder zufällt und dabei jeden wegschiebt, der darin steht.
+Tippe eine benachbarte Tür an, um sie zu öffnen. Die Zahl zeigt, in wie vielen Runden sie wieder zufällt.
 
 [grille_titre]
 Die Gitter
 
 [grille]
-Es lässt sich nicht von Hand hochziehen: Betätige seinen Hebel von einem Nachbarfeld aus. Die Zahl zeigt, in wie vielen Runden es wieder herunterfällt und dabei jeden wegschiebt, der darunter steht. Manche Gitter haben zwei Hebel: Jeder bleibt gezogen, bis auch der andere gezogen ist, und beide springen zurück, wenn das Gitter herunterfällt.
+Es lässt sich nicht von Hand hochziehen: Betätige seinen Hebel oder seine Hebel. Die Zahl zeigt, in wie vielen Runden es wieder herunterfällt.
 
 [fiole_titre]
 Die Tränke
@@ -216,73 +216,73 @@ Ein Schluck und alle deine Edelsteine sind voll. Geh darauf, um ihn zu trinken. 
 Der grüne Blob
 
 [blob_vert]
-Zorgus' Lieblingswächter: weich, klebrig und stur. Berührt er dich, verschluckt er dich, und du wartest darin auf die Rückkehr des Meisters. Hat er dich einmal gesehen, lässt er nicht mehr locker.
+Zorgus' Lieblingswächter: weich, klebrig und stur. Berührt er dich, verschluckt er dich, und du wartest darin auf die Rückkehr des Meisters. Er fürchtet das Feuer.
 
 [blob_rouge_titre]
 Der rote Blob
 
 [blob_rouge]
-Ein grüner Blob, der zu viel Angst vor dem Feuer hatte. Feuer hält ihn nicht mehr auf, aber Wasser jagt ihm Angst ein. In seiner Angst gefangen, wird er wieder grün.
+Ein grüner Blob, der zu viel Angst vor dem Feuer hatte. Feuer hält ihn nicht mehr auf, aber Wasser jagt ihm Angst ein.
 
 [torche_titre]
 Die Fackel
 
 [torche]
-Grüne Blobs fürchten das Feuer: Sie betreten die drei Felder unter der Fackel nicht und greifen dort nicht an. Steckt ein grüner Blob zu lange fest, wird er rot.
+Sie erhellt den Kerker, und manche Kreaturen fürchten das Feuer.
 
 [brasero_titre]
 Die Feuerschale
 
 [brasero]
-Ein unüberwindbares Feuer, das Sicht und Magie durchlässt. Grüne Blobs meiden die Felder rund um sie.
+Ein unüberwindbares Feuer, das die Umgebung erhellt.
 
 [contenant_titre]
 Kisten, Fässer und Vasen
 
 [contenant]
-Du kannst dich nicht hineinteleportieren. Tippe eines an, wenn du daneben stehst, um es zu zerschlagen: Das dauert eine Runde. Manchmal steckt ein Trank darin.
+Tippe eines an, wenn du daneben stehst, um es zu zerschlagen. Manchmal steckt etwas Nützliches darin.
 
 [escalier_titre]
 Die Treppe
 
 [escalier]
-Der Ausgang des Levels. Geh darauf, um tiefer in den Kerker hinabzusteigen.
+Der Ausgang des Levels: Steig tiefer in den Kerker hinab.
 
 [eau_titre]
 Das Wasser
 
 [eau]
-Mob hat sein Leben der Magie gewidmet, für Schwimmunterricht blieb nie Zeit: Du kannst weder darauf gehen noch dich dorthin teleportieren, aber Blick und Magie reichen darüber hinweg. Sitzt du ohne Edelstein, ohne Trank und ohne Behälter in Reichweite fest, ist die Partie verloren.
+Du kannst weder darauf gehen noch dich dorthin teleportieren, und Mob kann nicht schwimmen!
 
 [manette_titre]
 Der Hebel
 
 [manette]
-Tippe ihn von einem Nachbarfeld aus an, um das damit verbundene Gitter hochzuziehen: Das dauert eine Runde. Unmöglich, wenn sich eine Fledermaus darauf niedergelassen hat. Manche Gitter haben zwei Hebel: Jeder bleibt gezogen, bis auch der andere gezogen ist, und beide springen zurück, wenn das Gitter herunterfällt.
+Tippe ihn von einem Nachbarfeld aus an, um das damit verbundene Gitter hochzuziehen. Manche Gitter haben zwei Hebel.
 
 [alcove_titre]
 Die Nische
 
 [alcove]
-Eine Nische voller erloschener Kerzen. Zünde sie von einem Nachbarfeld aus an: Das dauert eine Runde, und ihr Licht lässt die Behälter funkeln, in denen ein Trank steckt.
+Eine Nische zu Ehren des Gottes der Magie. Bete dort, vielleicht hilft es dir!
 
 [chauve_souris_titre]
 Die Fledermaus
 
 [chauve_souris]
-Sie fliegt über Wasser, Behälter und Hebel. Hat sie dich einmal entdeckt, folgt sie dir überallhin. Ihr Biss stiehlt dir einen Edelstein, danach döst sie satt zwei Runden lang. Ohne Edelstein fällst du in Ohnmacht.
+Hat sie dich einmal entdeckt, folgt sie dir überallhin. Ihr Biss stiehlt dir einen Edelstein, danach döst sie satt. Ohne Edelstein fällst du in Ohnmacht.
 
 [empale_titre]
 Mob wurde aufgespießt
 
 [empale]
-Die Spitzen schossen unter seinen Füßen hervor. Mob wartet auf Zorgus' Rückkehr… ohne sich setzen zu können.
+Die Spitzen schossen unter seinen Füßen hervor: Mob ist verletzt. Er wartet auf Zorgus' Rückkehr… ohne sich setzen zu können.
 
 [parchemin_pris_titre]
 Verbesserter Spacio Creatura
 
 [parchemin_pris]
-Die Schriftrolle enthält eine verbesserte Fassung von Spacio Creatura: Der Zauber tauscht jetzt auch große Gegenstände (Fässer, Kisten, Vasen und Truhen), in jeder Mischung mit Kreaturen.
+Die Schriftrolle enthält eine verbesserte Fassung von Spacio Creatura: Der Zauber tauscht jetzt auch Truhen.
 
 Diese Kraft gilt nur in diesem Level.
 
@@ -301,37 +301,37 @@ Demo neu starten
 Die Truhen
 
 [coffre]
-Sie quellen über vor Gold, doch Gold nützt einem Magus nichts. Tippe eine von einem Nachbarfeld aus an, um sie zu öffnen oder zu schließen: Das dauert eine Runde. Man kann sie weder zerschlagen noch sich auf sie teleportieren.
+Sie quellen über vor Gold, das Mob nichts nützt! Sie sind viel zu robust, um zerschlagen zu werden.
 
 [cle_titre]
 Der Schlüssel
 
 [cle]
-Geh darauf, um ihn aufzuheben. Er öffnet die verschlossene Tür, nur ein einziges Mal: Danach bleibt die Tür unverschlossen.
+Er öffnet irgendwo eine verschlossene Tür.
 
 [porte_verrouillee_titre]
 Die verschlossene Tür
 
 [porte_verrouillee]
-Sie öffnet sich nur mit dem Schlüssel. Einmal aufgeschlossen, verhält sie sich wie eine normale Tür.
+Sie öffnet sich nur mit dem richtigen Schlüssel.
 
 [piege_titre]
 Die Stachelfallen
 
 [piege]
-Die Stacheln bleiben drei Runden versenkt und fahren dann eine Runde lang aus. Ausgefahren kannst du weder darauf gehen noch dich dorthin teleportieren, und fahren sie unter dem Magus aus, ist es vorbei. Sie betäuben Blobs; Fledermäuse kümmert das nicht.
+Durchbohren sie dir die Füße, ist es vorbei.
 
 [parchemin_titre]
 Der Altar und die Schriftrolle
 
 [parchemin]
-Der Altar ist unpassierbar. Tippe die Schriftrolle von einem Nachbarfeld aus an, um sie zu nehmen: Das dauert eine Runde und verbessert Spacio Creatura für dieses Level.
+Eine magische Schriftrolle, Quelle unbekannten Wissens!
 
 [autel_vide_titre]
 Der leere Altar
 
 [autel_vide]
-Der Altar ist unpassierbar. Die Schriftrolle wurde bereits genommen.
+Ein Altar, dem Gott der Magie geweiht.
 
 [geste_titre]
 Lange drücken

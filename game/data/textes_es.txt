@@ -47,10 +47,10 @@ Capturado…
 ¡Engullido! Esperarás el regreso de Zorgus dentro de un blob. No le va a hacer ninguna gracia.
 
 [echoue_titre]
-Mob no sabe nadar
+¡Mob no sabe nadar!
 
 [echoue]
-Ni una gota de magia, y la salida está al otro lado. Mob dedicó su vida a la magia: nunca tuvo tiempo de aprender a nadar.
+Ni una gota de magia, y la salida está al otro lado. Mob dedicó su vida a la magia: ¡no sabe nadar!
 
 [echoue_coffres_titre]
 Mob está emparedado
@@ -198,13 +198,13 @@ Efectos
 Las puertas
 
 [porte]
-Toca una puerta vecina para abrirla. El número indica en cuántos turnos se cierra, empujando a quien esté debajo.
+Toca una puerta vecina para abrirla. El número indica en cuántos turnos se cierra.
 
 [grille_titre]
 Las rejas
 
 [grille]
-No se levanta a mano: acciona su palanca desde una casilla vecina. El número indica en cuántos turnos vuelve a caer, empujando a quien esté debajo. Algunas rejas tienen dos palancas: cada una queda accionada hasta que se acciona la otra, y ambas vuelven a su sitio cuando la reja cae.
+No se levanta a mano: acciona su palanca o sus palancas. El número indica en cuántos turnos vuelve a caer.
 
 [fiole_titre]
 Los frascos
@@ -216,73 +216,73 @@ Un trago y todas tus gemas se llenan. Camina sobre él para beberlo. Si ya las t
 El blob verde
 
 [blob_vert]
-El guardián favorito de Zorgus: blando, pegajoso y terco. Si te toca, te engulle y esperarás dentro el regreso del maestro. Cuando te ha visto, ya no te suelta.
+El guardián favorito de Zorgus: blando, pegajoso y terco. Si te toca, te engulle y esperarás dentro el regreso del maestro. Teme al fuego.
 
 [blob_rouge_titre]
 El blob rojo
 
 [blob_rouge]
-Un blob verde que pasó demasiado miedo con el fuego. El fuego ya no lo detiene, pero el agua lo aterra. Acorralado por su miedo, vuelve a ser verde.
+Un blob verde que pasó demasiado miedo con el fuego. El fuego ya no lo detiene, pero el agua lo aterra.
 
 [torche_titre]
 La antorcha
 
 [torche]
-Los blobs verdes temen el fuego: no entran en las tres casillas bajo la antorcha ni atacan allí. Bloqueado demasiado tiempo, un blob verde se vuelve rojo.
+Ilumina la mazmorra, y algunas criaturas le tienen miedo al fuego.
 
 [brasero_titre]
 El brasero
 
 [brasero]
-Un fuego infranqueable que deja pasar la vista y la magia. Los blobs verdes no se acercan a las casillas que lo rodean.
+Un fuego infranqueable que ilumina la zona.
 
 [contenant_titre]
 Cajas, barriles y jarrones
 
 [contenant]
-No puedes teletransportarte a ellos. Toca uno cuando estés al lado para romperlo: lleva un turno. A veces esconde un frasco.
+Toca uno cuando estés al lado para romperlo. A veces esconde algo útil.
 
 [escalier_titre]
 La escalera
 
 [escalier]
-La salida del nivel. Camina sobre ella para bajar más hondo en la mazmorra.
+La salida del nivel: baja más hondo en la mazmorra.
 
 [eau_titre]
 El agua
 
 [eau]
-Mob dedicó su vida a la magia y nunca tuvo tiempo de aprender a nadar: no puedes caminar sobre ella ni teletransportarte a ella, pero la vista y la magia pasan por encima. Atrapado sin gemas, sin frasco y sin recipiente a tu alcance, la partida está perdida.
+No puedes caminar sobre ella ni teletransportarte a ella, ¡y Mob no sabe nadar!
 
 [manette_titre]
 La palanca
 
 [manette]
-Tócala desde una casilla vecina para levantar la reja unida a ella: lleva un turno. Imposible si un murciélago se ha posado en ella. Algunas rejas tienen dos palancas: cada una queda accionada hasta que se acciona la otra, y ambas vuelven a su sitio cuando la reja cae.
+Tócala desde una casilla vecina para levantar la reja unida a ella. Algunas rejas tienen dos palancas.
 
 [alcove_titre]
 La hornacina
 
 [alcove]
-Un nicho con velas apagadas. Enciéndelas desde una casilla vecina: lleva un turno, y su luz hace brillar los recipientes que esconden un frasco.
+Un nicho en honor al dios de la magia. Reza ahí, ¡quizá te ayude!
 
 [chauve_souris_titre]
 El murciélago
 
 [chauve_souris]
-Sobrevuela el agua, los recipientes y las palancas. Una vez que te ha visto, te sigue a todas partes. Su mordisco te roba una gema y luego dormita dos turnos, saciado. Sin gemas, te desmayas.
+Una vez que te ha visto, te sigue a todas partes. Su mordisco te roba una gema y luego dormita, saciado. Sin gemas, te desmayas.
 
 [empale_titre]
 Mob ha sido empalado
 
 [empale]
-Las púas salieron bajo sus pies. Mob esperará a que vuelva Zorgus… sin poder sentarse.
+Las púas salieron bajo sus pies: Mob está herido. Esperará a que vuelva Zorgus… sin poder sentarse.
 
 [parchemin_pris_titre]
 Spacio Creatura mejorado
 
 [parchemin_pris]
-El pergamino contiene una versión mejorada de Spacio Creatura: el hechizo ahora también intercambia los objetos grandes (barriles, cajas, jarrones y cofres), en cualquier combinación con las criaturas.
+El pergamino contiene una versión mejorada de Spacio Creatura: el hechizo ahora también intercambia los cofres.
 
 Este poder solo vale para este nivel.
 
@@ -301,37 +301,37 @@ Reiniciar la demo
 Los cofres
 
 [coffre]
-Rebosan de oro, pero el oro no le sirve de nada a un magus. Toca uno desde una casilla vecina para abrirlo o cerrarlo: lleva un turno. No se pueden romper ni se puede teletransportar a ellos.
+Rebosan de oro, ¡que no le sirve de nada a Mob! Son demasiado sólidos para romperlos.
 
 [cle_titre]
 La llave
 
 [cle]
-Camina sobre ella para recogerla. Abre la puerta cerrada con llave, una sola vez: después, la puerta queda abierta.
+Abre una puerta cerrada con llave, en algún lugar.
 
 [porte_verrouillee_titre]
 La puerta cerrada con llave
 
 [porte_verrouillee]
-Solo se abre con la llave. Una vez desbloqueada, se comporta como una puerta normal.
+Solo se abre con la llave correcta.
 
 [piege_titre]
 Las trampas de púas
 
 [piege]
-Las púas permanecen escondidas tres turnos y luego salen durante un turno. Cuando están fuera, no puedes caminar ni teletransportarte sobre ellas, y si salen bajo el magus, se acabó. Aturden a los blobs; a los murciélagos les da igual.
+Si te atraviesan los pies, se acabó.
 
 [parchemin_titre]
 El altar y el pergamino
 
 [parchemin]
-El altar no se puede atravesar. Toca el pergamino desde una casilla vecina para cogerlo: lleva un turno y mejora Spacio Creatura en este nivel.
+Un pergamino mágico, ¡fuente de un saber desconocido!
 
 [autel_vide_titre]
 El altar vacío
 
 [autel_vide]
-El altar no se puede atravesar. El pergamino ya ha sido cogido.
+Un altar dedicado al dios de la magia.
 
 [geste_titre]
 Pulsación larga

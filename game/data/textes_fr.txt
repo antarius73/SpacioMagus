@@ -47,16 +47,16 @@ Capturé…
 Englobé ! Vous attendrez le retour de Zorgus au fond d'un blob. Il ne va pas être content.
 
 [echoue_titre]
-Mob ne sait pas nager
+Mob ne sait pas nager !
 
 [echoue]
-Plus une goutte de magie, et la sortie est de l'autre côté. Mob a consacré sa vie à la magie : il n'a jamais eu le temps d'apprendre à nager.
+Plus une goutte de magie, et la sortie est de l'autre côté. Mob a consacré sa vie à la magie : il ne sait pas nager !
 
 [echoue_coffres_titre]
 Mob est emmuré
 
 [echoue_coffres]
-Plus une goutte de magie, et ces lourds coffres lui barrent la route. Mob a consacré sa vie à la magie : il n'a jamais soulevé autre chose qu'un grimoire.
+Plus une goutte de magie, et ces lourds coffres barrent la route. Mob a consacré sa vie à la magie : il n'a jamais soulevé autre chose qu'un grimoire.
 
 [echoue_coince_titre]
 Mob est coincé
@@ -198,13 +198,13 @@ Effets
 Les portes
 
 [porte]
-Touchez une porte voisine pour l'ouvrir. Le chiffre indique dans combien de tours elle se referme, en repoussant qui se tient dessous.
+Touchez une porte voisine pour l'ouvrir. Le chiffre indique dans combien de tours elle se referme.
 
 [grille_titre]
 Les grilles
 
 [grille]
-Elle ne se lève pas à la main : actionnez sa manette depuis une case voisine. Le chiffre indique dans combien de tours elle retombe, en repoussant qui se tient dessous. Certaines herses ont deux manettes : chacune reste tirée jusqu'à ce que l'autre le soit, et toutes deux se relèvent quand la herse retombe.
+Elle ne se lève pas à la main : actionnez sa ou ses manettes. Le chiffre indique dans combien de tours elle retombe.
 
 [fiole_titre]
 Les fioles
@@ -216,73 +216,73 @@ Une gorgée et toutes vos gemmes sont pleines. Marchez dessus pour la boire. Si 
 Le blob vert
 
 [blob_vert]
-Le gardien préféré de Zorgus : mou, collant et obstiné. S'il vous touche, il vous englobe et vous attendrez le retour du maître dedans. Une fois qu'il vous a vu, il ne vous lâche plus.
+Le gardien préféré de Zorgus : mou, collant et obstiné. S'il vous touche, il vous englobe et vous attendrez le retour du maître dedans. Il craint le feu.
 
 [blob_rouge_titre]
 Le blob rouge
 
 [blob_rouge]
-Un blob vert qui a eu trop peur du feu. Le feu ne l'arrête plus, mais l'eau le terrifie. Coincé par sa peur, il redevient vert.
+Un blob vert qui a eu trop peur du feu. Le feu ne l'arrête plus, mais l'eau le terrifie.
 
 [torche_titre]
 La torchère
 
 [torche]
-Les blobs verts craignent le feu : ils n'entrent pas dans les trois cases sous la torchère et n'y attaquent pas. Bloqué trop longtemps, un blob vert devient rouge.
+Elle éclaire le donjon, et certaines créatures ont peur du feu.
 
 [brasero_titre]
 Le brasero
 
 [brasero]
-Un feu infranchissable, qui laisse passer la vue et la magie. Les blobs verts ne s'approchent pas des cases qui l'entourent.
+Un feu infranchissable qui éclaire la zone.
 
 [contenant_titre]
 Caisses, tonneaux et vases
 
 [contenant]
-Impossible de s'y téléporter. Touchez-en un quand vous êtes à côté pour le briser : cela prend un tour. Il cache parfois une fiole.
+Touchez-en un quand vous êtes à côté pour le briser. Il cache parfois quelque chose d'utile.
 
 [escalier_titre]
 L'escalier
 
 [escalier]
-La sortie du niveau. Marchez dessus pour descendre plus profond dans le donjon.
+La sortie du niveau : descendez plus profondément dans le donjon.
 
 [eau_titre]
 L'eau
 
 [eau]
-Mob a consacré sa vie à la magie, pas le temps d'apprendre à nager : on ne peut ni y marcher ni s'y téléporter, mais la vue et la magie passent au-dessus. Coincé sans gemme, sans fiole et sans contenant à portée, la partie est perdue.
+On ne peut ni y marcher ni s'y téléporter, et Mob ne sait pas nager !
 
 [manette_titre]
 La manette
 
 [manette]
-Touchez-la depuis une case voisine pour lever la grille qui lui est reliée : cela prend un tour. Impossible si une chauve-souris s'y est posée. Certaines herses ont deux manettes : chacune reste tirée jusqu'à ce que l'autre le soit, et toutes deux se relèvent quand la herse retombe.
+Touchez-la depuis une case voisine pour lever la grille qui lui est reliée. Certaines herses ont deux manettes.
 
 [alcove_titre]
 L'alcôve
 
 [alcove]
-Une niche garnie de bougies éteintes. Allumez-les depuis une case voisine : cela prend un tour, et leur lumière fait scintiller les contenants qui cachent une fiole.
+Une niche en l'honneur du dieu de la magie. Priez-y, cela vous aidera peut-être !
 
 [chauve_souris_titre]
 La chauve-souris
 
 [chauve_souris]
-Elle survole l'eau, les contenants et les manettes. Une fois qu'elle vous a repéré, elle vous suit partout. Sa morsure vous vole une gemme, puis elle somnole deux tours, repue. Sans gemme, vous vous évanouissez.
+Une fois qu'elle vous a repéré, elle vous suit partout. Sa morsure vole une gemme, puis elle somnole, repue. Sans gemme, vous vous évanouissez.
 
 [empale_titre]
 Mob a été empalé
 
 [empale]
-Les pointes sont sorties sous ses pieds. Mob attendra le retour de Zorgus… sans pouvoir s'asseoir.
+Les pointes sont sorties sous ses pieds, Mob est blessé. Il va attendre le retour de Zorgus… sans pouvoir s'asseoir.
 
 [parchemin_pris_titre]
 Spacio Creatura amélioré
 
 [parchemin_pris]
-Le parchemin contient une version améliorée de Spacio Creatura : le sort échange désormais aussi les gros objets (tonneaux, caisses, vases et coffres), dans n'importe quel mélange avec les créatures.
+Le parchemin contient une version améliorée de Spacio Creatura : le sort échange désormais aussi les coffres.
 
 Ce pouvoir ne vaut que dans ce niveau.
 
@@ -301,37 +301,37 @@ Recommencer la démo
 Les coffres
 
 [coffre]
-Ils regorgent d'or, mais l'or ne sert à rien à un magus. Touchez-en un depuis une case voisine pour l'ouvrir ou le fermer : cela prend un tour. Impossible de les briser ou de s'y téléporter.
+Ils regorgent d'or, d'aucune utilité pour Mob ! Ils sont bien trop solides pour être brisés.
 
 [cle_titre]
 La clé
 
 [cle]
-Marchez dessus pour la ramasser. Elle ouvre la porte verrouillée, une seule fois : ensuite, la porte reste déverrouillée.
+Elle ouvre une porte verrouillée, quelque part.
 
 [porte_verrouillee_titre]
 La porte verrouillée
 
 [porte_verrouillee]
-Elle ne s'ouvre qu'avec la clé. Une fois déverrouillée, elle se comporte comme une porte normale.
+Elle ne s'ouvre qu'avec la bonne clé.
 
 [piege_titre]
 Les pièges à pointes
 
 [piege]
-Les pointes restent rentrées trois tours, puis sortent pendant un tour. Sorties, on ne peut ni y marcher ni s'y téléporter, et si elles sortent sous le magus, c'est la fin. Elles étourdissent les blobs ; les chauves-souris s'en moquent.
+Si elles vous traversent les pieds, c'est la fin.
 
 [parchemin_titre]
 L'autel et le parchemin
 
 [parchemin]
-L'autel est infranchissable. Touchez le parchemin depuis une case voisine pour le prendre : cela prend un tour, et il améliore Spacio Creatura pour ce niveau.
+Un parchemin magique, source de connaissances inconnues !
 
 [autel_vide_titre]
 L'autel vide
 
 [autel_vide]
-L'autel est infranchissable. Le parchemin a déjà été pris.
+Un autel dédié au dieu de la magie.
 
 [geste_titre]
 Appui long
