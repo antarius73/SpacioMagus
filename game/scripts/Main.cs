@@ -90,8 +90,16 @@ public partial class Main : Node
         RemoteControl.AttachIfRequested(this);
     }
 
-    private SaveGame? ResumableSave() =>
-        SaveStore.Load() is { } save && _levels.Contains(save.LevelFile) ? save : null;
+    private SaveGame? ResumableSave()
+    {
+        if (SaveStore.Load() is not { } save)
+        {
+            return null;
+        }
+
+        var index = _levels.ToList().IndexOf(save.LevelFile);
+        return index >= 0 && IsUnlocked(index) ? save : null;
+    }
 
     private void ShowTitle()
     {
@@ -549,6 +557,7 @@ public partial class Main : Node
             (Texts.ConfirmButton, () =>
             {
                 RecordStore.Clear(_records);
+                SaveStore.Delete();
                 ShowSettings(back);
             }),
             (Texts.CancelButton, () => ShowSettings(back))));

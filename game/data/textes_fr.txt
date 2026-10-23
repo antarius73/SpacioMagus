@@ -85,9 +85,11 @@ Donjon et interface : CraftPix.net.
 
 Effets : Raphael Hatencia (RagnaPixel Studio), licence CC BY 4.0.
 
-Magus : an_ghoul (an-ghoul.itch.io).
+Magus : an_ghoul, « Top-down Wizard » (an-ghoul.itch.io).
 
 Blob, fiole et toiles : Kao (kaopxl.itch.io).
+
+Coffres, pièges, clé et trésors : Kao, « Pixel art Dungeon Asset Pack » (kaopxl.itch.io).
 
 Sons d'interface : May Genko (maygenko.itch.io).
 
@@ -180,7 +182,7 @@ Effacer les records
 Effacer les records ?
 
 [effacer_records]
-Toutes les étoiles et tous les records seront perdus.
+Toutes les étoiles, tous les records et la partie en cours seront perdus.
 
 [langue_choix]
 Langue

@@ -6,10 +6,13 @@ namespace SpacioMagus;
 
 public static class RecordStore
 {
-    private const string FilePath = "user://records.json";
-    private const string TempPath = "user://records.json.tmp";
-    private const string BrokenPath = "user://records.json.illisible";
     private const string FileName = "records.json";
+
+    private static string FilePath => UserData.Path(FileName);
+
+    private static string TempPath => UserData.Path("records.json.tmp");
+
+    private static string BrokenPath => UserData.Path("records.json.illisible");
 
     public static RecordBook Load()
     {

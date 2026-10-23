@@ -57,7 +57,7 @@ public partial class RemoteControl : Node
     public static void AttachIfRequested(Main main)
     {
         var args = OS.GetCmdlineUserArgs();
-        if (!args.Contains(Flag))
+        if (!OS.IsDebugBuild() || !args.Contains(Flag))
         {
             return;
         }

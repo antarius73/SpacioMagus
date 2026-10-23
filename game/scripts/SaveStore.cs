@@ -6,9 +6,11 @@ namespace SpacioMagus;
 
 public static class SaveStore
 {
-    private const string FilePath = "user://sauvegarde.json";
-    private const string TempPath = "user://sauvegarde.json.tmp";
     private const string FileName = "sauvegarde.json";
+
+    private static string FilePath => UserData.Path(FileName);
+
+    private static string TempPath => UserData.Path("sauvegarde.json.tmp");
 
     public static bool Exists => FileAccess.FileExists(FilePath);
 
@@ -74,7 +76,7 @@ public static class SaveStore
 
     public static void Archive(SaveGame save, string outcome)
     {
-        const string folder = "user://parties";
+        var folder = UserData.Path("parties");
         var error = DirAccess.MakeDirRecursiveAbsolute(ProjectSettings.GlobalizePath(folder));
         if (error != Error.Ok)
         {

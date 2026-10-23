@@ -13,6 +13,7 @@ config_version=5
 config/name="Mob le Magus"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
+config/windows_native_icon="res://assets/icone/mob.ico"
 
 [display]
 

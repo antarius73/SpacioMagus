@@ -5,7 +5,7 @@ namespace SpacioMagus;
 
 public static class UserSettings
 {
-    private const string FilePath = "user://reglages.cfg";
+    private static string FilePath => UserData.Path("reglages.cfg");
     private const string Section = "jeu";
     private const string LanguageKey = "langue";
     private const string SoundKey = "son";

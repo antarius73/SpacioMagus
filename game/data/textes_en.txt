@@ -85,9 +85,11 @@ Dungeon and interface: CraftPix.net.
 
 Effects: Raphael Hatencia (RagnaPixel Studio), CC BY 4.0 licence.
 
-Magus: an_ghoul (an-ghoul.itch.io).
+Magus: an_ghoul, “Top-down Wizard” (an-ghoul.itch.io).
 
 Blob, potion and cobwebs: Kao (kaopxl.itch.io).
+
+Chests, traps, key and treasures: Kao, “Pixel art Dungeon Asset Pack” (kaopxl.itch.io).
 
 Interface sounds: May Genko (maygenko.itch.io).
 
@@ -180,7 +182,7 @@ Clear records
 Clear records?
 
 [effacer_records]
-All stars and records will be lost.
+All stars, all records and the game in progress will be lost.
 
 [langue_choix]
 Language

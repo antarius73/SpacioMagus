@@ -85,9 +85,11 @@ Mazmorra e interfaz: CraftPix.net.
 
 Efectos: Raphael Hatencia (RagnaPixel Studio), licencia CC BY 4.0.
 
-Magus: an_ghoul (an-ghoul.itch.io).
+Magus: an_ghoul, «Top-down Wizard» (an-ghoul.itch.io).
 
 Blob, poción y telarañas: Kao (kaopxl.itch.io).
+
+Cofres, trampas, llave y tesoros: Kao, «Pixel art Dungeon Asset Pack» (kaopxl.itch.io).
 
 Sonidos de interfaz: May Genko (maygenko.itch.io).
 
@@ -180,7 +182,7 @@ Borrar récords
 ¿Borrar los récords?
 
 [effacer_records]
-Se perderán todas las estrellas y todos los récords.
+Se perderán todas las estrellas, todos los récords y la partida en curso.
 
 [langue_choix]
 Idioma

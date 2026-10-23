@@ -85,9 +85,11 @@ Kerker und Oberfläche: CraftPix.net.
 
 Effekte: Raphael Hatencia (RagnaPixel Studio), Lizenz CC BY 4.0.
 
-Magus: an_ghoul (an-ghoul.itch.io).
+Magus: an_ghoul, „Top-down Wizard“ (an-ghoul.itch.io).
 
 Blob, Trank und Spinnweben: Kao (kaopxl.itch.io).
+
+Truhen, Fallen, Schlüssel und Schätze: Kao, „Pixel art Dungeon Asset Pack“ (kaopxl.itch.io).
 
 Oberflächen-Sounds: May Genko (maygenko.itch.io).
 
@@ -180,7 +182,7 @@ Rekorde löschen
 Rekorde löschen?
 
 [effacer_records]
-Alle Sterne und alle Rekorde gehen verloren.
+Alle Sterne, alle Rekorde und das laufende Spiel gehen verloren.
 
 [langue_choix]
 Sprache
